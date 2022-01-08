@@ -1,0 +1,174 @@
+#Every verbal output the plugin will ever display to the final player will be taken from here.
+#Yuo can either customize the messages and texts to make them fit into your server's tone
+#or copy this file and rename it to a different language code to translate the plugin to whatever language
+#you want to support on your server.
+
+#The language is client-side picked, so it'll depend on the language set in the Player's client which language file
+#the output is going to be pucked from. You can support as much languages as you want.
+
+#LandLords has build-in neutral English, neutral LATAM Spanish and European Spanish translations. We encourage you
+#to change the "default_language" setting in the config.yml file to your target player's native language, and
+#implementing your own translation if it's not build-into the plugin.
+
+#The plugin will try to match the player with the file named after their "language + country" pair, so you can implement
+#location-specific translations for different regions with the same language. if there's found no translation matching
+#this combination, the translation named after just the language will be picket.
+#   - en_US.yml   ==>   Will be used for players in the US
+#   - en_UK.yml   ==>   Will be used for players in the UK
+#   - en.yml      ==>   Will be used for english speaker players whose specific location is not implemented.
+# Under the same example, if a client's language is set to "en_AU", it'll use the "en.yml" translation, unless
+#you specifically add a "en_AU.yml" file with its own translation. The same is true for all other languages.
+
+#If no translation is found for a given language at oll. The language set at the "default_language" setting in
+#the "config.yml" file will be used. Make sure there's a file in the /lang directory already with named after
+#the default language code.
+
+#Each translation item might have or not a set of parameters. These are fields defined by the '%' symbol.
+#They are replaced in runtime by actual variable data. Each entry will have its own parameters linked to a
+#'%' index.
+
+
+#Used to separate items in a list
+lists_separator: ", "
+
+#The separator used for the last item of a list.
+lists_lastSeparator: " and "
+
+#Used to end a list when it's not fully displayed
+#   %1$s = The amount of items left
+lists_remaining: " and %1$s more"
+
+#The name the associated region will get when a player places a totem
+#   %1$s = The totem placer player's name
+totem_region_defauldName: "%1$s's lands"
+
+
+
+################################################ [ REGIONS ] ################################################
+
+#Message shown when a region's name is changed to other players
+#   %1$s = previous name        %2$s = new name       %3$s = Changer player
+region_name_update_thirdPerson: "%3$s has changed the name of %1$s to \"%2$s\""
+
+#Message shown when a region's name is changed to the changer player
+#   %1$s = previous name        %2$s = new name       %3$s = Changer player
+region_name_update_firstPerson: "The name of %1$s has been changed to to \"%2$s\""
+
+#Message shown to other players when a permission in a region has been granted to another player
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_add_thirdPerson_thirdPerson: "%1$s has been granted with the role of %3$s at %4$s by %2$s"
+
+#Message shown to a player when a permission in a region has been granted to them
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_add_thirdPerson_firstPerson: "%2$s has granted you with the role of %3$s at %4$s"
+
+#Message shown to a player when they grant a permission in a region to another player
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_add_firstPerson_thirdPerson: "You've granted %1$s with the role of %3$s at %4$s"
+
+#Message shown to a player when they grant a permission in a region to themselves
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_add_firstPerson_firstPerson: "You've granted yourself with the role of %3$s at %4$s"
+
+#Message shown to other players when a permission in a region has been removed from another player
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_remove_thirdPerson_thirdPerson: "%2$s has taken the role of %3$s at %4$s away from %1$s"
+
+#Message shown to a player when their permission in a region has been removed
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_remove_thirdPerson_firstPerson: "%2$s has taken the role of %3$s at %4$s away from you"
+
+#Message shown to a player when they remove a permission in a region from another player
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_remove_firstPerson_thirdPerson: "You got rid of %1$s's role of %3$s at %4$s"
+
+#Message shown to a player when they remove a permission in a region from themselves
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
+region_permission_remove_firstPerson_firstPerson: "You took the role of %3$s at $4$s away from yourself"
+
+#Message shown to other players when a permission in a region has been granted to another player
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = previous group name       %4$s = New group name       %5$s = Region name
+region_permission_change_thirdPerson_thirdPerson: "%2$s has changed the role of %1$s at %5$s from %3$s to %4$s"
+
+#Message shown to a player when a permission in a region has been granted to them
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = previous group name       %4$s = New group name       %5$s = Region name
+region_permission_change_thirdPerson_firstPerson: "%2$s has changed your role at %5$s from %3$s to %4$s"
+
+#Message shown to a player when they grant a permission in a region to another player
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = previous group name       %4$s = New group name       %5$s = Region name
+region_permission_change_firstPerson_thirdPerson: "You've changed the role of %1$s at %5$s from %3$s to %4$s"
+
+#Message shown to a player when they grant a permission in a region to themselves
+#   %1$s = Affected player        %2$s = Responsible player       %3$s = previous group name       %4$s = New group name       %5$s = Region name
+region_permission_change_firstPerson_firstPerson: "You've has changed your role at %5$s from %3$s to %4$s"
+
+#Message to show when a region is resized.
+#   %1$s = Responsible player's name     %2$s = Region's name     %3$s = new X    %4$s = new Y    %5$s = new Z
+region_resize: "%1$s has resized %2$s. New size: %3$s x %4$s x %5$s"
+
+
+################################################ [ REGION DEEDS ] ################################################
+
+#The text displayed inside region deeds books
+#   %1$s = Region name field    %2$s = Deeds ID     %3$s = Region ID
+#   (It's important to include %1$2. Otherwise the player won´t be able to change the region's name)
+#   Don't use the '[' amd ']' characters, as those are used to extract the region's name. They'd be removed on runtime if you do.
+deeds_bookContent: "%/en-deeds.txt"
+
+#The display name of the Book and Quill turned into deeds.
+#   %1$s = Region name
+deeds_bookTittle: "Land deeds for %1$s"
+
+#How the names of the region groups will be displayed in the books. (ONLY DEFINE A STYLE IN THIS FIELD)
+deeds_bookHeaders_style: "§k§3"
+
+#How the names of the players will be displayed in the books. (ONLY DEFINE A STYLE IN THIS FIELD)
+deeds_bookPlayerNames_style: ""
+
+#The header text of the list of error reading Deeds.
+#   %1$s = Amount of errors
+deeds_read_errorHeader: "-----[ %1$s unsaved changes! ]-----"
+
+#The part of a deeds read error message showing the page number the error is at.
+#   %1$s = Page number
+deeds_read_errorPageIndicator: "Page %1$s:    "
+
+#A general style to apply to all error messages (ONLY DEFINE A STYLE IN THIS FIELD)
+deeds_read_errorGeneralStyle: ""
+
+#If tha name of the Region couldn't be read because there was no '[' ... ']' enclosure.
+#   %1$s = Missing symbol
+deeds_read_error_enclosureNotFound_singular: "Missing symbol '%1$s'. Couldn't extract name."
+
+#   %1$s = Missing symbol 1     %2$s = Missing symbol 2
+deeds_read_error_enclosureNotFound_plural: "Neither '%1$s' nor '%2$s' symbols found. Couldn't extract name."
+
+#If the name of the region placed by the player was too short of long (Settable in the config.yml file).
+#   %1$s = Minimum length       %2$s = Attempted length      %3$s = Difference
+deeds_read_error_illegalNameLength_short: "Name is too short! The minimum length is %1$s characters."
+
+#   %1$s = Maximum length       %2$s = Attempted length      %3$s = Difference
+deeds_read_error_illegalNameLength_long: "Name is too long! The maximum length is %1$s characters."
+
+#If a permissions page could not be read as the separator ':' symbol wasn't found.
+deeds_error_permissionMissingSeparator: "No ':' symbol found. Unable to modify roles."
+
+#If a permissions page could not be read as there were more than one ':' symbols.
+#   %1$s = Number of separators found.
+deeds_error_permissionOverSeparators: "%1$s ':' symbols found. It must only be one after the role name."
+
+#If a permissions page could not be read as the name of the permissions group could not be found.
+#   %1$s = Name of the entered group
+deeds_error_groupNotFound: "There's not such a role called \"%1$s.\""
+
+#If a deeds are placed on a totem lectern of a region they don't belong
+#   %1$s = Deeds region     %2$s = Actual region
+deeds_placing_error_regionsMismatch: "These are %1$s's deeds. They have no power over %2$s."
+
+#If a no linger valid deeds item is placed in a totem lectern
+#   %1$s = Deeds ID         %2$s = Valid ID
+deeds_placing_error_idMismatch: "Minutes #%1$s no longer valid."
+
+#If an unreadable deeds book due to format errors is placed in a totem lectern (The list of error will follow)
+deeds_placing_error_readingErrors: "The Deeds document is not readable due to:"
+
