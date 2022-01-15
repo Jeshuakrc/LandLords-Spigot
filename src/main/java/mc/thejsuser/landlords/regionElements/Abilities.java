@@ -43,6 +43,7 @@ public enum Abilities {
     can_access_brewing_stands,
     can_access_looms,
     can_access_lecterns,
+    can_access_totem_lecterns,
     can_take_books_from_lecterns,
     can_place_books_on_lecterns,
     can_take_books_from_totem_lecterns,
