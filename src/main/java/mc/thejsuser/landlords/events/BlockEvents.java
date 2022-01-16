@@ -170,6 +170,7 @@ public class BlockEvents implements Listener {
                         case WATER_BUCKET -> Abilities.can_put_water;
                         case LAVA_BUCKET -> Abilities.can_put_lava;
                         case ITEM_FRAME -> Abilities.can_place_item_frames;
+                        case GLOW_ITEM_FRAME -> Abilities.can_place_glow_item_frames;
                         case PAINTING -> Abilities.can_place_paintings;
                         case ARMOR_STAND -> Abilities.can_place_armor_stands;
                         default -> ablt;

@@ -24,13 +24,11 @@ public class EntityEvents implements Listener {
         Abilities ablt = null;
 
          switch (entity.getType()){
-             case ITEM_FRAME:
-                 ablt=Abilities.can_break_item_frames;
+             case ITEM_FRAME -> ablt=Abilities.can_break_item_frames;
+             case GLOW_ITEM_FRAME -> ablt=Abilities.can_break_glow_item_frames;
+             case PAINTING -> ablt=Abilities.can_break_paintings;
 
-             case PAINTING:
-                 ablt=Abilities.can_break_paintings;
-
-             default: break;
+             default -> {}
          }
          if (ablt != null) {
             boolean a = Region.checkPlayerAbilityAtPoint(
@@ -48,22 +46,27 @@ public class EntityEvents implements Listener {
     public void onEntityDamage(EntityDamageByEntityEvent e) {
 
         Entity damager = e.getDamager();
-        if (damager instanceof Player) {
+        if (damager instanceof Player player) {
 
             Entity entity = e.getEntity();
             Abilities ablt = null;
-            if (entity instanceof Animals) {
-                ablt = Abilities.can_damage_animals;
-            }
-            if (entity instanceof Monster) {
-                ablt = Abilities.can_damage_monsters;
-            }
-            if (entity.getType().equals(EntityType.ARMOR_STAND)) {
-                ablt = Abilities.can_break_armor_stands;
+            switch (entity.getType()) {
+                case ARMOR_STAND -> ablt = Abilities.can_break_armor_stands;
+                case ITEM_FRAME -> ablt = Abilities.can_take_from_item_frames;
+                case GLOW_ITEM_FRAME -> ablt = Abilities.can_take_from_glow_item_frames;
+
+                default -> {
+                    if (entity instanceof Animals) {
+                        ablt = Abilities.can_damage_animals;
+                    }
+                    if (entity instanceof Monster) {
+                        ablt = Abilities.can_damage_monsters;
+                    }
+                }
             }
             if (ablt != null) {
                 boolean a = Region.checkPlayerAbilityAtPoint(
-                        (Player) damager,
+                        player,
                         ablt,
                         entity.getLocation().getX(),
                         entity.getLocation().getY(),
@@ -72,9 +75,6 @@ public class EntityEvents implements Listener {
                 e.setCancelled(!a);
             }
         }
-
-
-
     }
 
     @EventHandler
@@ -83,11 +83,13 @@ public class EntityEvents implements Listener {
         Entity entity = e.getRightClicked();
         Abilities ablt = null;
 
-        if (entity.getType() == EntityType.ITEM_FRAME) {
-            ablt = Abilities.can_interact_with_item_frames;
-        } else {
-            if (entity instanceof Animals) {
-                ablt = Abilities.can_interact_with_animals;
+        switch (entity.getType()) {
+            case ITEM_FRAME ->  ablt = Abilities.can_interact_with_item_frames;
+            case GLOW_ITEM_FRAME -> ablt = Abilities.can_interact_with_glow_item_frames;
+            default -> {
+                if (entity instanceof Animals) {
+                    ablt = Abilities.can_interact_with_animals;
+                }
             }
         }
         if (ablt != null) {
@@ -106,16 +108,18 @@ public class EntityEvents implements Listener {
     public void onArmorStandInteraction(PlayerInteractAtEntityEvent e){
 
         Entity entity = e.getRightClicked();
-        if (entity.getType().equals(EntityType.ARMOR_STAND)) {
-            boolean a = Region.checkPlayerAbilityAtPoint(
-                    e.getPlayer(),
-                    Abilities.can_interact_with_armor_stands,
-                    entity.getLocation().getX(),
-                    entity.getLocation().getY(),
-                    entity.getLocation().getZ()
-            );
-            e.setCancelled(!a);
-        }
+        Abilities ablt = switch (entity.getType()) {
+            case ARMOR_STAND -> Abilities.can_interact_with_armor_stands;
+            default -> null;
+        };
+        boolean a = Region.checkPlayerAbilityAtPoint(
+                e.getPlayer(),
+                ablt,
+                entity.getLocation().getX(),
+                entity.getLocation().getY(),
+                entity.getLocation().getZ()
+        );
+        e.setCancelled(!a);
     }
 
     @EventHandler
