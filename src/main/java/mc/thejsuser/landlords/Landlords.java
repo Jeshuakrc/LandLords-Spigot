@@ -42,7 +42,7 @@ public final class Landlords extends JavaPlugin {
         pm.registerEvents(new RedstoneEvents(), this);
         pm.registerEvents(new EntityEvents(), this);
         pm.registerEvents(new TotemEvents(), this);
-
+        pm.registerEvents(new PlayerEvents(), this);
     }
 
     @Override
