@@ -63,5 +63,7 @@ public enum Abilities {
     can_click_note_blocks,
     can_use_beds,
     can_use_respawn_anchors,
-    can_destroy_totems
+    can_destroy_totems,
+    can_teleport_in,
+    can_teleport_out
 }

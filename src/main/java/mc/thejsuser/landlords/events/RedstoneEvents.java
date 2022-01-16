@@ -36,12 +36,10 @@ public class RedstoneEvents implements Listener {
                     ablt = Abilities.can_press_buttons;
                 }
 
-                a = Region.checkPlayerAbilityAtPoint(
+                a = Region.checkAbilityAtPoint(
                         e.getPlayer(),
                         ablt,
-                        block.getX()+.5,
-                        block.getY()+.5,
-                        block.getZ()+.5
+                        block.getLocation().add(.5,.5,.5)
                 );
                 e.setCancelled(!a);
             }
@@ -102,13 +100,10 @@ public class RedstoneEvents implements Listener {
                     }
                 }
 
-                a = Region.checkPlayerAbilityAtPoint(
+                a = Region.checkAbilityAtPoint(
                         e.getPlayer(),
                         ablt,
-                        block.getX()+.5,
-                        block.getY()+.5,
-                        block.getZ()+.5
-                );
+                        block.getLocation().add(.5,.5,.5));
                 e.setCancelled(!a);
             }
         }

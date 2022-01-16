@@ -28,8 +28,6 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
 import org.bukkit.potion.PotionType;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -336,7 +334,7 @@ public class TotemEvents implements Listener {
             }
         } else if (entity instanceof Player player) {
             if (
-                    totem.getRegion().checkPlayerAbility(player,Abilities.can_destroy_totems) &&
+                    totem.getRegion().checkAbility(player,Abilities.can_destroy_totems) &&
                     totem.getLevel() == 0
             ) {
                 totem.destroy();

@@ -3,8 +3,6 @@ package mc.thejsuser.landlords.regionElements;
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.io.ConfigManager;
 import mc.thejsuser.landlords.io.JsonManager;
-import mc.thejsuser.landlords.io.LangManager;
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -32,28 +30,6 @@ public class Region {
     private final ConfigManager.ParticleData boundaryParticle_ = ConfigManager.getRegionBorderParticle();
     private final Region self_ = this;
 
-
-    public final Permissions permissions = new Permissions();
-
-    //CLASSES
-    public class Permissions{
-
-        public Group[] getFromPlayerName(String name) {
-            return getFromPlayerName(name,getPermissions());
-        }
-
-        public Group[] getFromPlayerName(String name, Permission[] permissions) {
-            List<Group> groups = new ArrayList<>();
-            for (Permission permission : permissions) {
-                if (permission.getPlayerName().equals(name)) {
-                    groups.add(permission.getGroup());
-                }
-            }
-            return groups.toArray(new Group[0]);
-        }
-
-    }
-
     //CONSTRUCTORS
     public Region() {
         boundingBox_ = new RegionBoundingBox(this);
@@ -67,7 +43,7 @@ public class Region {
     }
 
     //STATIC FIELDS
-    private static List<Region> regions_ = new ArrayList<Region>();
+    private static List<Region> regions_ = new ArrayList<>();
 
     //SETTERS
     public void setVertex(double[] vertex) {
@@ -176,12 +152,12 @@ public class Region {
                 l.add(i);
             }
         }
-        return l.toArray(new Region[l.size()]);
+        return l.toArray(new Region[0]);
     }
     public static Region[] getFromPoint(Location location) {
         return getFromPoint(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment());
     }
-    public static boolean checkPlayerAbilityInRegions(Region[] regions, Player player, Abilities ability) {
+    public static boolean checkAbilityInRegions(Region[] regions, Player player, Abilities ability) {
 
         boolean r = true;
         List<Region> list = new ArrayList<>();
@@ -195,30 +171,25 @@ public class Region {
         if (regions.length > 0) {
             int pos = 0;
             switch (ConfigManager.getOverlappingRegionMode()) {
-                case all:
-
+                case all -> {
                     r = true;
                     for (Region i : regions) {
-                        if (!i.checkPlayerAbility(player, ability)) {
+                        if (!i.checkAbility(player, ability)) {
                             r = false;
                             break;
                         }
                     }
-                    break;
-
-                case any:
-
+                }
+                case any -> {
                     r = false;
                     for (Region i : regions) {
-                        if (i.checkPlayerAbility(player, ability)) {
+                        if (i.checkAbility(player, ability)) {
                             r = true;
                             break;
                         }
                     }
-                    break;
-
-                case oldest:
-
+                }
+                case oldest -> {
                     int min = getHighestId(regions);
                     for (int i = 0; i < regions.length; i++) {
                         if (regions[i].getId() < min) {
@@ -226,11 +197,9 @@ public class Region {
                             pos = i;
                         }
                     }
-                    r = regions[pos].checkPlayerAbility(player, ability);
-                    break;
-
-                case newest:
-
+                    r = regions[pos].checkAbility(player, ability);
+                }
+                case newest -> {
                     int max = 0;
                     for (int i = 0; i < regions.length; i++) {
                         if (regions[i].getId() > max) {
@@ -238,21 +207,20 @@ public class Region {
                             pos = i;
                         }
                     }
-                    r = regions[pos].checkPlayerAbility(player, ability);
-                    break;
-
-                default:
-                    break;
+                    r = regions[pos].checkAbility(player, ability);
+                }
+                default -> {
+                }
             }
         }
         return r;
     }
-    public static boolean checkPlayerAbilityAtPoint(Player player, Abilities ability, double x, double y, double z) {
-        Region[] regions = getFromPoint(x, y, z, player.getWorld().getEnvironment());
-        return checkPlayerAbilityInRegions(regions, player, ability);
+    public static boolean checkAbilityAtPoint(Player player, Abilities ability, double x, double y, double z, World.Environment environment) {
+        Region[] regions = getFromPoint(x, y, z, environment);
+        return checkAbilityInRegions(regions, player, ability);
     }
-    public static boolean checkPlayerAbilityAtPoint(Player player, Abilities ability, Location location) {
-        return checkPlayerAbilityAtPoint(player,ability,location.getX(),location.getY(),location.getZ());
+    public static boolean checkAbilityAtPoint(Player player, Abilities ability, Location location) {
+        return checkAbilityAtPoint(player,ability,location.getX(),location.getY(),location.getZ(),location.getWorld().getEnvironment());
     }
     public static int getHighestId(Region[] regions) {
 
@@ -290,24 +258,25 @@ public class Region {
     }
 
     //PUBLIC METHODS
-    public boolean checkPlayerAbility(Player player, Abilities ability) {
+    public boolean checkAbility( Player player, Abilities ability) {
 
+        if(!this.isEnabled()) { return true; }
         boolean r = true;
-        if(this.isEnabled()) {
-            String name = player.getName();
-            Permission perm = null;
+        Permission perm = null;
+        if (player != null) {
             for (Permission i : permissions_) {
-                if (i.getPlayerName().equals(name)) {
+                if (i.getPlayerName().equals(player.getName())) {
                     perm = i;
                     break;
                 }
             }
-            if (perm == null) {
-                r = Group.checkForeignAbility(ability);
-            } else {
-                r = perm.getGroup().checkAbility(ability);
-            }
         }
+        if (perm == null) {
+            r = Group.checkForeignAbility(ability);
+        } else {
+            r = perm.getGroup().checkAbility(ability);
+        }
+
         return r;
     }
     public boolean contains(int x, int y, int z, World.Environment dimension) {

@@ -7,7 +7,6 @@ import mc.thejsuser.landlords.totemElements.TotemLectern;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Lectern;
 import org.bukkit.block.data.Levelled;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -48,13 +47,10 @@ public class BlockEvents implements Listener {
             }
         }
 
-        boolean a = Region.checkPlayerAbilityAtPoint(
+        boolean a = Region.checkAbilityAtPoint(
                 e.getPlayer(),
                 ablt,
-                block.getX()+.5,
-                block.getY()+.5,
-                block.getZ()+.5
-        );
+                block.getLocation().add(.5,.5,.5));
         e.setCancelled(!a);
     }
 
@@ -77,13 +73,10 @@ public class BlockEvents implements Listener {
             }
         }
 
-        boolean a = Region.checkPlayerAbilityAtPoint(
+        boolean a = Region.checkAbilityAtPoint(
                 e.getPlayer(),
                 ablt,
-                block.getX()+.5,
-                block.getY()+.5,
-                block.getZ()+.5
-        );
+                block.getLocation().add(.5,.5,.5));
         e.setCancelled(!a);
     }
 
@@ -180,12 +173,10 @@ public class BlockEvents implements Listener {
         }
 
         if (ablt != null && block != null) {
-            boolean a = Region.checkPlayerAbilityAtPoint(
+            boolean a = Region.checkAbilityAtPoint(
                     e.getPlayer(),
                     ablt,
-                    block.getX()+.5,
-                    block.getY()+.5,
-                    block.getZ()+.5
+                    block.getLocation().add(.5,.5,.5)
             );
             e.setCancelled(!a);
             if (a && ablt == Abilities.can_ring_bells) {
@@ -206,12 +197,10 @@ public class BlockEvents implements Listener {
 
         Abilities ablt = TotemLectern.isTotemLectern(lectern) ? Abilities.can_take_books_from_totem_lecterns : Abilities.can_take_books_from_lecterns;
 
-        boolean a = Region.checkPlayerAbilityAtPoint(
+        boolean a = Region.checkAbilityAtPoint(
                 e.getPlayer(),
                 ablt,
-                lectern.getX()+.5,
-                lectern.getY()+.5,
-                lectern.getZ()+.5
+                lectern.getLocation().add(.5,.5,.5)
         );
         e.setCancelled(!a);
     }

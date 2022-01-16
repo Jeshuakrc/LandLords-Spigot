@@ -25,13 +25,10 @@ public class ContainerEvents implements Listener {
             if (getMaterialAbilityDictionary().containsKey(material)) {
                 Abilities ablt = getMaterialAbilityDictionary().get(material);
 
-                boolean a = Region.checkPlayerAbilityAtPoint(
+                boolean a = Region.checkAbilityAtPoint(
                         e.getPlayer(),
                         ablt,
-                        block.getX()+.5,
-                        block.getY()+.5,
-                        block.getZ()+.5
-                );
+                        block.getLocation().add(.5,.5,.5));
                 e.setCancelled(!a);
             }
         }
