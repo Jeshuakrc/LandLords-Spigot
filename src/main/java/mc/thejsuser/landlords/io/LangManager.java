@@ -78,6 +78,9 @@ public abstract class LangManager {
         }
         return s.toString();
     }
+    public static String getLangFileName(Player player) {
+        return getFileFromLang_(player.getLocale()).getDefaults().getString("langFileName");
+    }
 
 
     //PROTECTED METHODS
@@ -105,6 +108,7 @@ public abstract class LangManager {
 
         if (langFiles_.containsKey(langCode)) {
             conf = langFiles_.get(langCode);
+            conf.addDefault("langFileName", langCode + ext_);
         } else {
             String langFile = langCode + ext_;
             file = new File(getLangsPath() + "/" + langFile);
@@ -140,6 +144,7 @@ public abstract class LangManager {
                     e.printStackTrace();
                 }
             }
+            conf.addDefault("langFileName", langFile);
         }
         return conf;
     }

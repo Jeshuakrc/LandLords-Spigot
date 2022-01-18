@@ -1,5 +1,6 @@
 package mc.thejsuser.landlords.events;
 
+import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regionElements.Abilities;
 import mc.thejsuser.landlords.regionElements.Region;
 import org.bukkit.Material;
@@ -25,11 +26,7 @@ public class ContainerEvents implements Listener {
             if (getMaterialAbilityDictionary().containsKey(material)) {
                 Abilities ablt = getMaterialAbilityDictionary().get(material);
 
-                boolean a = Region.checkAbilityAtPoint(
-                        e.getPlayer(),
-                        ablt,
-                        block.getLocation().add(.5,.5,.5));
-                e.setCancelled(!a);
+                Landlords.Utils.handleEvent(e,e.getPlayer(), block.getLocation().add(.5,.5,.5),ablt);
             }
         }
     }

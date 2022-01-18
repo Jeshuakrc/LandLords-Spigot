@@ -189,8 +189,23 @@ public abstract class ConfigManager {
         }
         return eList;
     }
+    public static TitleData getRegionTitleDisplayData() {
+        String mainPath = "region_names_title_display.";
+        return new TitleData(
+                configFile_.getInt(mainPath+"fadeIn"),
+                configFile_.getInt(mainPath+"stay"),
+                configFile_.getInt(mainPath+"fadeOut")
+        );
+    }
+    public static boolean getRegionTitleDisplayEnabled() {
+        return configFile_.getBoolean("region_names_title_display.enabled");
+    }
+    public static int getRegionTitleDisplayRefreshRate() {
+        return configFile_.getInt("region_names_title_display.refreshRate");
+    }
 
     public record ParticleData(Particle particle, int count, int[] delta) {}
+    public record TitleData(int fadeIn, int stay, int fadeOut) {}
     public enum overlappingPermissionsMode {
         all, any, oldest, newest
     }

@@ -1,5 +1,6 @@
 package mc.thejsuser.landlords.events;
 
+import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regionElements.Abilities;
 import mc.thejsuser.landlords.regionElements.Region;
 import org.bukkit.block.Block;
@@ -40,12 +41,7 @@ public class EntityEvents implements Listener {
              default -> {}
          }
          if (ablt != null) {
-            boolean a = Region.checkAbilityAtPoint(
-                    player,
-                    ablt,
-                    entity.getLocation()
-            );
-            e.setCancelled(!a);
+             Landlords.Utils.handleEvent(e,player,entity.getLocation(),ablt);
          }
     }
 
@@ -80,12 +76,7 @@ public class EntityEvents implements Listener {
             }
         }
         if (ablt != null) {
-            boolean a = Region.checkAbilityAtPoint(
-                    player,
-                    ablt,
-                    entity.getLocation()
-            );
-            e.setCancelled(!a);
+            Landlords.Utils.handleEvent(e,player,entity.getLocation(),ablt);
         }
 
     }
@@ -106,11 +97,7 @@ public class EntityEvents implements Listener {
             }
         }
         if (ablt != null) {
-            boolean a = Region.checkAbilityAtPoint(
-                    e.getPlayer(),
-                    ablt,
-                    entity.getLocation());
-            e.setCancelled(!a);
+            Landlords.Utils.handleEvent(e,e.getPlayer(),entity.getLocation(),ablt);
         }
     }
 
@@ -122,12 +109,9 @@ public class EntityEvents implements Listener {
             case ARMOR_STAND -> Abilities.can_interact_with_armor_stands;
             default -> null;
         };
-        boolean a = Region.checkAbilityAtPoint(
-                e.getPlayer(),
-                ablt,
-                entity.getLocation()
-        );
-        e.setCancelled(!a);
+        if(ablt != null) {
+            Landlords.Utils.handleEvent(e,e.getPlayer(),entity.getLocation(),ablt);
+        }
     }
 
     @EventHandler
@@ -137,5 +121,4 @@ public class EntityEvents implements Listener {
             blocks.removeIf(block -> Region.getFromPoint(block.getLocation().add(.5, .5, .5)).length > 0);
         }
     }
-
 }

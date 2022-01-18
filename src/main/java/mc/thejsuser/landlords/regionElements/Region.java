@@ -324,7 +324,7 @@ public class Region {
 
     }
     public void broadCastToMembersLang(String path, String[] args, int maxLevel) {
-        Landlords.broadcastMessageLang(path,args,this.getGroupLevelRagePlayers(0,maxLevel));
+        Landlords.Utils.broadcastMessageLang(path,args,this.getGroupLevelRagePlayers(0,maxLevel));
     }
 
     //PRIVATE METHODS

@@ -239,7 +239,7 @@ public class TotemEvents implements Listener {
                             switch (regionResizeMessageRange) {
                                 case lvl -> region.broadCastToMembersLang(msgPath, msgArgs, regionResizeMessageRange.getLevel());
                                 case members -> region.broadCastToMembersLang(msgPath, msgArgs, Group.getHighestLevel());
-                                case all -> Landlords.broadcastMessageLang(msgPath, msgArgs);
+                                case all -> Landlords.Utils.broadcastMessageLang(msgPath, msgArgs);
                                 case responsible -> player.sendMessage(LangManager.getString(msgPath, player, msgArgs));
                                 default -> {}
                             }

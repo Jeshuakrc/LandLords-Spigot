@@ -1,5 +1,6 @@
 package mc.thejsuser.landlords.events;
 
+import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regionElements.Abilities;
 import mc.thejsuser.landlords.regionElements.Region;
 import mc.thejsuser.landlords.io.ConfigManager;
@@ -28,20 +29,11 @@ public class RedstoneEvents implements Listener {
         if (block != null && action.equals(Action.RIGHT_CLICK_BLOCK)) {
             Material material = block.getType();
             if (getButtons_().contains(material)) {
-                boolean a; Abilities ablt;
+                Abilities ablt = (ConfigManager.getEnforcedButtons().contains(material)) ?
+                        Abilities.can_press_enforced_buttons :
+                        Abilities.can_press_buttons;
 
-                if (ConfigManager.getEnforcedButtons().contains(material)) {
-                    ablt = Abilities.can_press_enforced_buttons;
-                } else {
-                    ablt = Abilities.can_press_buttons;
-                }
-
-                a = Region.checkAbilityAtPoint(
-                        e.getPlayer(),
-                        ablt,
-                        block.getLocation().add(.5,.5,.5)
-                );
-                e.setCancelled(!a);
+                Landlords.Utils.handleEvent(e, e.getPlayer(), block.getLocation().add(.5,.5,.5), ablt);
             }
         }
     }
@@ -57,54 +49,24 @@ public class RedstoneEvents implements Listener {
                 Abilities ablt = Abilities.can_pull_levers;
                 Directional dir = (Directional) block.getBlockData();
                 Switch sw = (Switch) block.getBlockData();
-                BlockFace face = null;
 
-                switch (sw.getFace()) {
-                    case FLOOR:
-                        face = BlockFace.DOWN;
-                        break;
+                BlockFace face = switch (sw.getFace()) {
+                    case FLOOR -> BlockFace.DOWN;
+                    case CEILING -> BlockFace.UP;
+                    default -> switch (dir.getFacing()) {
+                        case NORTH -> BlockFace.SOUTH;
+                        case EAST -> BlockFace.WEST;
+                        case SOUTH -> BlockFace.NORTH;
+                        default ->  BlockFace.EAST;
+                    };
+                };
 
-                    case CEILING:
-                        face = BlockFace.UP;
-                        break;
-
-                    case WALL:
-                        switch (dir.getFacing()){
-                            case NORTH:
-                                face = BlockFace.SOUTH;
-                                break;
-
-                            case EAST:
-                                face = BlockFace.WEST;
-                                break;
-
-                            case SOUTH:
-                                face = BlockFace.NORTH;
-                                break;
-
-                            case WEST:
-                                face = BlockFace.EAST;
-                                break;
-
-                            default: break;
-                        }
-                        break;
-
-                    default: break;
+                Block connected = block.getRelative(face);
+                if (ConfigManager.getLeverLockerBlocks().contains(connected.getType())) {
+                    ablt = Abilities.can_pull_locked_levers;
                 }
 
-                if (face != null) {
-                    Block connected = block.getRelative(face);
-                    if (ConfigManager.getLeverLockerBlocks().contains(connected.getType())) {
-                        ablt = Abilities.can_pull_locked_levers;
-                    }
-                }
-
-                a = Region.checkAbilityAtPoint(
-                        e.getPlayer(),
-                        ablt,
-                        block.getLocation().add(.5,.5,.5));
-                e.setCancelled(!a);
+                Landlords.Utils.handleEvent(e,e.getPlayer(),block.getLocation().add(.5,.5,.5),ablt);
             }
         }
     }

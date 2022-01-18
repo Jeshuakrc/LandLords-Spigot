@@ -1,22 +1,22 @@
 package mc.thejsuser.landlords;
 
-import com.google.common.collect.Lists;
 import mc.thejsuser.landlords.io.LangManager;
+import mc.thejsuser.landlords.regionElements.Abilities;
 import mc.thejsuser.landlords.regionElements.Group;
-import mc.thejsuser.landlords.regionElements.Permission;
 import mc.thejsuser.landlords.regionElements.Region;
 import mc.thejsuser.landlords.events.*;
 import mc.thejsuser.landlords.io.ConfigManager;
-import mc.thejsuser.landlords.totemElements.TotemManager;
-import net.md_5.bungee.api.chat.hover.content.Item;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.Cancellable;
+import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public final class Landlords extends JavaPlugin {
 
@@ -43,6 +43,11 @@ public final class Landlords extends JavaPlugin {
         pm.registerEvents(new EntityEvents(), this);
         pm.registerEvents(new TotemEvents(), this);
         pm.registerEvents(new PlayerEvents(), this);
+
+        //Initialize regionNameDisplayer
+        if (ConfigManager.getRegionTitleDisplayEnabled()) {
+            PlayerEvents.TitleDisplayer.runTaskTimerAsynchronously(this, 0, ConfigManager.getRegionTitleDisplayRefreshRate());
+        }
     }
 
     @Override
@@ -50,21 +55,58 @@ public final class Landlords extends JavaPlugin {
         // Plugin shutdown logic
     }
 
-    //GENERAL PURPOSE METHODS
-    public static void broadcastMessageLang(String path, String[] args, Collection<? extends Player> players){
-        for (Player player : players) {
+    public static class Utils {
+        public static void broadcastMessageLang(String path, String[] args, Collection<? extends Player> players) {
+            for (Player player : players) {
                 assert player != null;
                 player.sendMessage(LangManager.getString(path, player, args));
+            }
         }
-    }
-    public static void broadcastMessageLang(String path, String[] args){
-        Landlords.broadcastMessageLang(path,args, mainInstance.getServer().getOnlinePlayers());
-    }
 
-    //FOR DEBUGGING PURPOSES. DELETE BEFORE RELEASE
-    public static void sendLogMessage(String message){
-        var l = getMainInstance();
-        l.getServer().getPlayer("TheJsUser").sendMessage(message);
+        public static void broadcastMessageLang(String path, String[] args) {
+            broadcastMessageLang(path, args, Landlords.getMainInstance().getServer().getOnlinePlayers());
+        }
+
+
+        public static boolean handleEvent(Cancellable event, Player player, Location location, Abilities ability) {
+            Region[] regions = Region.getFromPoint(location);
+            if (regions.length < 1) {
+                return true;
+            }
+            boolean a = Region.checkAbilityInRegions(regions, player, ability);
+            if (!a) {
+                event.setCancelled(true);
+
+                if (player != null) {
+                    String regionName = regions[0].getName();
+                    try {
+                        String  message,
+                                path = "action_denied." + ability.toString();
+                        try {
+                            message = LangManager.getString(path, player, regionName);
+                        } catch (NullPointerException e) {
+                            message = LangManager.getString("action_denied.default", player, regionName);
+                            Bukkit.getLogger().warning(String.format(
+                                    """
+                                    %1$s doesn't have the ability "%2$s" in the region "%3$s", but a specific denial message wasn't found in the "%4$s" lang file.
+                                    Displaying the default denied action message.
+                                    Include the "action_denied.%2$s" entry in the lang file to provide an specific message.""",
+                                    player.getName(),ability.toString(),regionName, LangManager.getLangFileName(player)
+                            ));
+                        }
+                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+                    } catch (NullPointerException e) {
+                        Bukkit.getLogger().warning(String.format(
+                                """
+                                %1$s doesn't have the ability "%2$s" in the region "%3$s", but neither a specific nor default denial message was found in the "%4$s" lang file.
+                                Make sure to include the "action_denied.%2$s" or "action_denier.default" entry in the lang file.""",
+                                player.getName(),ability.toString(),regionName, LangManager.getLangFileName(player)
+                        ));
+                    }
+                }
+            }
+            return a;
+        }
     }
 }
 

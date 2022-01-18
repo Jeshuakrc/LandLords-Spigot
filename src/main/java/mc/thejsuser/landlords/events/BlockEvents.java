@@ -1,9 +1,12 @@
 package mc.thejsuser.landlords.events;
 
+import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regionElements.Abilities;
 import mc.thejsuser.landlords.regionElements.Region;
 import mc.thejsuser.landlords.io.ConfigManager;
 import mc.thejsuser.landlords.totemElements.TotemLectern;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -18,6 +21,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTakeLecternBookEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -47,11 +51,7 @@ public class BlockEvents implements Listener {
             }
         }
 
-        boolean a = Region.checkAbilityAtPoint(
-                e.getPlayer(),
-                ablt,
-                block.getLocation().add(.5,.5,.5));
-        e.setCancelled(!a);
+        Landlords.Utils.handleEvent(e,e.getPlayer(),block.getLocation().add(.5,.5,.5),ablt);
     }
 
     @EventHandler
@@ -73,11 +73,7 @@ public class BlockEvents implements Listener {
             }
         }
 
-        boolean a = Region.checkAbilityAtPoint(
-                e.getPlayer(),
-                ablt,
-                block.getLocation().add(.5,.5,.5));
-        e.setCancelled(!a);
+        Landlords.Utils.handleEvent(e,e.getPlayer(),block.getLocation().add(.5,.5,.5),ablt);
     }
 
     @EventHandler
@@ -173,12 +169,7 @@ public class BlockEvents implements Listener {
         }
 
         if (ablt != null && block != null) {
-            boolean a = Region.checkAbilityAtPoint(
-                    e.getPlayer(),
-                    ablt,
-                    block.getLocation().add(.5,.5,.5)
-            );
-            e.setCancelled(!a);
+            boolean a = Landlords.Utils.handleEvent(e,e.getPlayer(),block.getLocation().add(.5,.5,.5),ablt);
             if (a && ablt == Abilities.can_ring_bells) {
                 /*
                 Region[] regions = Region.getFromPoint(block.getX() + .5, block.getY() + .5, block.getZ() + .5, block.getWorld().getEnvironment());
@@ -197,12 +188,7 @@ public class BlockEvents implements Listener {
 
         Abilities ablt = TotemLectern.isTotemLectern(lectern) ? Abilities.can_take_books_from_totem_lecterns : Abilities.can_take_books_from_lecterns;
 
-        boolean a = Region.checkAbilityAtPoint(
-                e.getPlayer(),
-                ablt,
-                lectern.getLocation().add(.5,.5,.5)
-        );
-        e.setCancelled(!a);
+        Landlords.Utils.handleEvent(e,e.getPlayer(),lectern.getLocation().add(.5,.5,.5),ablt);
     }
 
     //PRIVATE METHODS
