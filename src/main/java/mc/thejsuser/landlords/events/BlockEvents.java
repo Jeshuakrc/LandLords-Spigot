@@ -29,9 +29,6 @@ import java.util.List;
 
 public class BlockEvents implements Listener {
 
-    private static HashMap<Material,Abilities> doorsMaterialAbilityDictionary_ = null;
-    private static List<Material> beds_ = null;
-
     //EVENTS
     @EventHandler
     public void onBreakBlock(BlockBreakEvent e){
@@ -68,7 +65,10 @@ public class BlockEvents implements Listener {
                 ablt = Abilities.can_plant;
         } else if (ConfigManager.getBreakableRedstoneBlocks().contains(material)) {
                 ablt = Abilities.can_place_redstone;
-        } else if (block.getType().toString().contains("COPPER") && e.getBlockAgainst().getType().toString().contains("COPPER")) {;
+        } else if (
+                block.getType().toString().contains("COPPER") &&
+                e.getBlockReplacedState().getType().toString().contains("COPPER")
+        ) {;
             return; // The onBlockInteraction event handler takes care of these scenarios
         }
 
