@@ -11,7 +11,7 @@
 
     <name>Landlords</name>
 
-    <description>Guive your players the ability to claim regions of your word in an interactive and simple may that
+    <description>Give your players the ability to claim regions of your word in an interactive and simple way that
         involves gameplay.
     </description>
     <properties>
@@ -48,17 +48,11 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.4</version>
-                <executions>
-                    <!-- Run shade goal on package phase -->
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.3.1</version>
+                <configuration>
+                    <outputDirectory>F:\Minecrat\TestServer\plugins</outputDirectory>
+                </configuration>
             </plugin>
         </plugins>
         <resources>
@@ -84,13 +78,13 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.17-R0.1-SNAPSHOT</version>
+            <version>1.18.1-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.8.7</version>
+            <version>2.8.9</version>
         </dependency>
         <dependency>
             <groupId>xyz.upperlevel.spigot.book</groupId>

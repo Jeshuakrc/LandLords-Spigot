@@ -32,6 +32,8 @@ public enum Abilities {
     can_press_enforced_buttons,
     can_pull_levers,
     can_pull_locked_levers,
+    can_scrap_copper_blocks,
+    can_wax_copper_blocks,
     can_open_chests,
     can_open_barrels,
     can_access_furnaces,

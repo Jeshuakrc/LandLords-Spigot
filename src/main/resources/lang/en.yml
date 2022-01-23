@@ -184,6 +184,8 @@ action_denied:
   can_destroy_totems: "§a§l%1$s§r's totem shall only be destroyed by a §a§l%1$s§r's member"
   can_teleport_in: "Those are §a§l%1$s§r's domains. You can't teleport there"
   can_teleport_out: "You must be our of §a§l%1$s§r to teleport"
+  can_scrap_copper_blocks: "Copper blocks from §a§l%1$s§r cannot be scraped by you"
+  can_wax_copper_blocks: "Copper blocks from §a§l%1$s§r cannot be waxed by you"
 
 ################################################ [ REGION DEEDS ] ################################################
 
