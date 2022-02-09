@@ -1,8 +1,8 @@
 package mc.thejsuser.landlords;
 
 import mc.thejsuser.landlords.io.LangManager;
-import mc.thejsuser.landlords.regionElements.Abilities;
-import mc.thejsuser.landlords.regionElements.Group;
+import mc.thejsuser.landlords.regionElements.Ability;
+import mc.thejsuser.landlords.regionElements.Hierarchy;
 import mc.thejsuser.landlords.regionElements.Region;
 import mc.thejsuser.landlords.events.*;
 import mc.thejsuser.landlords.io.ConfigManager;
@@ -12,11 +12,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
-import org.bukkit.event.Event;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
 
 public final class Landlords extends JavaPlugin {
 
@@ -32,7 +30,7 @@ public final class Landlords extends JavaPlugin {
 
         //Initializing and loading files
         ConfigManager.initialize();
-        Group.loadGroups();
+        Hierarchy.loadHierarchies();
         Region.loadRegions();
 
         //Registering events
@@ -68,7 +66,7 @@ public final class Landlords extends JavaPlugin {
         }
 
 
-        public static boolean handleEvent(Cancellable event, Player player, Location location, Abilities ability) {
+        public static boolean handleEvent(Cancellable event, Player player, Location location, Ability ability) {
             Region[] regions = Region.getFromPoint(location);
             if (regions.length < 1) {
                 return true;

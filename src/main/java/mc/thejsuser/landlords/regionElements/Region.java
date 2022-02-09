@@ -8,7 +8,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -27,19 +26,18 @@ public class Region {
     private RegionDataContainer dataContainer_ = new RegionDataContainer();
     private RegionBoundingBox boundingBox_;
     private BoundayDisplayer boundayDisplayer_ = null;
+    private Hierarchy hierarchy_;
     private final ConfigManager.ParticleData boundaryParticle_ = ConfigManager.getRegionBorderParticle();
     private final Region self_ = this;
 
     //CONSTRUCTORS
-    public Region() {
-        boundingBox_ = new RegionBoundingBox(this);
-    }
-    public Region(double[] vertex, World.Environment dimension, Permission[] permissions, String name) {
-        setId(getHighestId(regions_.toArray(Region[]::new)) + 1);
-        setDimension(dimension);
-        setVertex(vertex);
-        setPermissions(permissions);
-        setName(name);
+    public Region(double[] vertex, World.Environment dimension, Permission[] permissions, String name, Hierarchy hierarchy) {
+        this.setId(getHighestId(regions_.toArray(Region[]::new)) + 1);
+        this.setDimension(dimension);
+        this.setVertex(vertex);
+        this.setPermissions(permissions);
+        this.setName(name);
+        this.setHierarchy(hierarchy);
     }
 
     //STATIC FIELDS
@@ -77,6 +75,9 @@ public class Region {
     }
     public void setDataContainer(RegionDataContainer dataContainer){
         dataContainer_ = dataContainer;
+    }
+    public void setHierarchy(Hierarchy hierarchy) {
+        this.hierarchy_ = hierarchy;
     }
 
     //GETTERS
@@ -129,10 +130,13 @@ public class Region {
         for (Permission p : this.getPermissions()) {
             int lvl = p.getGroup().getLevel();
             if (lvl <= max && lvl >= min) {
-                r.add(Landlords.getMainInstance().getServer().getPlayer(p.getPlayerName()));
+                r.add(p.getPlayer());
             }
         }
         return r;
+    }
+    public Hierarchy getHierarchy() {
+        return this.hierarchy_;
     }
 
     //STATIC METHODS
@@ -157,7 +161,7 @@ public class Region {
     public static Region[] getFromPoint(Location location) {
         return getFromPoint(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment());
     }
-    public static boolean checkAbilityInRegions(Region[] regions, Player player, Abilities ability) {
+    public static boolean checkAbilityInRegions(Region[] regions, Player player, Ability ability) {
 
         boolean r = true;
         List<Region> list = new ArrayList<>();
@@ -215,11 +219,11 @@ public class Region {
         }
         return r;
     }
-    public static boolean checkAbilityAtPoint(Player player, Abilities ability, double x, double y, double z, World.Environment environment) {
+    public static boolean checkAbilityAtPoint(Player player, Ability ability, double x, double y, double z, World.Environment environment) {
         Region[] regions = getFromPoint(x, y, z, environment);
         return checkAbilityInRegions(regions, player, ability);
     }
-    public static boolean checkAbilityAtPoint(Player player, Abilities ability, Location location) {
+    public static boolean checkAbilityAtPoint(Player player, Ability ability, Location location) {
         return checkAbilityAtPoint(player,ability,location.getX(),location.getY(),location.getZ(),location.getWorld().getEnvironment());
     }
     public static int getHighestId(Region[] regions) {
@@ -258,10 +262,9 @@ public class Region {
     }
 
     //PUBLIC METHODS
-    public boolean checkAbility( Player player, Abilities ability) {
+    public boolean checkAbility( Player player, Ability ability) {
 
         if(!this.isEnabled()) { return true; }
-        boolean r = true;
         Permission perm = null;
         if (player != null) {
             for (Permission i : permissions_) {
@@ -271,13 +274,7 @@ public class Region {
                 }
             }
         }
-        if (perm == null) {
-            r = Group.checkForeignAbility(ability);
-        } else {
-            r = perm.getGroup().checkAbility(ability);
-        }
-
-        return r;
+        return (perm == null) ? this.getHierarchy().checkAbility(ability) : this.getHierarchy().checkAbility(ability,perm.getGroup());
     }
     public boolean contains(int x, int y, int z, World.Environment dimension) {
 
@@ -394,4 +391,3 @@ public class Region {
         }
     }
 }
-

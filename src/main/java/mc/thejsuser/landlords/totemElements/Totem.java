@@ -36,7 +36,6 @@ public class Totem {
     private long lastInteraction_;
     private int cooldown_;
     private BoundingBox structureBox_;
-    private Lectern lectern = null;
     private final ConfigManager.ParticleData placeParticle_ = ConfigManager.getTotemPlaceParticle();
     private final int[] placeParticlePos_ = ConfigManager.getTotemPlaceParticlePos();
 
@@ -125,10 +124,12 @@ public class Totem {
 
     //PUBLIC METHODS
     public void place(Player placer){
-        
-        double[] vert = this.getStructure().getRegionInitialVertex();
+
+        TotemStructure structure = this.getStructure();
+        double[] vert = structure.getRegionInitialVertex();
         double[] regionVertex = new double[6];
         int[] totemPos = this.getPosition();
+        Hierarchy hierarchy = structure.getHierarchy();
         World world = this.getWorld();
         for (int i = 0; i < 3; i++) {
             regionVertex[i] = vert[i] + totemPos[i] + 0.5;
@@ -136,11 +137,12 @@ public class Totem {
         }
 
         Permission[] perms = {new Permission(
-                Group.getFromLevel(1),
-                placer.getName()
+                placer.getName(),
+                hierarchy,
+                ConfigManager.getDefaultGroupLevel()
             )};
         String name = LangManager.getString("totem_region_defauldName",placer,placer.getName());
-        Region region = new Region(regionVertex,this.getWorld().getEnvironment(),perms,name);
+        Region region = new Region(regionVertex,this.getWorld().getEnvironment(),perms,name,hierarchy);
         RegionData totemData = new RegionData("totemRegion",true);
         EnderCrystal crystal = placeEndCrystal(placer,this.getPosX(),this.getPosY(),this.getPosZ());
         region.getDataContainer().add(totemData);

@@ -1,7 +1,6 @@
 package mc.thejsuser.landlords.io;
 
 import com.google.gson.*;
-import com.google.gson.stream.JsonReader;
 import mc.thejsuser.landlords.regionElements.*;
 import mc.thejsuser.landlords.totemElements.*;
 import org.bukkit.Material;
@@ -11,14 +10,13 @@ import org.bukkit.entity.EntityType;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public abstract class JsonManager {
 
     //FIELDS
     private static final File regionsFile_ = new File(ConfigManager.getConfigPath(), "regions.json");
-    private static final File groupsFile_ = new File(ConfigManager.getConfigPath(), "groups.json");
+    private static final File hierarchiesFile_ = new File(ConfigManager.getConfigPath(), "hierarchies.json");
     private static final File totemStructuresFile_ = new File(ConfigManager.getConfigPath(), "totemStructures.json");
 
     //PRIVATE METHODS
@@ -39,14 +37,14 @@ public abstract class JsonManager {
         }
 
     }
-    private static void groupsEnsureExistence() {
+    private static void hierarchiesEnsureExistence() {
 
-        if(!groupsFile_.exists()){
+        if(!hierarchiesFile_.exists()){
             regionsFile_.getParentFile().mkdirs();
 
             FileWriter writer = null;
             try {
-                writer = new FileWriter(groupsFile_);
+                writer = new FileWriter(hierarchiesFile_);
                 writer.write("[]");
                 writer.flush();
             } catch (IOException e) {
@@ -87,7 +85,7 @@ public abstract class JsonManager {
     //CREATE OBJECTS
     private static Region loadRegionFromJson(JsonObject jsonRegion) {
 
-        Region r = new Region();
+        Hierarchy hierarchy = Hierarchy.getHierarchy(jsonRegion.get("hierarchy").getAsInt());
 
         JsonArray vertJsonArray = jsonRegion.getAsJsonArray("vertex");
         double[] vertArray = new double[6];
@@ -99,7 +97,7 @@ public abstract class JsonManager {
         Permission[] permArray = new Permission[permJsonArray.size()];
         for (int j = 0; j < permJsonArray.size(); j++) {
             JsonObject permJson = permJsonArray.get(j).getAsJsonObject();
-            Permission perm = loadPermissionFromJson(permJson);
+            Permission perm = loadPermissionFromJson(permJson,hierarchy);
             permArray[j]=perm;
         }
 
@@ -111,11 +109,14 @@ public abstract class JsonManager {
             dataContainer.add(data);
         }
 
+        Region r = new Region(
+                vertArray,
+                World.Environment.valueOf(jsonRegion.get("dimension").getAsString()),
+                permArray,
+                jsonRegion.get("name").getAsString(),
+                hierarchy
+        );
         r.setId(jsonRegion.get("id").getAsInt());
-        r.setVertex(vertArray);
-        r.setPermissions(permArray);
-        r.setDimension(World.Environment.valueOf(jsonRegion.get("dimension").getAsString()));
-        r.setName(jsonRegion.get("name").getAsString());
         r.enabled(jsonRegion.get("enabled").getAsBoolean());
         r.setDataContainer(dataContainer);
 
@@ -127,30 +128,40 @@ public abstract class JsonManager {
         JsonPrimitive val = jsonData.get("value").getAsJsonPrimitive();
         return new RegionData(key,val);
     }
-    private static Permission loadPermissionFromJson(JsonObject jsonPermission){
-
+    private static Permission loadPermissionFromJson(JsonObject jsonPermission, Hierarchy hierarchy){
         return new Permission(
-            Group.getFromName(jsonPermission.get("group").getAsString()),
-            jsonPermission.get("player_name").getAsString()
+                jsonPermission.get("player_name").getAsString(),
+                hierarchy,
+                jsonPermission.get("level").getAsInt()
         );
 
     }
-    private static Group loadGroupFromJson(JsonObject jsonGroup){
-
-        Group g = new Group();
+    private static Hierarchy loadHierarchyFromJson(JsonObject jsonHierarchy) {
+        Hierarchy hierarchy = new Hierarchy(
+            jsonHierarchy.get("id").getAsInt(),
+            jsonHierarchy.get("name").getAsString()
+        );
+        JsonArray groupJsonList = jsonHierarchy.getAsJsonArray("groups");
+        for (JsonElement jsonGroupElement : groupJsonList) {
+            JsonObject jsonGroup = jsonGroupElement.getAsJsonObject();
+            loadGroupFromJson(jsonGroup,hierarchy);
+        }
+        return hierarchy;
+    }
+    private static void loadGroupFromJson(JsonObject jsonGroup, Hierarchy hierarchy){
 
         JsonArray abltJsonList = jsonGroup.getAsJsonArray("abilities");
-        Abilities[] abltList = new Abilities[abltJsonList.size()];
+        List<Ability> abltList = new ArrayList<>();
         for (int j = 0; j < abltJsonList.size(); j++){
             String abltString = abltJsonList.get(j).getAsString();
-            abltList[j] = Abilities.valueOf(abltString);
+            abltList.add(Ability.valueOf(abltString));
         }
 
-        g.setAbilities(Arrays.asList(abltList));
-        g.setName(jsonGroup.get("name").getAsString());
-        g.setLevel(jsonGroup.get("level").getAsInt());
-
-        return g;
+        hierarchy.getGroups().add(
+                jsonGroup.get("name").getAsString(),
+                jsonGroup.get("level").getAsInt(),
+                abltList
+        );
     }
     private static TotemStructure loadTotemStructureFromJson(JsonObject jsonTotemStructure)     {
 
@@ -179,7 +190,14 @@ public abstract class JsonManager {
         for (int i = 0; i < regionMaxSixe.length; i++){
             regionMaxSixe[i] = list.get(i).getAsDouble();
         }
-        return new TotemStructure(elements,lecterns,regionBaseSize,regionGrowthRate,regionMaxSixe);
+        return new TotemStructure(
+                elements,
+                lecterns,
+                regionBaseSize,
+                regionGrowthRate,
+                regionMaxSixe,
+                Hierarchy.getHierarchy(jsonTotemStructure.get("region_hierarchy").getAsInt())
+        );
     }
     private static TotemElement loadTotemElementFromJson(JsonObject jsonTotemElement){
 
@@ -214,16 +232,16 @@ public abstract class JsonManager {
     }
 
     //LOAD OBJECTS
-    public static Group[] loadGroups(){
+    public static Hierarchy[] loadHierarchies(){
 
-        groupsEnsureExistence();
+        hierarchiesEnsureExistence();
 
-        JsonArray list = getJsonFromFile(groupsFile_).getAsJsonArray();
-        Group[] groups = new Group[list.size()];
+        JsonArray list = getJsonFromFile(hierarchiesFile_).getAsJsonArray();
+        Hierarchy[] hierarchies = new Hierarchy[list.size()];
         for (int i = 0; i < list.size(); i++) {
-            groups[i] = loadGroupFromJson(list.get(i).getAsJsonObject());
+            hierarchies[i] = loadHierarchyFromJson(list.get(i).getAsJsonObject());
         }
-        return groups;
+        return hierarchies;
     }
     public static List<Region> loadRegions(){
         regionsEnsureExistence();
@@ -274,6 +292,7 @@ public abstract class JsonManager {
         jsonRegion.addProperty("id",region.getId());
         jsonRegion.addProperty("dimension",region.getDimension().toString());
         jsonRegion.addProperty("name",region.getName());
+        jsonRegion.addProperty("hierarchy",region.getHierarchy().getId());
         jsonRegion.addProperty("enabled",region.isEnabled());
         jsonRegion.add("vertex",jsonVertex);
         jsonRegion.add("permissions",jsonPermissions);
@@ -286,7 +305,7 @@ public abstract class JsonManager {
         JsonObject jsonPermission = new JsonObject();
 
         jsonPermission.addProperty("player_name",permission.getPlayerName());
-        jsonPermission.addProperty("group",permission.getGroup().getName());
+        jsonPermission.addProperty("level",permission.getGroup().getLevel());
 
         return jsonPermission;
     }

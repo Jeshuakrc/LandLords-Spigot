@@ -1,5 +1,6 @@
 package mc.thejsuser.landlords.totemElements;
 
+import mc.thejsuser.landlords.regionElements.Hierarchy;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
@@ -16,9 +17,10 @@ public class TotemStructure {
     private double[] regionGrowthRate_ = new double[6];
     private double[] regionMaxSize_ = new double[3];
     private int[] structureBox_;
+    private Hierarchy hierarchy_;
 
     //CONSTRUCTORS
-    public TotemStructure(TotemElement[] elements, TotemLectern[] lecterns, double[] regionBaseSize, double[] regionGrowthRate, double[] regionMaxSize){
+    public TotemStructure(TotemElement[] elements, TotemLectern[] lecterns, double[] regionBaseSize, double[] regionGrowthRate, double[] regionMaxSize, Hierarchy hierarchy){
         for (TotemElement e : elements){
             e.setStructure(this);
         }
@@ -26,11 +28,12 @@ public class TotemStructure {
             l.setStructure(this);
         }
 
-        setElements(elements);
-        setLecterns(lecterns);
-        setRegionInitialVertex(regionBaseSize);
-        setRegionGrowthRate(regionGrowthRate);
-        setRegionMaxSize(regionMaxSize);
+        this.setElements(elements);
+        this.setLecterns(lecterns);
+        this.setRegionInitialVertex(regionBaseSize);
+        this.setRegionGrowthRate(regionGrowthRate);
+        this.setRegionMaxSize(regionMaxSize);
+        this.setHierarchy(hierarchy);
     }
 
     //GETTERS
@@ -59,6 +62,9 @@ public class TotemStructure {
         }
         return r;
     }
+    public Hierarchy getHierarchy() {
+        return hierarchy_;
+    }
 
     //SETTERS
     public void setElements(TotemElement[] elements){
@@ -76,6 +82,9 @@ public class TotemStructure {
     };
     public void setRegionMaxSize(double[] maxSizeArray) {
         regionMaxSize_ = maxSizeArray;
+    }
+    public void setHierarchy(Hierarchy hierarchy) {
+        this.hierarchy_ = hierarchy;
     }
 
     //PUBLIC METHODS

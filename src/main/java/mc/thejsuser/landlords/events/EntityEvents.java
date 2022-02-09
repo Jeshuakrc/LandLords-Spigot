@@ -1,7 +1,7 @@
 package mc.thejsuser.landlords.events;
 
 import mc.thejsuser.landlords.Landlords;
-import mc.thejsuser.landlords.regionElements.Abilities;
+import mc.thejsuser.landlords.regionElements.Ability;
 import mc.thejsuser.landlords.regionElements.Region;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
@@ -22,7 +22,7 @@ public class EntityEvents implements Listener {
 
         Hanging entity = e.getEntity();
         Entity remover = e.getRemover();
-        Abilities ablt = null;
+        Ability ablt = null;
         Player player = null;
         if (remover instanceof Player player_) {
             player = player_;
@@ -34,9 +34,9 @@ public class EntityEvents implements Listener {
         }
 
          switch (entity.getType()){
-             case ITEM_FRAME -> ablt=Abilities.can_break_item_frames;
-             case GLOW_ITEM_FRAME -> ablt=Abilities.can_break_glow_item_frames;
-             case PAINTING -> ablt=Abilities.can_break_paintings;
+             case ITEM_FRAME -> ablt= Ability.can_break_item_frames;
+             case GLOW_ITEM_FRAME -> ablt= Ability.can_break_glow_item_frames;
+             case PAINTING -> ablt= Ability.can_break_paintings;
 
              default -> {}
          }
@@ -60,18 +60,18 @@ public class EntityEvents implements Listener {
         }
 
         Entity entity = e.getEntity();
-        Abilities ablt = null;
+        Ability ablt = null;
         switch (entity.getType()) {
-            case ARMOR_STAND -> ablt = Abilities.can_break_armor_stands;
-            case ITEM_FRAME -> ablt = Abilities.can_take_from_item_frames;
-            case GLOW_ITEM_FRAME -> ablt = Abilities.can_take_from_glow_item_frames;
+            case ARMOR_STAND -> ablt = Ability.can_break_armor_stands;
+            case ITEM_FRAME -> ablt = Ability.can_take_from_item_frames;
+            case GLOW_ITEM_FRAME -> ablt = Ability.can_take_from_glow_item_frames;
 
             default -> {
                 if (entity instanceof Animals) {
-                    ablt = Abilities.can_damage_animals;
+                    ablt = Ability.can_damage_animals;
                 }
                 if (entity instanceof Monster) {
-                    ablt = Abilities.can_damage_monsters;
+                    ablt = Ability.can_damage_monsters;
                 }
             }
         }
@@ -85,14 +85,14 @@ public class EntityEvents implements Listener {
     public void onEntityInteraction(PlayerInteractEntityEvent e) {
 
         Entity entity = e.getRightClicked();
-        Abilities ablt = null;
+        Ability ablt = null;
 
         switch (entity.getType()) {
-            case ITEM_FRAME ->  ablt = Abilities.can_interact_with_item_frames;
-            case GLOW_ITEM_FRAME -> ablt = Abilities.can_interact_with_glow_item_frames;
+            case ITEM_FRAME ->  ablt = Ability.can_interact_with_item_frames;
+            case GLOW_ITEM_FRAME -> ablt = Ability.can_interact_with_glow_item_frames;
             default -> {
                 if (entity instanceof Animals) {
-                    ablt = Abilities.can_interact_with_animals;
+                    ablt = Ability.can_interact_with_animals;
                 }
             }
         }
@@ -105,8 +105,8 @@ public class EntityEvents implements Listener {
     public void onArmorStandInteraction(PlayerInteractAtEntityEvent e){
 
         Entity entity = e.getRightClicked();
-        Abilities ablt = switch (entity.getType()) {
-            case ARMOR_STAND -> Abilities.can_interact_with_armor_stands;
+        Ability ablt = switch (entity.getType()) {
+            case ARMOR_STAND -> Ability.can_interact_with_armor_stands;
             default -> null;
         };
         if(ablt != null) {

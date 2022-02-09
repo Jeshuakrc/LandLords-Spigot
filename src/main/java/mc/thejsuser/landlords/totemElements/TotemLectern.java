@@ -74,7 +74,6 @@ public class TotemLectern implements TotemRelative, Cloneable {
         }
 
     }
-
     public Deeds.ReadingResults readDeeds(ItemStack itemStack, Player player) {
         if (!Deeds.isTotemDeeds(itemStack)) { throw new IllegalArgumentException(); }
 
@@ -101,7 +100,6 @@ public class TotemLectern implements TotemRelative, Cloneable {
 
         return read;
     }
-
     public static boolean isTotemLectern(Block block) {
         if (block.getState() instanceof Lectern lectern) {
             return lectern.getPersistentDataContainer().has(lecternRegionIDKey_,PersistentDataType.INTEGER);

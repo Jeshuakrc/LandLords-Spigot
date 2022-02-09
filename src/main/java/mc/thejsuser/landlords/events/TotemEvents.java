@@ -2,10 +2,7 @@ package mc.thejsuser.landlords.events;
 
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.io.LangManager;
-import mc.thejsuser.landlords.regionElements.Abilities;
-import mc.thejsuser.landlords.regionElements.Group;
-import mc.thejsuser.landlords.regionElements.Permission;
-import mc.thejsuser.landlords.regionElements.Region;
+import mc.thejsuser.landlords.regionElements.*;
 import mc.thejsuser.landlords.io.ConfigManager;
 import mc.thejsuser.landlords.totemElements.*;
 import org.bukkit.*;
@@ -100,12 +97,13 @@ public class TotemEvents implements Listener {
                         Region region = lectern.getTotem().getRegion();
                         List<Permission>    oldPerms = new ArrayList<>(Arrays.asList(region.getPermissions().clone())),
                                             newPerms;
-                        String oldName = region.getName(), newName;
+                        String              oldName = region.getName(),
+                                            newName;
                         lectern.readDeeds(item,player);
                         newPerms = new ArrayList<>(Arrays.asList(region.getPermissions()));
                         newName = region.getName();
 
-                        if (oldPerms.equals(newPerms) && oldName.equals(region.getName())) { return; }
+                        if (oldPerms.equals(newPerms) && oldName.equals(newName)) { return; }
 
                         HashMap<Player,List<String>> playerMessagesMap = new HashMap<>();
                         List<Player> msgRecipients = new ArrayList<>(Landlords.getMainInstance().getServer().getOnlinePlayers());
@@ -126,19 +124,19 @@ public class TotemEvents implements Listener {
                             }
                         }
 
-                        HashMap<String,List<Group>> playerPermissionsMap = new HashMap<>();
+                        HashMap<String,List<Hierarchy.Group>> playerPermissionsMap = new HashMap<>();
                         for (Permission oldPerm : oldPerms) {
-                            String name = oldPerm.getPlayerName();
-                            if (!playerPermissionsMap.containsKey(name)) {
-                                playerPermissionsMap.put(name,new ArrayList<>());
+                            String p = oldPerm.getPlayerName();
+                            if (!playerPermissionsMap.containsKey(p)) {
+                                playerPermissionsMap.put(p,new ArrayList<>());
                             }
-                            playerPermissionsMap.get(name).add(oldPerm.getGroup());
+                            playerPermissionsMap.get(p).add(oldPerm.getGroup());
                         }
 
                         for (Permission perm : newPerms) {
 
                             String affected = perm.getPlayerName();
-                            List<Group> groups = playerPermissionsMap.getOrDefault(affected,Collections.emptyList());
+                            List<Hierarchy.Group> groups = playerPermissionsMap.getOrDefault(affected,Collections.emptyList());
                             if(groups.isEmpty()){
                                 for (Player p : msgRecipients) {
                                     messages = playerMessagesMap.get(p);
@@ -150,7 +148,7 @@ public class TotemEvents implements Listener {
                                     messages.add(LangManager.getString(messagePath.toString(),p,affected,player.getName(),perm.getGroup().getName(),region.getName()));
                                 }
                             } else{
-                                Group group = groups.get(0);
+                                Hierarchy.Group group = groups.get(0);
                                 if (!groups.contains(perm.getGroup())) {
                                     for (Player p : msgRecipients) {
                                         messages = playerMessagesMap.get(p);
@@ -166,16 +164,16 @@ public class TotemEvents implements Listener {
                             }
                         }
 
-                        for (String playerName : playerPermissionsMap.keySet()) {
-                            for (Group g : playerPermissionsMap.get(playerName)) {
+                        for (String name : playerPermissionsMap.keySet()) {
+                            for (Hierarchy.Group g : playerPermissionsMap.get(name)) {
                                 for (Player p : msgRecipients) {
                                     messages = playerMessagesMap.get(p);
                                     messagePath.setLength(0);
                                     messagePath.append("region_permission_remove_");
                                     messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
-                                    messagePath.append(p.getName().equals(playerName) ? "firstPerson" : "thirdPerson");
+                                    messagePath.append(p.getName().equals(name) ? "firstPerson" : "thirdPerson");
 
-                                    messages.add(LangManager.getString(messagePath.toString(),p,playerName,player.getName(),g.getName(),region.getName()));
+                                    messages.add(LangManager.getString(messagePath.toString(),p,name,player.getName(),g.getName(),region.getName()));
                                 }
                             }
                         }
@@ -238,7 +236,7 @@ public class TotemEvents implements Listener {
 
                             switch (regionResizeMessageRange) {
                                 case lvl -> region.broadCastToMembersLang(msgPath, msgArgs, regionResizeMessageRange.getLevel());
-                                case members -> region.broadCastToMembersLang(msgPath, msgArgs, Group.getHighestLevel());
+                                case members -> region.broadCastToMembersLang(msgPath, msgArgs, region.getHierarchy().getHighestLevel());
                                 case all -> Landlords.Utils.broadcastMessageLang(msgPath, msgArgs);
                                 case responsible -> player.sendMessage(LangManager.getString(msgPath, player, msgArgs));
                                 default -> {}
@@ -334,7 +332,7 @@ public class TotemEvents implements Listener {
             }
         } else if (entity instanceof Player player) {
             if (
-                    totem.getRegion().checkAbility(player,Abilities.can_destroy_totems) &&
+                    totem.getRegion().checkAbility(player, Ability.can_destroy_totems) &&
                     totem.getLevel() == 0
             ) {
                 totem.destroy();

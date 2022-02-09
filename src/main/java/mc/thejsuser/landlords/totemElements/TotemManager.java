@@ -69,7 +69,7 @@ public abstract class TotemManager {
                 }
             }
         }
-        removeOrphanedRegions();
+        //removeOrphanedRegions(); //Causing regions in non-generated terrain to be deleted
         return totems_;
     }
     public static Totem[] getPossibleTotemsAtBlock(Block block){

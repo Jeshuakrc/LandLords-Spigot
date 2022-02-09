@@ -203,6 +203,9 @@ public abstract class ConfigManager {
     public static int getRegionTitleDisplayRefreshRate() {
         return configFile_.getInt("region_names_title_display.refreshRate");
     }
+    public static int getDefaultGroupLevel() {
+        return configFile_.getInt("default_group_level");
+    }
 
     public record ParticleData(Particle particle, int count, int[] delta) {}
     public record TitleData(int fadeIn, int stay, int fadeOut) {}

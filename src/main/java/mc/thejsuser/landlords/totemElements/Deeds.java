@@ -61,8 +61,8 @@ public class Deeds {
         List<String> pages = new ArrayList<>();
         pages.add(getStyledFirstPage_(region.getName()));
 
-        HashMap<Group,List<String>> permissionsMap = new HashMap<>();
-        Group group;
+        HashMap<Hierarchy.Group,List<String>> permissionsMap = new HashMap<>();
+        Hierarchy.Group group;
         for (Permission p : region.getPermissions()) {
             group = p.getGroup();
             if (!permissionsMap.containsKey(group)) {
@@ -72,23 +72,23 @@ public class Deeds {
         }
 
         int size, index, perPage = ConfigManager.getDeedsPlayersPerPage();
-        List<String> names;
+        List<String> players;
         boolean newPage;
-        List<String> players = new ArrayList<>();
-        for (Group g : Group.getGroups()) {
+        List<String> names = new ArrayList<>();
+        for (Hierarchy.Group g : region.getHierarchy().getGroups()) {
             index = 0;
-            names = permissionsMap.getOrDefault(g, Arrays.asList(new String[] {""}));
-            size = names.size();
+            players = permissionsMap.getOrDefault(g, Collections.emptyList());
+            size = players.size();
             newPage = false;
 
             do {
                 while (index < size || newPage) {
-                    players.clear();
+                    names.clear();
                     for (int i = 0; i < perPage && index < size; i++) {
-                        players.add(names.get(index));
+                        names.add(players.get(index));
                         index++;
                     }
-                    pages.add(getStyledPermissionsPage_(g, players));
+                    pages.add(getStyledPermissionsPage_(g, names));
                     if (newPage) { break; }
                 }
                 newPage = (index % perPage) >= ConfigManager.getDeedsPlayersForNewPage() && !newPage;
@@ -123,7 +123,9 @@ public class Deeds {
             }
 
             String regionName = StringUtils.substringBetween(pag,"[","]");
-            int length = regionName.length(), minLength = ConfigManager.getRegionMinNameLength(), maxLength = ConfigManager.getRegionMaxNameLength();
+            int     length = regionName.length(),
+                    minLength = ConfigManager.getRegionMinNameLength(),
+                    maxLength = ConfigManager.getRegionMaxNameLength();
 
             if (length <= minLength) {
                 exceptionThrower.trowException("deeds_read_error_illegalNameLength_short",Integer.toString(minLength),Integer.toString(length),Integer.toString(minLength - length));
@@ -144,7 +146,8 @@ public class Deeds {
                 exceptionThrower.trowException("deeds_error_permissionOverSeparators",Integer.toString(sections.length-1));
             }
 
-            Group regionGroup = Group.getFromName(sections[0]);
+            Hierarchy hierarchy = this.getRegion().getHierarchy();
+            Hierarchy.Group regionGroup = hierarchy.getGroup(sections[0]);
             if (regionGroup == null){
                 exceptionThrower.trowException("deeds_error_groupNotFound",sections[0]);
             }
@@ -155,7 +158,7 @@ public class Deeds {
                 players = StringUtils.split(sections[1], "\n");
                 permissions = new Permission[players.length];
                 for (int i = 0; i < players.length; i++) {
-                    permissions[i] = new Permission(regionGroup, players[i]);
+                    permissions[i] = new Permission(players[i],hierarchy,regionGroup.getLevel());
                 }
             }
 
@@ -199,7 +202,7 @@ public class Deeds {
             }
         }
 
-        return new ReadingResults(name, permissions,errors);
+        return new ReadingResults(name, permissions, errors);
     }
     public ReadingResults read(){
         return read((BookMeta) this.getItemStack().getItemMeta());
@@ -315,7 +318,7 @@ public class Deeds {
         firstPage = firstPage.replaceAll("\\[","").replaceAll("]","");
         return String.format(firstPage,nameField,deedsId,this.getRegion().getId());
     }
-    private String getStyledPermissionsPage_(Group group, List<String> players){
+    private String getStyledPermissionsPage_(Hierarchy.Group group, List<String> players){
         StringBuilder page = new StringBuilder();
         page.append(extractStyle_(LangManager.getString("deeds_bookHeaders_style", this.holder_)))
                 .append(group.getName())
