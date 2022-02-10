@@ -14,6 +14,19 @@ import java.util.List;
 
 public abstract class JsonManager {
 
+    public static final Gson GSON;
+    static {
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(Region.class, new Region.JSerializer());
+        builder.registerTypeAdapter(Permission.class, new Permission.JSerializer());
+        builder.registerTypeAdapter(RegionData.class, new RegionData.JSerializer());
+        builder.registerTypeAdapter(RegionData.class, new RegionData.JDeserializer());
+        builder.registerTypeAdapter(RegionDataContainer.class, new RegionDataContainer.JSerializer());
+        builder.registerTypeAdapter(RegionDataContainer.class, new RegionDataContainer.JDeserializer());
+
+        GSON = builder.create();
+    }
+
     //FIELDS
     private static final File regionsFile_ = new File(ConfigManager.getConfigPath(), "regions.json");
     private static final File hierarchiesFile_ = new File(ConfigManager.getConfigPath(), "hierarchies.json");

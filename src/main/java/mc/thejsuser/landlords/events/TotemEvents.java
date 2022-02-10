@@ -199,7 +199,6 @@ public class TotemEvents implements Listener {
                 }
             }
         }
-
     }
 
     @EventHandler

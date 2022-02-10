@@ -1,7 +1,10 @@
 package mc.thejsuser.landlords.regionElements;
 
+import com.google.gson.*;
 import mc.thejsuser.landlords.Landlords;
 import org.bukkit.entity.Player;
+
+import java.lang.reflect.Type;
 
 public class Permission {
 
@@ -28,4 +31,16 @@ public class Permission {
         return Landlords.getMainInstance().getServer().getPlayer(this.playerName_);
     }
 
+    //PUBLIC CLASSES
+    public static class JSerializer implements JsonSerializer<Permission> {
+
+        @Override
+        public JsonElement serialize(Permission src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject jsonPermission = new JsonObject();
+            jsonPermission.addProperty("player_name",src.getPlayerName());
+            jsonPermission.addProperty("level", src.getGroup().getLevel());
+
+            return jsonPermission;
+        }
+    }
 }

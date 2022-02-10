@@ -1,5 +1,9 @@
 package mc.thejsuser.landlords.regionElements;
 
+import com.google.gson.*;
+import mc.thejsuser.landlords.io.JsonManager;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,5 +44,34 @@ public class RegionDataContainer {
             }
         }
         return false;
+    }
+    public boolean isEmpty() {
+        return data_.isEmpty();
+    }
+
+    public static class JSerializer implements JsonSerializer<RegionDataContainer> {
+
+        @Override
+        public JsonElement serialize(RegionDataContainer src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonArray jsonDataContainer = new JsonArray();
+            for (RegionData data : src.data_) {
+                jsonDataContainer.add(JsonManager.GSON.toJsonTree(data));
+            }
+
+            return jsonDataContainer;
+        }
+    }
+
+    public static class JDeserializer implements JsonDeserializer<RegionDataContainer> {
+
+        @Override
+        public RegionDataContainer deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            RegionDataContainer regionDataContainer = new RegionDataContainer();
+            JsonArray jsonDataContainer = json.getAsJsonArray();
+            for (JsonElement jsonElement : jsonDataContainer) {
+                regionDataContainer.add(JsonManager.GSON.fromJson(jsonElement,RegionData.class));
+            }
+            return regionDataContainer;
+        }
     }
 }

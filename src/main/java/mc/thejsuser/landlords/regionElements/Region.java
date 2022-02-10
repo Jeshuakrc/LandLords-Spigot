@@ -1,13 +1,17 @@
 package mc.thejsuser.landlords.regionElements;
 
+import com.google.gson.*;
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.io.ConfigManager;
 import mc.thejsuser.landlords.io.JsonManager;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,8 +29,9 @@ public class Region {
     private RegionBoundary boundary_ = null;
     private RegionDataContainer dataContainer_ = new RegionDataContainer();
     private RegionBoundingBox boundingBox_;
-    private BoundayDisplayer boundayDisplayer_ = null;
+    private BoundaryDisplayer boundaryDisplayer_ = null;
     private Hierarchy hierarchy_;
+    private final List<Rule<?>> rules_ = new ArrayList<>();
     private final ConfigManager.ParticleData boundaryParticle_ = ConfigManager.getRegionBorderParticle();
     private final Region self_ = this;
 
@@ -137,6 +142,17 @@ public class Region {
     }
     public Hierarchy getHierarchy() {
         return this.hierarchy_;
+    }
+    public Rule<?>[] getRules() {
+        return this.rules_.toArray(new Rule<?>[0]);
+    }
+    public Rule<?> getRule(String name) {
+        for (Rule<?> rule : this.rules_) {
+            if (rule.getName().equals(name)) {
+               return rule;
+            }
+        }
+        return null;
     }
 
     //STATIC METHODS
@@ -303,25 +319,41 @@ public class Region {
         return l;
     }
     public void destroy() {
-        if(boundayDisplayer_ != null) {
-            if (!boundayDisplayer_.displayer.isCancelled()) {
-                this.boundayDisplayer_.cancel();
+        if(boundaryDisplayer_ != null) {
+            if (!boundaryDisplayer_.displayer.isCancelled()) {
+                this.boundaryDisplayer_.cancel();
             }
         }
         regions_.remove(this);
         JsonManager.removeRegion(this);
     }
     public void displayBoundaries(int frequency ,long persistence) {
-        if(boundayDisplayer_ != null) { boundayDisplayer_.cancel(); }
+        if(boundaryDisplayer_ != null) { boundaryDisplayer_.cancel(); }
 
-        boundayDisplayer_ = new BoundayDisplayer();
-        boundayDisplayer_.displayBoundaries(frequency,persistence);
+        boundaryDisplayer_ = new BoundaryDisplayer();
+        boundaryDisplayer_.displayBoundaries(frequency,persistence);
     }
     public void broadCastToMembers(String message, int maxLevel) {
 
     }
     public void broadCastToMembersLang(String path, String[] args, int maxLevel) {
         Landlords.Utils.broadcastMessageLang(path,args,this.getGroupLevelRagePlayers(0,maxLevel));
+    }
+    public void clearRules() {
+        this.rules_.clear();
+    }
+    public boolean removeRule(String name) {
+        for (int i = 0; i < this.rules_.size(); i++) {
+            Rule<?> rule = this.rules_.get(i);
+            if (rule.getName().equals(name)) {
+                this.rules_.remove(rule);
+                return true;
+            }
+        }
+        return false;
+    }
+    public void addRule(Rule<?> rule) {
+        this.rules_.add(rule);
     }
 
     //PRIVATE METHODS
@@ -347,7 +379,7 @@ public class Region {
     }
 
     //PRIVATE CLASSES
-    private class BoundayDisplayer {
+    private class BoundaryDisplayer {
 
         //FIELDS
         boolean ran = false;
@@ -390,4 +422,105 @@ public class Region {
             }
         }
     }
+
+    //PUBLIC CLASSES
+    public static class JSerializer implements JsonSerializer<Region> {
+
+        @Override
+        public JsonElement serialize(Region src, Type typeOfSrc, JsonSerializationContext context) {
+
+            JsonObject jsonRegion = new JsonObject();
+            jsonRegion.addProperty("id",src.getId());
+            jsonRegion.addProperty("name",src.getName());
+            jsonRegion.addProperty("hierarchy",src.getHierarchy().getId());
+            jsonRegion.addProperty("enabled",src.isEnabled());
+            jsonRegion.addProperty("vertex", new Gson().toJson(src.getVertex()));
+
+            JsonArray jsonPermissions = new JsonArray();
+            for (Permission permission : src.getPermissions()) {
+                jsonPermissions.add(JsonManager.GSON.toJsonTree(permission));
+            }
+            jsonRegion.add("permissions",jsonPermissions);
+
+            if (src.getRules().length > 0) {
+                JsonArray jsonRules = new JsonArray();
+                JsonObject jsonRule;
+                for (Rule<?> rule : src.getRules()) {
+                    jsonRule = new JsonObject();
+                    jsonRule.addProperty(rule.getName(),new Gson().toJson(rule.getValue()));
+                    jsonRules.add(jsonRule);
+                }
+                jsonRegion.add("rules",jsonRules);
+            }
+
+            if (!src.getDataContainer().isEmpty()) {
+                 jsonRegion.add("data_container",JsonManager.GSON.toJsonTree(src.getDataContainer()));
+            }
+
+            return jsonRegion;
+        }
+    }
+    public static class JDeserializer implements JsonDeserializer<Region> {
+
+        @Override
+        public Region deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            Gson gson = JsonManager.GSON;
+            JsonObject jsonRegion = json.getAsJsonObject();
+            JsonArray jsonPermissions = jsonRegion.getAsJsonArray("permissions");
+            Permission[] permissions = new Permission[jsonPermissions.size()];
+            Hierarchy hierarchy = Hierarchy.getHierarchy(jsonRegion.get("hierarchy").getAsInt());
+            JsonObject jsonPermission;
+            for (int i = 0; i < permissions.length; i++) {
+                jsonPermission = jsonPermissions.get(i).getAsJsonObject();
+                permissions[i] = new Permission(
+                        jsonPermission.get("player_name").getAsString(),
+                        hierarchy,
+                        jsonPermission.get("level").getAsInt()
+                );
+            }
+
+            Region region = new Region(
+                    gson.fromJson(jsonRegion.get("vertex"),double[].class),
+                    World.Environment.valueOf(jsonRegion.get("dimension").getAsString()),
+                    permissions,
+                    jsonRegion.get("name").getAsString(),
+                    hierarchy
+            );
+            region.setId(jsonRegion.get("id").getAsInt());
+            region.enabled(jsonRegion.get("enabled").getAsBoolean());
+
+            if (jsonRegion.has("data_container")) {
+                region.setDataContainer(gson.fromJson(jsonRegion.get("data_container"),RegionDataContainer.class));
+            }
+
+            if (jsonRegion.has("rules")) {
+                JsonArray jsonRules = jsonRegion.get("rules").getAsJsonArray();
+                JsonObject jsonRule; Rule<?> rule; String name; JsonPrimitive jsonValue;
+                for (JsonElement element : jsonRules) {
+                    jsonRule = element.getAsJsonObject();
+                    name = jsonRule.keySet().toArray(new String[0])[0];
+                    jsonValue = jsonRule.get(name).getAsJsonPrimitive();
+                    if (jsonValue.isBoolean()) {
+                        Boolean val = jsonValue.getAsBoolean();
+                        rule = new Rule<Boolean>(name,val);
+                    } else if (jsonValue.isNumber()) {
+                        Number number = jsonValue.getAsNumber();
+                        Double doubleNum = number.doubleValue();
+                        if (doubleNum == Math.floor(doubleNum)) {
+                            rule = new Rule<Integer>(name,number.intValue());
+                        } else {
+                            rule = new Rule<Double>(name,doubleNum);
+                        }
+                    } else {
+                        rule = new Rule<String>(name,jsonValue.getAsString());
+                    }
+                    region.addRule(rule);
+                }
+            }
+            return region;
+        }
+    }
+
+
 }

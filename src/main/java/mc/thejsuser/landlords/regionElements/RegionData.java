@@ -1,6 +1,9 @@
 package mc.thejsuser.landlords.regionElements;
 
-import com.google.gson.JsonPrimitive;
+import com.google.gson.*;
+import mc.thejsuser.landlords.io.JsonManager;
+
+import java.lang.reflect.Type;
 
 public class RegionData {
 
@@ -86,4 +89,27 @@ public class RegionData {
         val_ = new JsonPrimitive(val);
     }
 
+    public static class JSerializer implements JsonSerializer<RegionData> {
+
+        @Override
+        public JsonElement serialize(RegionData src, Type typeOfSrc, JsonSerializationContext context) {
+            JsonObject jsonRegionData = new JsonObject();
+            jsonRegionData.addProperty("key", src.getKey());
+            jsonRegionData.add("value", src.getValue());
+
+            return jsonRegionData;
+        }
+    }
+
+    public static class JDeserializer implements JsonDeserializer<RegionData> {
+
+        @Override
+        public RegionData deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonRegionData = json.getAsJsonObject();
+            return new RegionData(
+                    jsonRegionData.get("key").getAsString(),
+                    jsonRegionData.get("value").getAsJsonPrimitive()
+            );
+        }
+    }
 }
