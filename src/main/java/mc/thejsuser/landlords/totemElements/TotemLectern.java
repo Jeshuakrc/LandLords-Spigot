@@ -2,19 +2,17 @@ package mc.thejsuser.landlords.totemElements;
 
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.io.LangManager;
-import mc.thejsuser.landlords.regionElements.Permission;
-import mc.thejsuser.landlords.regionElements.Region;
+import mc.thejsuser.landlords.regions.Permission;
+import mc.thejsuser.landlords.regions.Region;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Lectern;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class TotemLectern implements TotemRelative, Cloneable {

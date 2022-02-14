@@ -1,7 +1,4 @@
-package mc.thejsuser.landlords.regionElements;
-
-import java.util.ArrayList;
-import java.util.List;
+package mc.thejsuser.landlords.regions;
 
 public class Rule <T> {
 

@@ -1,10 +1,10 @@
 package mc.thejsuser.landlords.events;
 
-import mc.thejsuser.landlords.regionElements.Ability;
+import mc.thejsuser.landlords.regions.Ability;
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.io.ConfigManager;
 import mc.thejsuser.landlords.io.LangManager;
-import mc.thejsuser.landlords.regionElements.Region;
+import mc.thejsuser.landlords.regions.Region;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

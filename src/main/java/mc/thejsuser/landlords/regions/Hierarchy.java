@@ -1,12 +1,12 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions;
 
-import mc.thejsuser.landlords.io.JsonManager;
+import com.google.gson.*;
+import mc.thejsuser.landlords.io.Serializer;
 
-import javax.security.auth.login.AccountExpiredException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.zip.GZIPOutputStream;
 
 public class Hierarchy {
 
@@ -70,8 +70,8 @@ public class Hierarchy {
     }
 
     //STATIC METHODS
-    public static ArrayList<Hierarchy> loadHierarchies() {
-        JsonManager.loadHierarchies();
+    public static ArrayList<Hierarchy> loadAll() {
+        Serializer.deserializeFileList(Serializer.FILES.HIERARCHIES,Hierarchy.class);
         return hierarchies_;
     }
     public static Hierarchy getHierarchy (int id) {
@@ -194,6 +194,37 @@ public class Hierarchy {
             ));
             Collections.reverse(this);
             return r;
+        }
+    }
+
+    public static class JDeserializer implements JsonDeserializer<Hierarchy> {
+
+        @Override
+        public Hierarchy deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            Gson gson = Serializer.GSON;
+            JsonObject jsonHierarchy = json.getAsJsonObject();
+
+            Hierarchy hierarchy = new Hierarchy(
+                    jsonHierarchy.get("id").getAsInt(),
+                    jsonHierarchy.get("name").getAsString()
+            );
+
+            JsonObject jsonGroup; ArrayList<Ability> abilities;
+            for (JsonElement element : jsonHierarchy.get("groups").getAsJsonArray()) {
+                jsonGroup = element.getAsJsonObject();
+                abilities = new ArrayList<>();
+                for (JsonElement element1 : jsonGroup.get("abilities").getAsJsonArray()) {
+                    abilities.add(Ability.valueOf(element1.getAsString()));
+                }
+                hierarchy.getGroups().add(
+                        jsonGroup.get("name").getAsString(),
+                        jsonGroup.get("level").getAsInt(),
+                        abilities
+                );
+            }
+
+            return hierarchy;
         }
     }
 }

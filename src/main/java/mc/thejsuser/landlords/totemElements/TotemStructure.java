@@ -1,13 +1,12 @@
 package mc.thejsuser.landlords.totemElements;
 
-import mc.thejsuser.landlords.regionElements.Hierarchy;
+import mc.thejsuser.landlords.regions.Hierarchy;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.BoundingBox;
 
 import java.util.Collection;
-import java.util.List;
 
 public class TotemStructure {
 

@@ -1,16 +1,15 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions;
 
 import com.google.gson.*;
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.io.ConfigManager;
-import mc.thejsuser.landlords.io.JsonManager;
+import mc.thejsuser.landlords.io.Serializer;
+import mc.thejsuser.landlords.regions.dataContainers.RegionDataContainer;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -146,22 +145,21 @@ public class Region {
     public Rule<?>[] getRules() {
         return this.rules_.toArray(new Rule<?>[0]);
     }
-    public Rule<?> getRule(String name) {
+    public <T> Rule<T> getRule(String name, Class<T> c) {
         for (Rule<?> rule : this.rules_) {
-            if (rule.getName().equals(name)) {
-               return rule;
+            if (rule.getName().equals(name) && rule.getValue().getClass().equals(c)) {
+               return (Rule<T>) rule;
             }
         }
         return null;
     }
 
     //STATIC METHODS
-    public static List<Region> loadRegions() {
-
-        regions_ = JsonManager.loadRegions();
+    public static List<Region> loadAll() {
+        regions_ = Serializer.deserializeFileList(Serializer.FILES.REGIONS, Region.class);
         return regions_;
     }
-    public static List<Region> getRegions() {
+    public static List<Region> getAll() {
         return regions_;
     }
     public static Region[] getFromPoint(double x, double y, double z, World.Environment dimension) {
@@ -253,7 +251,7 @@ public class Region {
     public static Region getFromId(int id) {
 
         Region r = null;
-        for (Region i : getRegions()) {
+        for (Region i : getAll()) {
             if (i.getId() == id) {
                 r = i;
                 break;
@@ -268,7 +266,7 @@ public class Region {
 
         List<Region> r = new ArrayList<>();
         BoundingBox box1 = new BoundingBox(vertex[0],vertex[1],vertex[2],vertex[3],vertex[4],vertex[5]);
-        for (Region i : Region.getRegions()) {
+        for (Region i : Region.getAll()) {
             RegionBoundingBox box2 = i.getBoundingBox();
             if(box2.overlaps(box1)){
                 r.add(i);
@@ -303,14 +301,10 @@ public class Region {
         return this.getBoundingBox().contains(x,y,z);
     }
     public void save() {
-
-        Region r = getFromId(getId());
-        if (r == null) {
-            JsonManager.saveRegionNew(this);
+        if (!regions_.contains(this)) {
             Region.addRegion(this);
-        } else {
-            JsonManager.saveRegionOverwrite(this, getId());
         }
+        Serializer.serializeToFile(Serializer.FILES.REGIONS,regions_);
     }
     public List<Region> getOverlappingRegions() {
 
@@ -325,7 +319,7 @@ public class Region {
             }
         }
         regions_.remove(this);
-        JsonManager.removeRegion(this);
+        Serializer.serializeToFile(Serializer.FILES.REGIONS, regions_);
     }
     public void displayBoundaries(int frequency ,long persistence) {
         if(boundaryDisplayer_ != null) { boundaryDisplayer_.cancel(); }
@@ -354,6 +348,14 @@ public class Region {
     }
     public void addRule(Rule<?> rule) {
         this.rules_.add(rule);
+    }
+    public Boolean hasRule(String name, Type type) {
+        for (Rule<?> rule : this.rules_) {
+            if (rule.getName().equals(name) && rule.getValue().getClass().equals(type)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     //PRIVATE METHODS
@@ -433,12 +435,13 @@ public class Region {
             jsonRegion.addProperty("id",src.getId());
             jsonRegion.addProperty("name",src.getName());
             jsonRegion.addProperty("hierarchy",src.getHierarchy().getId());
+            jsonRegion.addProperty("dimension",src.getDimension().toString());
             jsonRegion.addProperty("enabled",src.isEnabled());
-            jsonRegion.addProperty("vertex", new Gson().toJson(src.getVertex()));
+            jsonRegion.add("vertex", new Gson().toJsonTree(src.getVertex()));
 
             JsonArray jsonPermissions = new JsonArray();
             for (Permission permission : src.getPermissions()) {
-                jsonPermissions.add(JsonManager.GSON.toJsonTree(permission));
+                jsonPermissions.add(Serializer.GSON.toJsonTree(permission));
             }
             jsonRegion.add("permissions",jsonPermissions);
 
@@ -454,7 +457,7 @@ public class Region {
             }
 
             if (!src.getDataContainer().isEmpty()) {
-                 jsonRegion.add("data_container",JsonManager.GSON.toJsonTree(src.getDataContainer()));
+                 jsonRegion.add("data_container", Serializer.GSON.toJsonTree(src.getDataContainer()));
             }
 
             return jsonRegion;
@@ -465,7 +468,7 @@ public class Region {
         @Override
         public Region deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
-            Gson gson = JsonManager.GSON;
+            Gson gson = Serializer.GSON;
             JsonObject jsonRegion = json.getAsJsonObject();
             JsonArray jsonPermissions = jsonRegion.getAsJsonArray("permissions");
             Permission[] permissions = new Permission[jsonPermissions.size()];
@@ -521,6 +524,4 @@ public class Region {
             return region;
         }
     }
-
-
 }

@@ -1,7 +1,7 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions.dataContainers;
 
 import com.google.gson.*;
-import mc.thejsuser.landlords.io.JsonManager;
+import mc.thejsuser.landlords.io.Serializer;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public class RegionDataContainer {
         public JsonElement serialize(RegionDataContainer src, Type typeOfSrc, JsonSerializationContext context) {
             JsonArray jsonDataContainer = new JsonArray();
             for (RegionData data : src.data_) {
-                jsonDataContainer.add(JsonManager.GSON.toJsonTree(data));
+                jsonDataContainer.add(Serializer.GSON.toJsonTree(data));
             }
 
             return jsonDataContainer;
@@ -69,7 +69,7 @@ public class RegionDataContainer {
             RegionDataContainer regionDataContainer = new RegionDataContainer();
             JsonArray jsonDataContainer = json.getAsJsonArray();
             for (JsonElement jsonElement : jsonDataContainer) {
-                regionDataContainer.add(JsonManager.GSON.fromJson(jsonElement,RegionData.class));
+                regionDataContainer.add(Serializer.GSON.fromJson(jsonElement,RegionData.class));
             }
             return regionDataContainer;
         }

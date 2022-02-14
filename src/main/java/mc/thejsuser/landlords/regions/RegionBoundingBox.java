@@ -1,4 +1,4 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions;
 
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.BoundingBox;

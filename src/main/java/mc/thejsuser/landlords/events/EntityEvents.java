@@ -1,8 +1,8 @@
 package mc.thejsuser.landlords.events;
 
 import mc.thejsuser.landlords.Landlords;
-import mc.thejsuser.landlords.regionElements.Ability;
-import mc.thejsuser.landlords.regionElements.Region;
+import mc.thejsuser.landlords.regions.Ability;
+import mc.thejsuser.landlords.regions.Region;
 import org.bukkit.block.Block;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;

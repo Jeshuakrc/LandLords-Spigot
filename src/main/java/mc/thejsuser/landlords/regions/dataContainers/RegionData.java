@@ -1,7 +1,6 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions.dataContainers;
 
 import com.google.gson.*;
-import mc.thejsuser.landlords.io.JsonManager;
 
 import java.lang.reflect.Type;
 

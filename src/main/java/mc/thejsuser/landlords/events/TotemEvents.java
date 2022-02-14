@@ -2,7 +2,7 @@ package mc.thejsuser.landlords.events;
 
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.io.LangManager;
-import mc.thejsuser.landlords.regionElements.*;
+import mc.thejsuser.landlords.regions.*;
 import mc.thejsuser.landlords.io.ConfigManager;
 import mc.thejsuser.landlords.totemElements.*;
 import org.bukkit.*;

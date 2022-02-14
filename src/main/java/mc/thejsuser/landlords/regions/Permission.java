@@ -1,4 +1,4 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions;
 
 import com.google.gson.*;
 import mc.thejsuser.landlords.Landlords;
@@ -38,6 +38,7 @@ public class Permission {
         public JsonElement serialize(Permission src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject jsonPermission = new JsonObject();
             jsonPermission.addProperty("player_name",src.getPlayerName());
+
             jsonPermission.addProperty("level", src.getGroup().getLevel());
 
             return jsonPermission;

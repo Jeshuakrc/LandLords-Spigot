@@ -1,4 +1,4 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions;
 
 public enum Ability {
     can_break_blocks,

@@ -1,7 +1,8 @@
-package mc.thejsuser.landlords.regionElements;
+package mc.thejsuser.landlords.regions;
 
 import mc.thejsuser.landlords.io.ConfigManager;
 import org.bukkit.Location;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,7 @@ public class RegionBoundary {
     //FIELDS
     private Region region_;
     private List<Location> boundaries_;
-    private int borderResolution_ = ConfigManager.getTotemBorderResolution() + 1;;
+    private int borderResolution_ = ConfigManager.getTotemBorderResolution() + 1;
 
     //CONSTRUCTORS
     RegionBoundary(Region region){

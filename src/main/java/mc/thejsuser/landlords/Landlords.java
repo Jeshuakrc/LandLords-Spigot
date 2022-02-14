@@ -1,9 +1,9 @@
 package mc.thejsuser.landlords;
 
 import mc.thejsuser.landlords.io.LangManager;
-import mc.thejsuser.landlords.regionElements.Ability;
-import mc.thejsuser.landlords.regionElements.Hierarchy;
-import mc.thejsuser.landlords.regionElements.Region;
+import mc.thejsuser.landlords.regions.Ability;
+import mc.thejsuser.landlords.regions.Hierarchy;
+import mc.thejsuser.landlords.regions.Region;
 import mc.thejsuser.landlords.events.*;
 import mc.thejsuser.landlords.io.ConfigManager;
 import net.md_5.bungee.api.ChatMessageType;
@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.util.Collection;
 
 public final class Landlords extends JavaPlugin {
@@ -30,8 +31,8 @@ public final class Landlords extends JavaPlugin {
 
         //Initializing and loading files
         ConfigManager.initialize();
-        Hierarchy.loadHierarchies();
-        Region.loadRegions();
+        Hierarchy.loadAll();
+        Region.loadAll();
 
         //Registering events
         PluginManager pm = getServer().getPluginManager();
@@ -103,6 +104,7 @@ public final class Landlords extends JavaPlugin {
                     }
                 }
             }
+
             return a;
         }
     }

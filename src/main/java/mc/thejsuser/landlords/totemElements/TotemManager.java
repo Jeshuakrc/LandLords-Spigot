@@ -1,9 +1,9 @@
 package mc.thejsuser.landlords.totemElements;
 
 import mc.thejsuser.landlords.Landlords;
-import mc.thejsuser.landlords.regionElements.Region;
-import mc.thejsuser.landlords.regionElements.RegionData;
-import mc.thejsuser.landlords.io.JsonManager;
+import mc.thejsuser.landlords.regions.Region;
+import mc.thejsuser.landlords.regions.dataContainers.RegionData;
+import mc.thejsuser.landlords.io.Serializer;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EnderCrystal;
@@ -18,7 +18,7 @@ public abstract class TotemManager {
     private static List<Totem> totems_ = new ArrayList<Totem>();
 
     public static TotemStructure[] loadTotemStructures(){
-        structures_ = JsonManager.loadTotemStructures();
+        structures_ = Serializer.loadTotemStructures();
         return structures_;
     }
     public static TotemStructure[] getTotemStructures(){
@@ -115,7 +115,7 @@ public abstract class TotemManager {
     }
     public static void removeOrphanedRegions() {
 
-        List<Region> regionList = List.copyOf(Region.getRegions());
+        List<Region> regionList = List.copyOf(Region.getAll());
 
         for (Region r : regionList) {
             RegionData data = r.getDataContainer().get("totemRegion");

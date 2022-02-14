@@ -1,10 +1,8 @@
 package mc.thejsuser.landlords.events;
 
 import mc.thejsuser.landlords.Landlords;
-import mc.thejsuser.landlords.io.JsonManager;
-import mc.thejsuser.landlords.regionElements.Ability;
+import mc.thejsuser.landlords.regions.Ability;
 import mc.thejsuser.landlords.io.ConfigManager;
-import mc.thejsuser.landlords.regionElements.Region;
 import mc.thejsuser.landlords.totemElements.TotemLectern;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -19,7 +17,6 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTakeLecternBookEvent;
 import org.bukkit.inventory.ItemStack;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -43,11 +40,6 @@ public class BlockEvents implements Listener {
             if (ConfigManager.getBreakableRedstoneBlocks().contains(material)) {
                 ablt = Ability.can_break_redstone;
             }
-        }
-
-        for (Region region : Region.getFromPoint(block.getLocation())) {
-            String json = JsonManager.GSON.toJson(region);
-            e.getPlayer().sendMessage(json);
         }
 
         Landlords.Utils.handleEvent(e,e.getPlayer(),block.getLocation().add(.5,.5,.5),ablt);
