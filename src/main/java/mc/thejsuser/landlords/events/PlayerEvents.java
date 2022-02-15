@@ -39,7 +39,7 @@ public class PlayerEvents implements Listener {
              Collection<? extends Player> players = Landlords.getMainInstance().getServer().getOnlinePlayers();
 
             for (Player player : players) {
-                List<Region> regions = Arrays.asList(Region.getFromPoint(player.getLocation()));
+                List<Region> regions = Arrays.asList(Region.getAllAt(player.getLocation()));
                 for (Region region : regions) {
                     if (!prevRegions.containsKey(player)) { return; }
                     if (!prevRegions.get(player).contains(region)) {

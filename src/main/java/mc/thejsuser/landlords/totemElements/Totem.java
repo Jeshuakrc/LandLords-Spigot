@@ -144,9 +144,13 @@ public class Totem {
         String name = LangManager.getString("totem_region_defauldName",placer,placer.getName());
         Region region = new Region(regionVertex,this.getWorld().getEnvironment(),perms,name,hierarchy);
         RegionData totemData = new RegionData("totemRegion",true);
-        EnderCrystal crystal = placeEndCrystal(placer,this.getPosX(),this.getPosY(),this.getPosZ());
         region.getDataContainer().add(totemData);
+        for (Rule rule : structure.getRules()) {
+            region.addRule(rule);
+        }
         region.save();
+
+        EnderCrystal crystal = placeEndCrystal(placer,this.getPosX(),this.getPosY(),this.getPosZ());
         this.setRegionId(region.getId());
         this.saveOnEndCrystal(crystal);
         TotemManager.registerTotem(this);
@@ -332,7 +336,7 @@ public class Totem {
                     blockPos = {block.getX(), block.getY(), block.getZ()},
                     lPos;
 
-            for (TotemLectern l : this.getStructure().getLecterns()) {
+            for (TotemLectern l : this.getStructure().lecterns) {
                 lPos = l.getAbsolutePosition(pos[0], pos[1], pos[2]);
 
                 if (Arrays.equals(lPos, blockPos)) {

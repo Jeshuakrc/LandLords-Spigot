@@ -3,6 +3,7 @@ package mc.thejsuser.landlords.events;
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regions.Ability;
 import mc.thejsuser.landlords.io.ConfigManager;
+import mc.thejsuser.landlords.regions.Rule;
 import mc.thejsuser.landlords.totemElements.TotemLectern;
 import org.bukkit.Material;
 import org.bukkit.block.Block;

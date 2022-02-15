@@ -4,6 +4,7 @@ import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regions.Region;
 import mc.thejsuser.landlords.regions.dataContainers.RegionData;
 import mc.thejsuser.landlords.io.Serializer;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EnderCrystal;
@@ -14,14 +15,14 @@ import java.util.List;
 
 public abstract class TotemManager {
 
-    private static TotemStructure[] structures_ = null;
+    private static List<TotemStructure> structures_ = null;
     private static List<Totem> totems_ = new ArrayList<Totem>();
 
-    public static TotemStructure[] loadTotemStructures(){
-        structures_ = Serializer.loadTotemStructures();
+    public static List<TotemStructure> loadTotemStructures(){
+        structures_ = Serializer.deserializeFileList(Serializer.FILES.TOTEM_STRUCTURES,TotemStructure.class);
         return structures_;
     }
-    public static TotemStructure[] getTotemStructures(){
+    public static List<TotemStructure> getTotemStructures(){
         if(structures_==null){
             loadTotemStructures();
         }

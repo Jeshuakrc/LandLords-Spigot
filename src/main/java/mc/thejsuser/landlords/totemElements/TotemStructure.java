@@ -1,34 +1,38 @@
 package mc.thejsuser.landlords.totemElements;
 
+import com.google.gson.*;
+import mc.thejsuser.landlords.io.Serializer;
 import mc.thejsuser.landlords.regions.Hierarchy;
+import mc.thejsuser.landlords.regions.Rule;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.util.BoundingBox;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public class TotemStructure {
 
-    private TotemElement[] elements_;
-    private TotemLectern[] lecterns_;
     private double[] regionInitialVertex_ = new double[6];
     private double[] regionGrowthRate_ = new double[6];
     private double[] regionMaxSize_ = new double[3];
     private int[] structureBox_;
     private Hierarchy hierarchy_;
+    private List<Rule> rules_;
+
+    public final Elements elements = new Elements(this);
+    public final Lecterns lecterns = new Lecterns(this);
 
     //CONSTRUCTORS
-    public TotemStructure(TotemElement[] elements, TotemLectern[] lecterns, double[] regionBaseSize, double[] regionGrowthRate, double[] regionMaxSize, Hierarchy hierarchy){
-        for (TotemElement e : elements){
-            e.setStructure(this);
-        }
-        for (TotemLectern l : lecterns){
-            l.setStructure(this);
-        }
-
-        this.setElements(elements);
-        this.setLecterns(lecterns);
+    public TotemStructure(double[] regionBaseSize, double[] regionGrowthRate, double[] regionMaxSize, Hierarchy hierarchy){
         this.setRegionInitialVertex(regionBaseSize);
         this.setRegionGrowthRate(regionGrowthRate);
         this.setRegionMaxSize(regionMaxSize);
@@ -36,12 +40,6 @@ public class TotemStructure {
     }
 
     //GETTERS
-    public TotemElement[] getElements(){
-        return this.elements_;
-    }
-    public TotemLectern[] getLecterns(){
-        return this.lecterns_;
-    }
     public double[] getRegionInitialVertex(){
         return this.regionInitialVertex_;
     }
@@ -51,7 +49,10 @@ public class TotemStructure {
     public double[] getRegionMaxSize() {
         return this.regionMaxSize_;
     }
-    int[] getStructureBox(){return structureBox_;}
+    int[] getStructureBox() {
+        this.setStructureBox_();;
+        return this.structureBox_;
+    }
     public double[] getRegionInitialSize(){
 
         double[] r = new double[3];
@@ -62,17 +63,13 @@ public class TotemStructure {
         return r;
     }
     public Hierarchy getHierarchy() {
-        return hierarchy_;
+        return this.hierarchy_;
+    }
+    public Rule[] getRules() {
+        return this.rules_.toArray(new Rule[0]);
     }
 
     //SETTERS
-    public void setElements(TotemElement[] elements){
-        elements_=elements;
-        this.setStructureBox_();
-    }
-    public void setLecterns(TotemLectern[] lecterns){
-        lecterns_=lecterns;
-    }
     public void setRegionInitialVertex(double[] baseSizeArray){
         regionInitialVertex_ = baseSizeArray;
     }
@@ -85,12 +82,15 @@ public class TotemStructure {
     public void setHierarchy(Hierarchy hierarchy) {
         this.hierarchy_ = hierarchy;
     }
+    public void setRules (List<Rule> rules) {
+        this.rules_ = rules;
+    }
 
     //PUBLIC METHODS
     public boolean chekStructureFromPoint(int x, int y, int z, World world){
 
         boolean r = true;
-        for (TotemElement i : elements_){
+        for (TotemElement<?> i : this.elements){
 
             Block b = world.getBlockAt(
                     x + i.getPosition()[0],
@@ -98,7 +98,7 @@ public class TotemStructure {
                     z + i.getPosition()[2]
                     );
             if(i instanceof TotemBlock){
-                if(!b.getType().equals(i.getBlockType())){
+                if(!b.getType().equals(i.getType())){
                     r=false;
                     break;
                 }
@@ -115,7 +115,7 @@ public class TotemStructure {
                 Collection<Entity> entities = world.getNearbyEntities(bounding);
                 boolean found = false;
                 for (Entity e : entities){
-                    if(e.getType().equals(i.getEntityType())){
+                    if(e.getType().equals(i.getType())){
                         found = true;
                         break;
                     }
@@ -129,15 +129,14 @@ public class TotemStructure {
         return r;
     }
 
-
     //PRIVATE METHODS
     private void setStructureBox_() {
-        TotemElement[] elements = this.elements_;
+        Elements elements = this.elements;
 
-        int[] mins = elements[0].getPosition().clone();
-        int[] maxs = elements[0].getPosition().clone();
+        int[] mins = elements.get(0).getPosition().clone();
+        int[] maxs = elements.get(0).getPosition().clone();
 
-        for (TotemElement e : elements) {
+        for (TotemElement<?> e : elements) {
             int[] pos = e.getPosition();
             for(int i = 0; i < 3; i++){
                 maxs[i] = Math.max(maxs[i],pos[i]);
@@ -154,4 +153,106 @@ public class TotemStructure {
             }
         }
     }
+
+    //CLASSES
+    public static class Elements extends ArrayList<TotemElement<?>> {
+        private final TotemStructure structure_;
+
+        private Elements(TotemStructure structure) {
+            super();
+            this.structure_ = structure;
+        }
+
+        @Override
+        @Deprecated
+        public boolean add(TotemElement<?> totemElement) {
+            return super.add(totemElement);
+        }
+
+        public <T> boolean add (T type,int x, int y, int z) {
+
+            TotemElement<?> element;
+            if (type instanceof EntityType entityType) {
+                element = new TotemEntity(entityType,x,y,z,structure_);
+            } else if (type instanceof Material material) {
+                if (!material.isBlock()) { return false; }
+                element = new TotemBlock(material,x,y,z,structure_);
+            } else { return false; }
+            return super.add(element);
+        }
+    }
+    public static class Lecterns extends ArrayList<TotemLectern> {
+        private final TotemStructure structure_;
+
+        private Lecterns(TotemStructure structure) {
+            this.structure_ = structure;
+        }
+        @Override
+        @Deprecated
+        public boolean add(TotemLectern totemLectern) {
+            return super.add(totemLectern);
+        }
+
+        public boolean add (int x, int y, int z, BlockFace facing) {
+            return super.add(new TotemLectern(x,y,z,facing,structure_));
+        }
+    }
+
+    public static class JDeserializer implements JsonDeserializer<TotemStructure> {
+
+        @Override
+        public TotemStructure deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+
+            JsonObject jsonStructure = json.getAsJsonObject();
+            JsonObject jsonRegion = jsonStructure.get("region").getAsJsonObject();
+
+            TotemStructure structure = new TotemStructure(
+                    Serializer.GSON.fromJson(jsonRegion.get("initial_size"),double[].class),
+                    Serializer.GSON.fromJson(jsonRegion.get("growth_rate"),double[].class),
+                    Serializer.GSON.fromJson(jsonRegion.get("max_size"),double[].class),
+                    Hierarchy.get(jsonRegion.get("hierarchy").getAsInt())
+            );
+
+            JsonObject jsonObject; TotemElement.ElementType type; int[] pos; String name;
+            for (JsonElement elm : jsonStructure.get("elements").getAsJsonArray()) {
+                jsonObject = elm.getAsJsonObject();
+                type = TotemElement.ElementType.valueOf(jsonObject.get("type").getAsString());
+                pos = Serializer.GSON.fromJson(jsonObject.get("position"),int[].class);
+                name = jsonObject.get("name").getAsString();
+
+                switch (type) {
+                    case block -> structure.elements.add(
+                            Material.valueOf(name),
+                            pos[0], pos[1], pos [2]
+                    );
+
+                    default -> structure.elements.add(
+                            EntityType.valueOf(name),
+                            pos[0], pos[1], pos [2]
+                    );
+                }
+            }
+            BlockFace facing;
+            for (JsonElement elm : jsonStructure.get("lecterns").getAsJsonArray()) {
+                jsonObject = elm.getAsJsonObject();
+                pos = Serializer.GSON.fromJson(jsonObject.get("position"),int[].class);
+                facing = BlockFace.valueOf(jsonObject.get("direction").getAsString());
+
+                structure.lecterns.add(pos[0],pos[1],pos[2],facing);
+            }
+            if (jsonRegion.has("rules")) {
+                JsonObject jsonRules = jsonRegion.get("rules").getAsJsonObject();
+                ArrayList<Rule> rules = new ArrayList<>();
+                for (Map.Entry<String,JsonElement> entry : jsonRules.entrySet()) {
+                    JsonObject jsonRule = new JsonObject();
+                    jsonRule.add(entry.getKey(),entry.getValue());
+                    rules.add(Serializer.GSON.fromJson(jsonRule,Rule.class));
+                }
+                structure.setRules(rules);
+            }
+
+            return structure;
+        }
+    }
 }
+

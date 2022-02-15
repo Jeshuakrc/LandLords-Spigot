@@ -3,7 +3,7 @@ package mc.thejsuser.landlords.events;
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regions.Ability;
 import mc.thejsuser.landlords.regions.Region;
-import org.bukkit.block.Block;
+import mc.thejsuser.landlords.regions.Rule;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,8 +12,6 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.hanging.HangingBreakByEntityEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
-
-import java.util.List;
 
 public class EntityEvents implements Listener {
 
@@ -116,9 +114,28 @@ public class EntityEvents implements Listener {
 
     @EventHandler
     public void onCreeperExplode(EntityExplodeEvent e){
-        if(e.getEntity() instanceof Creeper) {
-            List<Block> blocks = e.blockList();
-            blocks.removeIf(block -> Region.getFromPoint(block.getLocation().add(.5, .5, .5)).length > 0);
-        }
+        e.blockList().removeIf(block -> {
+            Entity entity = e.getEntity();
+            for (Region region : Region.getAllAt(block.getLocation().add(.5,.5,.5))) {
+                if (entity instanceof Creeper && region.hasRule("creeperProtected")) {
+                    return region.getRuleValue("creeperProtected", Rule.DataType.BOOL);
+                }
+                if (entity instanceof TNTPrimed tnt && region.hasRule("tntProtected")) {
+                    switch (region.getRuleValue("tntProtected", Landlords.RegionRules.TNT_PROTECTED_DT)) {
+                        case all -> { return true; }
+                        case ignitor -> {
+                            if (tnt.getSource() != null) {
+                                if (tnt.getSource() instanceof Player player) {
+                                    return !region.checkAbility(player,Ability.can_ignite_tnt);
+                                }
+                            }
+                            return true;
+                        }
+                        default -> { return false; }
+                    }
+                }
+            }
+            return false;
+        });
     }
 }

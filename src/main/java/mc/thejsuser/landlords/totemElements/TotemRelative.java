@@ -13,5 +13,4 @@ public interface TotemRelative {
         return r;
     }
     TotemStructure getStructure();
-    void setStructure(TotemStructure structure);
 }

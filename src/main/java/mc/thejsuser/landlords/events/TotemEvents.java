@@ -319,6 +319,13 @@ public class TotemEvents implements Listener {
 
         entity = e.getDamager();
         if(entity instanceof Arrow arrow) {
+            if(arrow.getShooter() instanceof Player player) {
+                if (!totem.getRegion().checkAbility(player, Ability.can_destroy_totems)) {
+                    e.setCancelled(true);
+                    return;
+                }
+            }
+
             List<PotionType> effects = ConfigManager.getTotemDestroyArrowEffects();
 
             if(effects.isEmpty()) {

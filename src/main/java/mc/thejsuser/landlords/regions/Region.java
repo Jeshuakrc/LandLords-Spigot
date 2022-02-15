@@ -8,13 +8,11 @@ import mc.thejsuser.landlords.regions.dataContainers.RegionDataContainer;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.PufferFish;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class Region {
 
@@ -30,7 +28,7 @@ public class Region {
     private RegionBoundingBox boundingBox_;
     private BoundaryDisplayer boundaryDisplayer_ = null;
     private Hierarchy hierarchy_;
-    private final List<Rule<?>> rules_ = new ArrayList<>();
+    private final List<Rule> rules_ = new ArrayList<>();
     private final ConfigManager.ParticleData boundaryParticle_ = ConfigManager.getRegionBorderParticle();
     private final Region self_ = this;
 
@@ -142,16 +140,23 @@ public class Region {
     public Hierarchy getHierarchy() {
         return this.hierarchy_;
     }
-    public Rule<?>[] getRules() {
-        return this.rules_.toArray(new Rule<?>[0]);
+    public Rule[] getRules() {
+        return this.rules_.toArray(new Rule[0]);
     }
-    public <T> Rule<T> getRule(String name, Class<T> c) {
-        for (Rule<?> rule : this.rules_) {
-            if (rule.getName().equals(name) && rule.getValue().getClass().equals(c)) {
-               return (Rule<T>) rule;
+    public <T> Rule getRule(String name, Rule.DataType<T> dataType) {
+        for (Rule rule : this.rules_) {
+            if (rule.name.equals(name) && rule.getKey().dataType.equals(dataType)) {
+               return rule;
             }
         }
         return null;
+    }
+    public <T> T getRuleValue(String name, Rule.DataType<T> dataType) {
+        try {
+            return this.getRule(name, dataType).getValue(dataType);
+        } catch (NullPointerException e) {
+            return null;
+        }
     }
 
     //STATIC METHODS
@@ -162,18 +167,26 @@ public class Region {
     public static List<Region> getAll() {
         return regions_;
     }
-    public static Region[] getFromPoint(double x, double y, double z, World.Environment dimension) {
-
+    public static Region[] getAllAt(double x, double y, double z, World.Environment dimension, Region.Checker checker){
         List<Region> l = new ArrayList<>(Collections.emptyList());
-        for (Region i : regions_) {
-            if (i.contains(x, y, z, dimension)) {
-                l.add(i);
+        for (Region r : regions_) {
+            if (r.contains(x, y, z, dimension) && checker.check(r)) {
+                l.add(r);
             }
         }
         return l.toArray(new Region[0]);
     }
-    public static Region[] getFromPoint(Location location) {
-        return getFromPoint(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment());
+    public static Region[] getAllAt(Location location, Region.Checker checker){
+        return getAllAt(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment(),checker);
+    }
+    public static Region[] getAllAt(double x, double y, double z, World.Environment dimension) {
+        return getAllAt(x,y,z,dimension,region -> true);
+    }
+    public static Region[] getAllAt(Location location) {
+        return getAllAt(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment());
+    }
+    public static Region[] getRuleContainersAt(String ruleName, Location location) {
+        return getAllAt(location, region -> region.hasRule(ruleName));
     }
     public static boolean checkAbilityInRegions(Region[] regions, Player player, Ability ability) {
 
@@ -233,12 +246,12 @@ public class Region {
         }
         return r;
     }
-    public static boolean checkAbilityAtPoint(Player player, Ability ability, double x, double y, double z, World.Environment environment) {
-        Region[] regions = getFromPoint(x, y, z, environment);
+    public static boolean checkAbilityAt(Player player, Ability ability, double x, double y, double z, World.Environment environment) {
+        Region[] regions = getAllAt(x, y, z, environment);
         return checkAbilityInRegions(regions, player, ability);
     }
-    public static boolean checkAbilityAtPoint(Player player, Ability ability, Location location) {
-        return checkAbilityAtPoint(player,ability,location.getX(),location.getY(),location.getZ(),location.getWorld().getEnvironment());
+    public static boolean checkAbilityAt(Player player, Ability ability, Location location) {
+        return checkAbilityAt(player,ability,location.getX(),location.getY(),location.getZ(),location.getWorld().getEnvironment());
     }
     public static int getHighestId(Region[] regions) {
 
@@ -338,20 +351,23 @@ public class Region {
     }
     public boolean removeRule(String name) {
         for (int i = 0; i < this.rules_.size(); i++) {
-            Rule<?> rule = this.rules_.get(i);
-            if (rule.getName().equals(name)) {
+            Rule rule = this.rules_.get(i);
+            if (rule.name.equals(name)) {
                 this.rules_.remove(rule);
                 return true;
             }
         }
         return false;
     }
-    public void addRule(Rule<?> rule) {
+    public void addRule(Rule rule) {
         this.rules_.add(rule);
     }
-    public Boolean hasRule(String name, Type type) {
-        for (Rule<?> rule : this.rules_) {
-            if (rule.getName().equals(name) && rule.getValue().getClass().equals(type)) {
+    public <T> void  addRule(String name, Rule.DataType<T> dataType, T value) {
+        this.rules_.add(new Rule(name,dataType,value));
+    }
+    public Boolean hasRule(String name) {
+        for (Rule rule : this.rules_) {
+            if (rule.name.equals(name)) {
                 return true;
             }
         }
@@ -426,6 +442,11 @@ public class Region {
     }
 
     //PUBLIC CLASSES
+    @FunctionalInterface
+    public static interface Checker {
+        boolean check(Region region);
+    }
+
     public static class JSerializer implements JsonSerializer<Region> {
 
         @Override
@@ -446,12 +467,11 @@ public class Region {
             jsonRegion.add("permissions",jsonPermissions);
 
             if (src.getRules().length > 0) {
-                JsonArray jsonRules = new JsonArray();
-                JsonObject jsonRule;
-                for (Rule<?> rule : src.getRules()) {
-                    jsonRule = new JsonObject();
-                    jsonRule.addProperty(rule.getName(),new Gson().toJson(rule.getValue()));
-                    jsonRules.add(jsonRule);
+                JsonObject jsonRules = new JsonObject(); JsonObject jsonRule;
+                for (Rule rule : src.getRules()) {
+                     jsonRule = Serializer.GSON.toJsonTree(rule).getAsJsonObject();
+                     String name = jsonRule.keySet().iterator().next();
+                     jsonRules.add(name,jsonRule.get(name));
                 }
                 jsonRegion.add("rules",jsonRules);
             }
@@ -472,7 +492,7 @@ public class Region {
             JsonObject jsonRegion = json.getAsJsonObject();
             JsonArray jsonPermissions = jsonRegion.getAsJsonArray("permissions");
             Permission[] permissions = new Permission[jsonPermissions.size()];
-            Hierarchy hierarchy = Hierarchy.getHierarchy(jsonRegion.get("hierarchy").getAsInt());
+            Hierarchy hierarchy = Hierarchy.get(jsonRegion.get("hierarchy").getAsInt());
             JsonObject jsonPermission;
             for (int i = 0; i < permissions.length; i++) {
                 jsonPermission = jsonPermissions.get(i).getAsJsonObject();
@@ -498,27 +518,11 @@ public class Region {
             }
 
             if (jsonRegion.has("rules")) {
-                JsonArray jsonRules = jsonRegion.get("rules").getAsJsonArray();
-                JsonObject jsonRule; Rule<?> rule; String name; JsonPrimitive jsonValue;
-                for (JsonElement element : jsonRules) {
-                    jsonRule = element.getAsJsonObject();
-                    name = jsonRule.keySet().toArray(new String[0])[0];
-                    jsonValue = jsonRule.get(name).getAsJsonPrimitive();
-                    if (jsonValue.isBoolean()) {
-                        Boolean val = jsonValue.getAsBoolean();
-                        rule = new Rule<Boolean>(name,val);
-                    } else if (jsonValue.isNumber()) {
-                        Number number = jsonValue.getAsNumber();
-                        Double doubleNum = number.doubleValue();
-                        if (doubleNum == Math.floor(doubleNum)) {
-                            rule = new Rule<Integer>(name,number.intValue());
-                        } else {
-                            rule = new Rule<Double>(name,doubleNum);
-                        }
-                    } else {
-                        rule = new Rule<String>(name,jsonValue.getAsString());
-                    }
-                    region.addRule(rule);
+                JsonObject jsonRules = jsonRegion.get("rules").getAsJsonObject();
+                for (Map.Entry<String,JsonElement> entry : jsonRules.entrySet()) {
+                    JsonObject jsonRule = new JsonObject();
+                    jsonRule.add(entry.getKey(),entry.getValue());
+                    region.addRule(gson.fromJson(jsonRule,Rule.class));
                 }
             }
             return region;

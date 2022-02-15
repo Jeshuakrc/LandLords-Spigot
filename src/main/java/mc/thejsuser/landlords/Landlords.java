@@ -1,11 +1,13 @@
 package mc.thejsuser.landlords;
 
+import com.google.gson.JsonPrimitive;
 import mc.thejsuser.landlords.io.LangManager;
 import mc.thejsuser.landlords.regions.Ability;
 import mc.thejsuser.landlords.regions.Hierarchy;
 import mc.thejsuser.landlords.regions.Region;
 import mc.thejsuser.landlords.events.*;
 import mc.thejsuser.landlords.io.ConfigManager;
+import mc.thejsuser.landlords.regions.Rule;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -23,6 +25,12 @@ public final class Landlords extends JavaPlugin {
     public static Landlords getMainInstance(){
         return mainInstance;
     }
+    public static class RegionRules {
+        public static final Rule.DataType<Landlords.tntProtectedType> TNT_PROTECTED_DT = new Rule.DataType<Landlords.tntProtectedType>(
+                e -> new JsonPrimitive(e.toString()), j -> Landlords.tntProtectedType.valueOf(j.getAsString())
+        );
+    }
+    public enum tntProtectedType { none, all, ignitor }
 
     @Override
     public void onEnable() {
@@ -30,6 +38,7 @@ public final class Landlords extends JavaPlugin {
         mainInstance = this;
 
         //Initializing and loading files
+        new Rule.Key("tntProtected", Landlords.RegionRules.TNT_PROTECTED_DT);
         ConfigManager.initialize();
         Hierarchy.loadAll();
         Region.loadAll();
@@ -68,7 +77,7 @@ public final class Landlords extends JavaPlugin {
 
 
         public static boolean handleEvent(Cancellable event, Player player, Location location, Ability ability) {
-            Region[] regions = Region.getFromPoint(location);
+            Region[] regions = Region.getAllAt(location);
             if (regions.length < 1) {
                 return true;
             }

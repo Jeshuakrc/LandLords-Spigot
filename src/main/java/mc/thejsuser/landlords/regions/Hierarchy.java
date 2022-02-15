@@ -74,7 +74,7 @@ public class Hierarchy {
         Serializer.deserializeFileList(Serializer.FILES.HIERARCHIES,Hierarchy.class);
         return hierarchies_;
     }
-    public static Hierarchy getHierarchy (int id) {
+    public static Hierarchy get(int id) {
         for (Hierarchy hierarchy : hierarchies_) {
             if (hierarchy.getId() == id) {
                 return hierarchy;
