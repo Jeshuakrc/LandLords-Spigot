@@ -13,6 +13,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.BoundingBox;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class Region {
 
@@ -167,16 +168,16 @@ public class Region {
     public static List<Region> getAll() {
         return regions_;
     }
-    public static Region[] getAllAt(double x, double y, double z, World.Environment dimension, Region.Checker checker){
+    public static Region[] getAllAt(double x, double y, double z, World.Environment dimension, Predicate<Region> checker){
         List<Region> l = new ArrayList<>(Collections.emptyList());
         for (Region r : regions_) {
-            if (r.contains(x, y, z, dimension) && checker.check(r)) {
+            if (r.contains(x, y, z, dimension) && checker.test(r)) {
                 l.add(r);
             }
         }
         return l.toArray(new Region[0]);
     }
-    public static Region[] getAllAt(Location location, Region.Checker checker){
+    public static Region[] getAllAt(Location location, Predicate<Region> checker){
         return getAllAt(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment(),checker);
     }
     public static Region[] getAllAt(double x, double y, double z, World.Environment dimension) {
@@ -439,12 +440,6 @@ public class Region {
                 canceller.cancel(); displayer.cancel();
             }
         }
-    }
-
-    //PUBLIC CLASSES
-    @FunctionalInterface
-    public static interface Checker {
-        boolean check(Region region);
     }
 
     public static class JSerializer implements JsonSerializer<Region> {
