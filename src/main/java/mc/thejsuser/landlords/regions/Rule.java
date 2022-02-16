@@ -106,7 +106,14 @@ public class Rule {
             T deserialize(JsonElement json);
         }
     }
+    public static class EnumDataType<E extends Enum<E>> extends DataType<E> {
 
+        public EnumDataType(Class<E> enumType) {
+            super(e -> new JsonPrimitive(e.toString()), j -> E.valueOf(enumType, j.getAsString()));
+        }
+    }
+
+    //SERIALIZATION CLASSES
     public static class JSerializer implements JsonSerializer<Rule> {
 
         @Override

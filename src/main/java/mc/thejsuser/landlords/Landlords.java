@@ -1,6 +1,5 @@
 package mc.thejsuser.landlords;
 
-import com.google.gson.JsonPrimitive;
 import mc.thejsuser.landlords.io.LangManager;
 import mc.thejsuser.landlords.regions.Ability;
 import mc.thejsuser.landlords.regions.Hierarchy;
@@ -26,9 +25,7 @@ public final class Landlords extends JavaPlugin {
         return mainInstance;
     }
     public static class RegionRules {
-        public static final Rule.DataType<Landlords.tntProtectedType> TNT_PROTECTED_DT = new Rule.DataType<Landlords.tntProtectedType>(
-                e -> new JsonPrimitive(e.toString()), j -> Landlords.tntProtectedType.valueOf(j.getAsString())
-        );
+        public static final Rule.DataType<Landlords.tntProtectedType> TNT_PROTECTED_DT = new Rule.EnumDataType<>(tntProtectedType.class);
     }
     public enum tntProtectedType { none, all, ignitor }
 
