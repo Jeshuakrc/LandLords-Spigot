@@ -8,7 +8,6 @@ import mc.thejsuser.landlords.regions.Region;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.scheduler.BukkitRunnable;
 import java.util.*;
@@ -21,11 +20,6 @@ public class PlayerEvents implements Listener {
         if (cause.equals(PlayerTeleportEvent.TeleportCause.ENDER_PEARL) || cause.equals(PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT)) {
             Landlords.Utils.handleEvent(e,player,e.getTo(), Ability.can_teleport_in);
         }
-    }
-
-    @EventHandler
-    public void onPlayerMovement(PlayerMoveEvent e) {
-
     }
 
     //RUnnables

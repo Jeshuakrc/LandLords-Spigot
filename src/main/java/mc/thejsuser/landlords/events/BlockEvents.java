@@ -3,6 +3,7 @@ package mc.thejsuser.landlords.events;
 import mc.thejsuser.landlords.Landlords;
 import mc.thejsuser.landlords.regions.Ability;
 import mc.thejsuser.landlords.io.ConfigManager;
+import mc.thejsuser.landlords.regions.Region;
 import mc.thejsuser.landlords.regions.Rule;
 import mc.thejsuser.landlords.totemElements.TotemLectern;
 import org.bukkit.Material;
@@ -12,9 +13,7 @@ import org.bukkit.block.data.Levelled;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.block.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerTakeLecternBookEvent;
 import org.bukkit.inventory.ItemStack;
@@ -185,5 +184,16 @@ public class BlockEvents implements Listener {
         Ability ablt = TotemLectern.isTotemLectern(lectern) ? Ability.can_take_books_from_totem_lecterns : Ability.can_take_books_from_lecterns;
 
         Landlords.Utils.handleEvent(e,e.getPlayer(),lectern.getLocation().add(.5,.5,.5),ablt);
+    }
+
+    @EventHandler
+    public void onFireSpread(BlockBurnEvent e) {
+        Region[] regions = Region.getRuleContainersAt("fireProtected",e.getBlock().getLocation().add(.5,.5,.5));
+        for (Region r : regions) {
+            if (r.getRuleValue("fireProtected",Rule.DataType.BOOL)) {
+                e.setCancelled(true);
+                return;
+            }
+        }
     }
 }
