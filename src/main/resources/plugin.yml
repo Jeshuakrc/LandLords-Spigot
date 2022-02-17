@@ -1,7 +1,7 @@
 name: Landlords
 version: ${project.version}
-main: mc.thejsuser.landlords.Landlords
+main: com.jkantrell.landlords.Landlords
 api-version: 1.17
-prefix: Landlords_AntiGrief
+prefix: Landlords
 authors: [ TheJsUser ]
 description: Guive your players the ability to claim regions of your word in an interactive and simple may that involves gameplay.
