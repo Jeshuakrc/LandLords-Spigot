@@ -24,6 +24,8 @@ import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.world.ChunkLoadEvent;
+import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
@@ -267,15 +269,26 @@ public class TotemEvents implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoining(PlayerJoinEvent e){
-
-        if(Landlords.getMainInstance().getServer().getOnlinePlayers().size()==1){
-            new BukkitRunnable(){
-                @Override
-                public void run() {
-                    TotemManager.loadTotems();
+    public void onChunkLoad(ChunkLoadEvent e) {
+        Entity[] entities = e.getChunk().getEntities();
+        for (Entity entity : entities) {
+            if (entity instanceof EnderCrystal crystal) {
+                if(Totem.isTotem(crystal)){
+                    TotemManager.getTotems().add(Totem.getFromEndCrystal(crystal));
                 }
-            }.runTaskLater(Landlords.getMainInstance(),40);
+            }
+        }
+    }
+
+    @EventHandler
+    public void onChunkUnload(ChunkUnloadEvent e) {
+        Entity[] entities = e.getChunk().getEntities();
+        for (Entity entity : entities) {
+            if (entity instanceof EnderCrystal crystal) {
+                if(Totem.isTotem(crystal)){
+                    TotemManager.getTotems().remove(Totem.getFromEndCrystal(crystal));
+                }
+            }
         }
     }
 

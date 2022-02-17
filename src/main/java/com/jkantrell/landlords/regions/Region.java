@@ -180,7 +180,7 @@ public class Region {
         return getAllAt(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment(),checker);
     }
     public static Region[] getAllAt(double x, double y, double z, World.Environment dimension) {
-        return getAllAt(x,y,z,dimension,region -> true);
+        return getAllAt(x,y,z,dimension, Region::isEnabled);
     }
     public static Region[] getAllAt(Location location) {
         return getAllAt(location.getX(),location.getY(),location.getZ(), Objects.requireNonNull(location.getWorld()).getEnvironment());
