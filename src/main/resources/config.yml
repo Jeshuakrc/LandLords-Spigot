@@ -129,6 +129,14 @@ region_border_persistence_placed: 420
 #                   Any integer will just define a maximum level reach.
 region_messages_maxLevelReach_resize: 1
 
+# Configures the tittles to display whenever a players enters a region.
+region_names_title_display:
+  enabled: true   # If true, a tittle with the region name will be shown to the player whenever they enter a region.
+  fadeIn: 10      # The duration in ticks of the fade-in transition.
+  stay: 30        # The duration in ticks the title will stay in the screen.
+  fadeOut: 8      # The duration in ticks of the fade-out transition.
+  refreshRate: 60 # The rate in ticks the plugin will check the regions the players are in.
+
 #How many players fit in a single page of a book and quill when modifying a region's permissions through deeds
 deeds_players_per_page: 13
 
