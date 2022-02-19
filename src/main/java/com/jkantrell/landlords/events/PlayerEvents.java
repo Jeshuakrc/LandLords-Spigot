@@ -2,8 +2,8 @@ package com.jkantrell.landlords.events;
 
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.regions.Ability;
-import com.jkantrell.landlords.regions.Region;
+import com.jkantrell.landlords.oldRegions.ablt_;
+import com.jkantrell.landlords.oldRegions.Region;
 import com.jkantrell.landlords.Landlords;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,7 +18,7 @@ public class PlayerEvents implements Listener {
         Player player = e.getPlayer();
         PlayerTeleportEvent.TeleportCause cause = e.getCause();
         if (cause.equals(PlayerTeleportEvent.TeleportCause.ENDER_PEARL) || cause.equals(PlayerTeleportEvent.TeleportCause.CHORUS_FRUIT)) {
-            Landlords.Utils.handleEvent(e,player,e.getTo(), Ability.can_teleport_in);
+            Landlords.Utils.handleEvent(e,player,e.getTo(), ablt_.can_teleport_in);
         }
     }
 

@@ -1,6 +1,6 @@
-package com.jkantrell.landlords.regions;
+package com.jkantrell.landlords.oldRegions;
 
-public enum Ability {
+public enum ablt_ {
     can_break_blocks,
     can_plant,
     can_break_crops,

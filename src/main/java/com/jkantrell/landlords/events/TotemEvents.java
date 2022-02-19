@@ -1,11 +1,11 @@
 package com.jkantrell.landlords.events;
 
-import com.jkantrell.landlords.regions.Ability;
-import com.jkantrell.landlords.regions.Hierarchy;
-import com.jkantrell.landlords.regions.Permission;
+import com.jkantrell.landlords.oldRegions.ablt_;
+import com.jkantrell.landlords.oldRegions.Hierarchy;
+import com.jkantrell.landlords.oldRegions.Permission;
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.regions.Region;
+import com.jkantrell.landlords.oldRegions.Region;
 import com.jkantrell.landlords.totemElements.*;
 import com.jkantrell.landlords.io.ConfigManager;
 import org.bukkit.*;
@@ -23,7 +23,6 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -31,7 +30,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
@@ -336,7 +334,7 @@ public class TotemEvents implements Listener {
         entity = e.getDamager();
         if(entity instanceof Arrow arrow) {
             if(arrow.getShooter() instanceof Player player) {
-                if (!totem.getRegion().checkAbility(player, Ability.can_destroy_totems)) {
+                if (!totem.getRegion().checkAbility(player, ablt_.can_destroy_totems)) {
                     e.setCancelled(true);
                     return;
                 }
@@ -354,7 +352,7 @@ public class TotemEvents implements Listener {
             }
         } else if (entity instanceof Player player) {
             if (
-                    totem.getRegion().checkAbility(player, Ability.can_destroy_totems) &&
+                    totem.getRegion().checkAbility(player, ablt_.can_destroy_totems) &&
                     totem.getLevel() == 0
             ) {
                 totem.destroy();

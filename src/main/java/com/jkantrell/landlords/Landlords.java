@@ -3,10 +3,10 @@ package com.jkantrell.landlords;
 import com.jkantrell.landlords.events.*;
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.regions.Ability;
-import com.jkantrell.landlords.regions.Hierarchy;
-import com.jkantrell.landlords.regions.Region;
-import com.jkantrell.landlords.regions.Rule;
+import com.jkantrell.landlords.oldRegions.ablt_;
+import com.jkantrell.landlords.oldRegions.Hierarchy;
+import com.jkantrell.landlords.oldRegions.Region;
+import com.jkantrell.landlords.oldRegions.Rule;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -73,7 +73,7 @@ public final class Landlords extends JavaPlugin {
         }
 
 
-        public static boolean handleEvent(Cancellable event, Player player, Location location, Ability ability) {
+        public static boolean handleEvent(Cancellable event, Player player, Location location, ablt_ ability) {
             Region[] regions = Region.getAllAt(location);
             if (regions.length < 1) {
                 return true;

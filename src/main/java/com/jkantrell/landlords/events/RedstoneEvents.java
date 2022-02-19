@@ -1,7 +1,7 @@
 package com.jkantrell.landlords.events;
 
 import com.jkantrell.landlords.Landlords;
-import com.jkantrell.landlords.regions.Ability;
+import com.jkantrell.landlords.oldRegions.ablt_;
 import com.jkantrell.landlords.io.ConfigManager;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
@@ -28,9 +28,9 @@ public class RedstoneEvents implements Listener {
         if (block != null && action.equals(Action.RIGHT_CLICK_BLOCK)) {
             Material material = block.getType();
             if (getButtons_().contains(material)) {
-                Ability ablt = (ConfigManager.getEnforcedButtons().contains(material)) ?
-                        Ability.can_press_enforced_buttons :
-                        Ability.can_press_buttons;
+                ablt_ ablt = (ConfigManager.getEnforcedButtons().contains(material)) ?
+                        ablt_.can_press_enforced_buttons :
+                        ablt_.can_press_buttons;
 
                 Landlords.Utils.handleEvent(e, e.getPlayer(), block.getLocation().add(.5,.5,.5), ablt);
             }
@@ -45,7 +45,7 @@ public class RedstoneEvents implements Listener {
         if (block != null && action.equals(Action.RIGHT_CLICK_BLOCK)) {
             if (block.getType() == Material.LEVER) {
                 boolean a;
-                Ability ablt = Ability.can_pull_levers;
+                ablt_ ablt = ablt_.can_pull_levers;
                 Directional dir = (Directional) block.getBlockData();
                 Switch sw = (Switch) block.getBlockData();
 
@@ -62,7 +62,7 @@ public class RedstoneEvents implements Listener {
 
                 Block connected = block.getRelative(face);
                 if (ConfigManager.getLeverLockerBlocks().contains(connected.getType())) {
-                    ablt = Ability.can_pull_locked_levers;
+                    ablt = ablt_.can_pull_locked_levers;
                 }
 
                 Landlords.Utils.handleEvent(e,e.getPlayer(),block.getLocation().add(.5,.5,.5),ablt);

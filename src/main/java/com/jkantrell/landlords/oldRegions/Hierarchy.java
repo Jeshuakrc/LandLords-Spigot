@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.regions;
+package com.jkantrell.landlords.oldRegions;
 
 import com.google.gson.*;
 import com.jkantrell.landlords.io.Serializer;
@@ -84,7 +84,7 @@ public class Hierarchy {
     }
 
     //METHODS
-    public boolean checkAbility(Ability ability, int level) {
+    public boolean checkAbility(ablt_ ability, int level) {
 
         boolean r;
         if(level > 1) {
@@ -108,10 +108,10 @@ public class Hierarchy {
         }
         return r;
     }
-    public boolean checkAbility(Ability ability) {
+    public boolean checkAbility(ablt_ ability) {
         return this.checkAbility(ability, groups_.get(0).getLevel()+1);
     }
-    public boolean checkAbility(Ability ability, Hierarchy.Group group) {
+    public boolean checkAbility(ablt_ ability, Hierarchy.Group group) {
         if (!group.getHierarchy().equals(this)) { return false; }
         return checkAbility(ability,group.getLevel());
     }
@@ -122,11 +122,11 @@ public class Hierarchy {
         //FIELDS
         private int level_;
         private String name_;
-        private List<Ability> abilities_;
+        private List<ablt_> abilities_;
         private final Hierarchy hierarchy_;
 
         //CONSTRUCTORS
-        private Group(int level, String name, List<Ability> abilities, Hierarchy hierarchy) {
+        private Group(int level, String name, List<ablt_> abilities, Hierarchy hierarchy) {
             this.setLevel(level);
             this.setName(name);
             this.setAbilities(abilities);
@@ -140,7 +140,7 @@ public class Hierarchy {
         protected void setName(String name_) {
             this.name_ = name_;
         }
-        protected void setAbilities(List<Ability> abilities_) {
+        protected void setAbilities(List<ablt_> abilities_) {
             this.abilities_ = abilities_;
         }
 
@@ -151,7 +151,7 @@ public class Hierarchy {
         public String getName() {
             return name_;
         }
-        public List<Ability> getAbilities() {
+        public List<ablt_> getAbilities() {
             return new ArrayList<>(abilities_);
         }
         public Hierarchy getHierarchy() {
@@ -163,7 +163,7 @@ public class Hierarchy {
         public int compareTo(Group o) {
             return Integer.compare(level_, o.getLevel());
         }
-        public boolean allowedTo(Ability ability) {
+        public boolean allowedTo(ablt_ ability) {
             return this.getAbilities().contains(ability);
         }
     }
@@ -188,7 +188,7 @@ public class Hierarchy {
             return r;
         }
 
-        public boolean add(String name, int level, List<Ability> abilities){
+        public boolean add(String name, int level, List<ablt_> abilities){
             boolean r = super.add(new Group(
                     level, name, abilities, this.hierarchy_
             ));
@@ -210,12 +210,12 @@ public class Hierarchy {
                     jsonHierarchy.get("name").getAsString()
             );
 
-            JsonObject jsonGroup; ArrayList<Ability> abilities;
+            JsonObject jsonGroup; ArrayList<ablt_> abilities;
             for (JsonElement element : jsonHierarchy.get("groups").getAsJsonArray()) {
                 jsonGroup = element.getAsJsonObject();
                 abilities = new ArrayList<>();
                 for (JsonElement element1 : jsonGroup.get("abilities").getAsJsonArray()) {
-                    abilities.add(Ability.valueOf(element1.getAsString()));
+                    abilities.add(ablt_.valueOf(element1.getAsString()));
                 }
                 hierarchy.getGroups().add(
                         jsonGroup.get("name").getAsString(),

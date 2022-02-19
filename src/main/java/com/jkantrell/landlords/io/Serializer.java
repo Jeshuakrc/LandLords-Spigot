@@ -1,12 +1,12 @@
 package com.jkantrell.landlords.io;
 
 import com.google.gson.*;
-import com.jkantrell.landlords.regions.Hierarchy;
-import com.jkantrell.landlords.regions.Permission;
-import com.jkantrell.landlords.regions.Region;
-import com.jkantrell.landlords.regions.Rule;
-import com.jkantrell.landlords.regions.dataContainers.RegionData;
-import com.jkantrell.landlords.regions.dataContainers.RegionDataContainer;
+import com.jkantrell.landlords.oldRegions.Hierarchy;
+import com.jkantrell.landlords.oldRegions.Permission;
+import com.jkantrell.landlords.oldRegions.Region;
+import com.jkantrell.landlords.oldRegions.Rule;
+import com.jkantrell.landlords.oldRegions.dataContainers.RegionData;
+import com.jkantrell.landlords.oldRegions.dataContainers.RegionDataContainer;
 import com.jkantrell.landlords.totemElements.TotemStructure;
 
 import java.io.*;

@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.regions;
+package com.jkantrell.landlords.oldRegions;
 
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.BoundingBox;

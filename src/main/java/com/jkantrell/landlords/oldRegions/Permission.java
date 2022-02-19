@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.regions;
+package com.jkantrell.landlords.oldRegions;
 
 import com.google.gson.*;
 import com.jkantrell.landlords.Landlords;

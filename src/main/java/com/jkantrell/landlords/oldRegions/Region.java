@@ -1,7 +1,7 @@
-package com.jkantrell.landlords.regions;
+package com.jkantrell.landlords.oldRegions;
 
 import com.google.gson.*;
-import com.jkantrell.landlords.regions.dataContainers.RegionDataContainer;
+import com.jkantrell.landlords.oldRegions.dataContainers.RegionDataContainer;
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.Serializer;
@@ -188,7 +188,7 @@ public class Region {
     public static Region[] getRuleContainersAt(String ruleName, Location location) {
         return getAllAt(location, region -> region.hasRule(ruleName));
     }
-    public static boolean checkAbilityInRegions(Region[] regions, Player player, Ability ability) {
+    public static boolean checkAbilityInRegions(Region[] regions, Player player, ablt_ ability) {
 
         boolean r = true;
         List<Region> list = new ArrayList<>();
@@ -246,11 +246,11 @@ public class Region {
         }
         return r;
     }
-    public static boolean checkAbilityAt(Player player, Ability ability, double x, double y, double z, World.Environment environment) {
+    public static boolean checkAbilityAt(Player player, ablt_ ability, double x, double y, double z, World.Environment environment) {
         Region[] regions = getAllAt(x, y, z, environment);
         return checkAbilityInRegions(regions, player, ability);
     }
-    public static boolean checkAbilityAt(Player player, Ability ability, Location location) {
+    public static boolean checkAbilityAt(Player player, ablt_ ability, Location location) {
         return checkAbilityAt(player,ability,location.getX(),location.getY(),location.getZ(),location.getWorld().getEnvironment());
     }
     public static int getHighestId(Region[] regions) {
@@ -289,7 +289,7 @@ public class Region {
     }
 
     //PUBLIC METHODS
-    public boolean checkAbility( Player player, Ability ability) {
+    public boolean checkAbility( Player player, ablt_ ability) {
 
         if(!this.isEnabled()) { return true; }
         Permission perm = null;

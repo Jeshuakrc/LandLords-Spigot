@@ -1,9 +1,9 @@
 package com.jkantrell.landlords.events;
 
-import com.jkantrell.landlords.regions.Region;
-import com.jkantrell.landlords.regions.Rule;
+import com.jkantrell.landlords.oldRegions.Region;
+import com.jkantrell.landlords.oldRegions.Rule;
 import com.jkantrell.landlords.Landlords;
-import com.jkantrell.landlords.regions.Ability;
+import com.jkantrell.landlords.oldRegions.ablt_;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,7 +20,7 @@ public class EntityEvents implements Listener {
 
         Hanging entity = e.getEntity();
         Entity remover = e.getRemover();
-        Ability ablt = null;
+        ablt_ ablt = null;
         Player player = null;
         if (remover instanceof Player player_) {
             player = player_;
@@ -32,9 +32,9 @@ public class EntityEvents implements Listener {
         }
 
          switch (entity.getType()){
-             case ITEM_FRAME -> ablt= Ability.can_break_item_frames;
-             case GLOW_ITEM_FRAME -> ablt= Ability.can_break_glow_item_frames;
-             case PAINTING -> ablt= Ability.can_break_paintings;
+             case ITEM_FRAME -> ablt= ablt_.can_break_item_frames;
+             case GLOW_ITEM_FRAME -> ablt= ablt_.can_break_glow_item_frames;
+             case PAINTING -> ablt= ablt_.can_break_paintings;
 
              default -> {}
          }
@@ -58,18 +58,18 @@ public class EntityEvents implements Listener {
         }
 
         Entity entity = e.getEntity();
-        Ability ablt = null;
+        ablt_ ablt = null;
         switch (entity.getType()) {
-            case ARMOR_STAND -> ablt = Ability.can_break_armor_stands;
-            case ITEM_FRAME -> ablt = Ability.can_take_from_item_frames;
-            case GLOW_ITEM_FRAME -> ablt = Ability.can_take_from_glow_item_frames;
+            case ARMOR_STAND -> ablt = ablt_.can_break_armor_stands;
+            case ITEM_FRAME -> ablt = ablt_.can_take_from_item_frames;
+            case GLOW_ITEM_FRAME -> ablt = ablt_.can_take_from_glow_item_frames;
 
             default -> {
                 if (entity instanceof Animals) {
-                    ablt = Ability.can_damage_animals;
+                    ablt = ablt_.can_damage_animals;
                 }
                 if (entity instanceof Monster) {
-                    ablt = Ability.can_damage_monsters;
+                    ablt = ablt_.can_damage_monsters;
                 }
             }
         }
@@ -83,14 +83,14 @@ public class EntityEvents implements Listener {
     public void onEntityInteraction(PlayerInteractEntityEvent e) {
 
         Entity entity = e.getRightClicked();
-        Ability ablt = null;
+        ablt_ ablt = null;
 
         switch (entity.getType()) {
-            case ITEM_FRAME ->  ablt = Ability.can_interact_with_item_frames;
-            case GLOW_ITEM_FRAME -> ablt = Ability.can_interact_with_glow_item_frames;
+            case ITEM_FRAME ->  ablt = ablt_.can_interact_with_item_frames;
+            case GLOW_ITEM_FRAME -> ablt = ablt_.can_interact_with_glow_item_frames;
             default -> {
                 if (entity instanceof Animals) {
-                    ablt = Ability.can_interact_with_animals;
+                    ablt = ablt_.can_interact_with_animals;
                 }
             }
         }
@@ -103,8 +103,8 @@ public class EntityEvents implements Listener {
     public void onArmorStandInteraction(PlayerInteractAtEntityEvent e){
 
         Entity entity = e.getRightClicked();
-        Ability ablt = switch (entity.getType()) {
-            case ARMOR_STAND -> Ability.can_interact_with_armor_stands;
+        ablt_ ablt = switch (entity.getType()) {
+            case ARMOR_STAND -> ablt_.can_interact_with_armor_stands;
             default -> null;
         };
         if(ablt != null) {
@@ -126,7 +126,7 @@ public class EntityEvents implements Listener {
                         case ignitor -> {
                             if (tnt.getSource() != null) {
                                 if (tnt.getSource() instanceof Player player) {
-                                    return !region.checkAbility(player,Ability.can_ignite_tnt);
+                                    return !region.checkAbility(player, ablt_.can_ignite_tnt);
                                 }
                             }
                             return true;

@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.regions.dataContainers;
+package com.jkantrell.landlords.oldRegions.dataContainers;
 
 import com.google.gson.*;
 import com.jkantrell.landlords.io.Serializer;
