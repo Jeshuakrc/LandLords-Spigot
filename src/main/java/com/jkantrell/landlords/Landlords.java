@@ -38,11 +38,6 @@ public final class Landlords extends JavaPlugin {
         } catch (IllegalAccessException e) {
             e.printStackTrace();
         }
-
-        //Initialize regionNameDisplayer
-        if (ConfigManager.getRegionTitleDisplayEnabled()) {
-            PlayerEvents.TitleDisplayer.runTaskTimerAsynchronously(this, 0, ConfigManager.getRegionTitleDisplayRefreshRate());
-        }
     }
 
     @Override
