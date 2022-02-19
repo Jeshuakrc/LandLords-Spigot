@@ -1,15 +1,9 @@
 package com.jkantrell.landlords;
 
-import com.jkantrell.landlords.events.*;
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.*;
-import net.md_5.bungee.api.ChatMessageType;
-import net.md_5.bungee.api.chat.TextComponent;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Cancellable;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
