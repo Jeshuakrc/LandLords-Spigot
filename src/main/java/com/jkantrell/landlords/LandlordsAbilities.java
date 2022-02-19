@@ -1,16 +1,13 @@
-package com.jkantrell.landlords.events;
+package com.jkantrell.landlords;
 
-import com.jkantrell.landlords.oldRegions.ablt_;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.regions.abilities.Ability;
-import com.jkantrell.regionslib.regions.abilities.AbilityHandler;
-import net.md_5.bungee.chat.SelectorComponentSerializer;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockBreakEvent;
 
 import java.lang.reflect.Field;
 
-public class AbilityRegistration {
+public class LandlordsAbilities {
 
     public final static Ability<BlockBreakEvent> BLOCK_BREAK = new Ability<>(
             "block_break",
@@ -20,7 +17,7 @@ public class AbilityRegistration {
             );
 
     static void registerAll() throws IllegalAccessException {
-        for (Field field : AbilityRegistration.class.getFields()) {
+        for (Field field : LandlordsAbilities.class.getFields()) {
             Ability<Event> ability = (Ability<Event>) field.get(null);
             if (field.getGenericType() instanceof Class<?> clazz) {
                 Class<Event> eventClass = (Class<Event>) clazz;

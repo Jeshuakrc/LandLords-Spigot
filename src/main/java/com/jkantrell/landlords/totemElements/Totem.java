@@ -2,8 +2,8 @@ package com.jkantrell.landlords.totemElements;
 
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.oldRegions.*;
-import com.jkantrell.landlords.oldRegions.dataContainers.RegionData;
+import com.jkantrell.regionslib.regions.*;
+import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import com.jkantrell.landlords.Landlords;
 import org.bukkit.*;
 import org.bukkit.block.Block;
@@ -142,7 +142,7 @@ public class Totem {
                 ConfigManager.getDefaultGroupLevel()
             )};
         String name = LangManager.getString("totem_region_defauldName",placer,placer.getName());
-        Region region = new Region(regionVertex,this.getWorld().getEnvironment(),perms,name,hierarchy);
+        Region region = new Region(regionVertex,this.getWorld(),perms,name,hierarchy);
         RegionData totemData = new RegionData("totemRegion",true);
         region.getDataContainer().add(totemData);
         for (Rule rule : structure.getRules()) {

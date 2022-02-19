@@ -1,10 +1,10 @@
 package com.jkantrell.landlords.events;
 
-import com.jkantrell.landlords.oldRegions.Rule;
+import com.jkantrell.regionslib.regions.Rule;
 import com.jkantrell.landlords.Landlords;
-import com.jkantrell.landlords.oldRegions.ablt_;
+import com.jkantrell.regionslib.regions.ablt_;
 import com.jkantrell.landlords.io.ConfigManager;
-import com.jkantrell.landlords.oldRegions.Region;
+import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.landlords.totemElements.TotemLectern;
 import org.bukkit.Material;
 import org.bukkit.block.Block;

@@ -2,8 +2,7 @@ package com.jkantrell.landlords.events;
 
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.oldRegions.ablt_;
-import com.jkantrell.landlords.oldRegions.Region;
+import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.landlords.Landlords;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

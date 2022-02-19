@@ -3,10 +3,7 @@ package com.jkantrell.landlords;
 import com.jkantrell.landlords.events.*;
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.oldRegions.ablt_;
-import com.jkantrell.landlords.oldRegions.Hierarchy;
-import com.jkantrell.landlords.oldRegions.Region;
-import com.jkantrell.landlords.oldRegions.Rule;
+import com.jkantrell.regionslib.regions.*;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
@@ -42,12 +39,11 @@ public final class Landlords extends JavaPlugin {
 
         //Registering events
         PluginManager pm = getServer().getPluginManager();
-        pm.registerEvents(new BlockEvents(), this);
-        pm.registerEvents(new ContainerEvents(), this);
-        pm.registerEvents(new RedstoneEvents(), this);
-        pm.registerEvents(new EntityEvents(), this);
-        pm.registerEvents(new TotemEvents(), this);
-        pm.registerEvents(new PlayerEvents(), this);
+        try {
+            LandlordsAbilities.registerAll();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
 
         //Initialize regionNameDisplayer
         if (ConfigManager.getRegionTitleDisplayEnabled()) {
@@ -70,48 +66,6 @@ public final class Landlords extends JavaPlugin {
 
         public static void broadcastMessageLang(String path, String[] args) {
             broadcastMessageLang(path, args, Landlords.getMainInstance().getServer().getOnlinePlayers());
-        }
-
-
-        public static boolean handleEvent(Cancellable event, Player player, Location location, ablt_ ability) {
-            Region[] regions = Region.getAllAt(location);
-            if (regions.length < 1) {
-                return true;
-            }
-            boolean a = Region.checkAbilityInRegions(regions, player, ability);
-            if (!a) {
-                event.setCancelled(true);
-
-                if (player != null) {
-                    String regionName = regions[0].getName();
-                    try {
-                        String  message,
-                                path = "action_denied." + ability.toString();
-                        try {
-                            message = LangManager.getString(path, player, regionName);
-                        } catch (NullPointerException e) {
-                            message = LangManager.getString("action_denied.default", player, regionName);
-                            Bukkit.getLogger().warning(String.format(
-                                    """
-                                    %1$s doesn't have the ability "%2$s" in the region "%3$s", but a specific denial message wasn't found in the "%4$s" lang file.
-                                    Displaying the default denied action message.
-                                    Include the "action_denied.%2$s" entry in the lang file to provide an specific message.""",
-                                    player.getName(),ability.toString(),regionName, LangManager.getLangFileName(player)
-                            ));
-                        }
-                        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
-                    } catch (NullPointerException e) {
-                        Bukkit.getLogger().warning(String.format(
-                                """
-                                %1$s doesn't have the ability "%2$s" in the region "%3$s", but neither a specific nor default denial message was found in the "%4$s" lang file.
-                                Make sure to include the "action_denied.%2$s" or "action_denier.default" entry in the lang file.""",
-                                player.getName(),ability.toString(),regionName, LangManager.getLangFileName(player)
-                        ));
-                    }
-                }
-            }
-
-            return a;
         }
     }
 }

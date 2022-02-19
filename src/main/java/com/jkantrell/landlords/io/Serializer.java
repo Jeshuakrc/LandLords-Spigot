@@ -1,12 +1,7 @@
 package com.jkantrell.landlords.io;
 
 import com.google.gson.*;
-import com.jkantrell.landlords.oldRegions.Hierarchy;
-import com.jkantrell.landlords.oldRegions.Permission;
-import com.jkantrell.landlords.oldRegions.Region;
-import com.jkantrell.landlords.oldRegions.Rule;
-import com.jkantrell.landlords.oldRegions.dataContainers.RegionData;
-import com.jkantrell.landlords.oldRegions.dataContainers.RegionDataContainer;
+import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.landlords.totemElements.TotemStructure;
 
 import java.io.*;
@@ -19,17 +14,6 @@ public abstract class Serializer {
     public static final Gson GSON;
     static {
         GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(Hierarchy.class, new Hierarchy.JDeserializer());
-        builder.registerTypeAdapter(Rule.class, new Rule.JSerializer());
-        builder.registerTypeAdapter(Rule.class, new Rule.JDeserializer());
-        builder.registerTypeAdapter(Region.class, new Region.JSerializer());
-        builder.registerTypeAdapter(Region.class, new Region.JDeserializer());
-        builder.registerTypeAdapter(Permission.class, new Permission.JSerializer());
-        builder.registerTypeAdapter(RegionData.class, new RegionData.JSerializer());
-        builder.registerTypeAdapter(RegionData.class, new RegionData.JDeserializer());
-        builder.registerTypeAdapter(RegionDataContainer.class, new RegionDataContainer.JSerializer());
-        builder.registerTypeAdapter(RegionDataContainer.class, new RegionDataContainer.JDeserializer());
-
         builder.registerTypeAdapter(TotemStructure.class, new TotemStructure.JDeserializer());
 
         GSON = builder.create();

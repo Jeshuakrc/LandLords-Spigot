@@ -1,7 +1,6 @@
 package com.jkantrell.landlords.events;
 
 import com.jkantrell.landlords.Landlords;
-import com.jkantrell.landlords.oldRegions.ablt_;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;

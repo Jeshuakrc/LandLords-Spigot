@@ -1,8 +1,8 @@
 package com.jkantrell.landlords.totemElements;
 
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.oldRegions.Permission;
-import com.jkantrell.landlords.oldRegions.Region;
+import com.jkantrell.regionslib.regions.Permission;
+import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.landlords.Landlords;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;

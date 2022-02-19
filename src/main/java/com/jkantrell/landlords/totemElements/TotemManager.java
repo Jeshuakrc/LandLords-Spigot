@@ -1,8 +1,8 @@
 package com.jkantrell.landlords.totemElements;
 
 import com.jkantrell.landlords.io.Serializer;
-import com.jkantrell.landlords.oldRegions.Region;
-import com.jkantrell.landlords.oldRegions.dataContainers.RegionData;
+import com.jkantrell.regionslib.regions.Region;
+import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import com.jkantrell.landlords.Landlords;
 import org.bukkit.World;
 import org.bukkit.block.Block;

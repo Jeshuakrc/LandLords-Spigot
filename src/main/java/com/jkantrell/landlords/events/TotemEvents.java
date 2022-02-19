@@ -1,11 +1,8 @@
 package com.jkantrell.landlords.events;
 
-import com.jkantrell.landlords.oldRegions.ablt_;
-import com.jkantrell.landlords.oldRegions.Hierarchy;
-import com.jkantrell.landlords.oldRegions.Permission;
+import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.oldRegions.Region;
 import com.jkantrell.landlords.totemElements.*;
 import com.jkantrell.landlords.io.ConfigManager;
 import org.bukkit.*;

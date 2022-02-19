@@ -2,11 +2,8 @@ package com.jkantrell.landlords.totemElements;
 
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.oldRegions.Hierarchy;
-import com.jkantrell.landlords.oldRegions.Permission;
-import com.jkantrell.landlords.oldRegions.Region;
-import com.jkantrell.landlords.oldRegions.dataContainers.RegionData;
-import com.jkantrell.landlords.oldRegions.dataContainers.RegionDataContainer;
+import com.jkantrell.regionslib.regions.*;
+import com.jkantrell.regionslib.regions.dataContainers.*;
 import com.jkantrell.landlords.Landlords;
 import org.apache.commons.lang.StringUtils;
 import org.bukkit.Material;
