@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totemElements;
+package com.jkantrell.landlords.totems;
 
 public abstract class TotemElement<T> implements TotemRelative {
 

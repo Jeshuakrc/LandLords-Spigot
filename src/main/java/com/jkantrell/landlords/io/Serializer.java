@@ -1,8 +1,8 @@
 package com.jkantrell.landlords.io;
 
 import com.google.gson.*;
-import com.jkantrell.regionslib.regions.*;
-import com.jkantrell.landlords.totemElements.TotemStructure;
+import com.jkantrell.landlords.totems.TotemStructure;
+import org.bukkit.Bukkit;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -20,8 +20,6 @@ public abstract class Serializer {
     }
 
     public static class FILES {
-        public static final File REGIONS = new File(ConfigManager.getConfigPath(), "regions.json");
-        public static final File HIERARCHIES = new File(ConfigManager.getConfigPath(), "hierarchies.json");
         public static final File TOTEM_STRUCTURES = new File(ConfigManager.getConfigPath(), "totemStructures.json");
     }
 
@@ -64,6 +62,7 @@ public abstract class Serializer {
 
     private static void ensureFileExistence (File file, boolean array) {
         if (file.exists()) { return; }
+        Bukkit.getLogger().info("Looking for file " + file.getPath());
         file.getParentFile().mkdirs();
 
         if (!array) { return; }

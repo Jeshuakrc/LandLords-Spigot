@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totemElements;
+package com.jkantrell.landlords.totems;
 
 import com.jkantrell.landlords.io.Serializer;
 import com.jkantrell.regionslib.regions.Region;

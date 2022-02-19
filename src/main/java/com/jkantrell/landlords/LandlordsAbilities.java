@@ -6,10 +6,12 @@ import org.bukkit.event.Event;
 import org.bukkit.event.block.BlockBreakEvent;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 
 public class LandlordsAbilities {
 
     public final static Ability<BlockBreakEvent> BLOCK_BREAK = new Ability<>(
+            BlockBreakEvent.class,
             "block_break",
             e -> true,
             BlockBreakEvent::getPlayer,
@@ -18,11 +20,7 @@ public class LandlordsAbilities {
 
     static void registerAll() throws IllegalAccessException {
         for (Field field : LandlordsAbilities.class.getFields()) {
-            Ability<Event> ability = (Ability<Event>) field.get(null);
-            if (field.getGenericType() instanceof Class<?> clazz) {
-                Class<Event> eventClass = (Class<Event>) clazz;
-                RegionsLib.getAbilityHandler().register(ability,eventClass);
-            }
+            ((Ability<?>) field.get(null)).register();
         }
     }
 

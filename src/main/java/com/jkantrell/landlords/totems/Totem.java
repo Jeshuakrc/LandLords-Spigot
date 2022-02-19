@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totemElements;
+package com.jkantrell.landlords.totems;
 
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;

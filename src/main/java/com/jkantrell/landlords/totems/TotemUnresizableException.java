@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totemElements;
+package com.jkantrell.landlords.totems;
 
 public class TotemUnresizableException extends Exception{
 }

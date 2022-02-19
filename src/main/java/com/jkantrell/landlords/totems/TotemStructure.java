@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totemElements;
+package com.jkantrell.landlords.totems;
 
 import com.google.gson.*;
 import com.jkantrell.landlords.io.Serializer;

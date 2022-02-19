@@ -2,12 +2,15 @@ package com.jkantrell.landlords;
 
 import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.totems.TotemEventListener;
+import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.regions.*;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
+import java.util.logging.Level;
 
 public final class Landlords extends JavaPlugin {
 
@@ -22,14 +25,17 @@ public final class Landlords extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        this.getLogger().setLevel(Level.ALL);
+
         //Setting Main Instance
         mainInstance = this;
 
         //Initializing and loading files
         new Rule.Key("tntProtected", Landlords.RegionRules.TNT_PROTECTED_DT);
+        this.getServer().getPluginManager().registerEvents(new TotemEventListener(),this);
         ConfigManager.initialize();
-        Hierarchy.loadAll();
-        Region.loadAll();
+        RegionsLib.enable(this);
+
 
         //Registering events
         PluginManager pm = getServer().getPluginManager();
