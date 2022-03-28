@@ -86,7 +86,7 @@ public abstract class LangManager {
     protected static String getLangsPath() {
 
         if (langPath_==null) {
-            Path path = Paths.get(ConfigManager.getConfigPath() + "/" + langDirName_);
+            Path path = Paths.get(Landlords.CONFIG.configPath + "/" + langDirName_);
             if (!Files.exists(path)) {
                 try {
                     Files.createDirectories(path);
@@ -127,7 +127,7 @@ public abstract class LangManager {
                     if (!newLang.equals(langCode)) {
                         return LangManager.getFileFromLang_(newLang);
                     } else {
-                        String defaultLang = ConfigManager.getDefaultLanguageCode();
+                        String defaultLang = Landlords.CONFIG.defaultLanguageCode;
                         if (!defaultLang.equals(langCode)) {
                             return LangManager.getFileFromLang_(defaultLang);
                         }

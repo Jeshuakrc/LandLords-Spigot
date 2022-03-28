@@ -1,19 +1,19 @@
 package com.jkantrell.landlords;
 
-import com.jkantrell.landlords.io.ConfigManager;
+import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.landlords.totems.TotemEventListener;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.regions.*;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
-
+import java.io.FileNotFoundException;
 import java.util.Collection;
 import java.util.logging.Level;
 
 public final class Landlords extends JavaPlugin {
 
+    public static final Config CONFIG = new Config("./plugins/Landlords/config.yml");
     private static Landlords mainInstance;
     public static Landlords getMainInstance(){
         return mainInstance;
@@ -33,17 +33,13 @@ public final class Landlords extends JavaPlugin {
         //Initializing and loading files
         new Rule.Key("tntProtected", Landlords.RegionRules.TNT_PROTECTED_DT);
         this.getServer().getPluginManager().registerEvents(new TotemEventListener(),this);
-        ConfigManager.initialize();
-        RegionsLib.enable(this);
-
-
-        //Registering events
-        PluginManager pm = getServer().getPluginManager();
         try {
-            LandlordsAbilities.registerAll();
-        } catch (IllegalAccessException e) {
+            Landlords.CONFIG.load();
+        } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+        RegionsLib.configLocation = new String[] {"./plugins/Landlords/config.yml", "regions"};
+        RegionsLib.enable(this);
     }
 
     @Override

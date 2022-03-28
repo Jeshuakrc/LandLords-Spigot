@@ -1,7 +1,9 @@
 package com.jkantrell.landlords.io;
 
 import com.google.gson.*;
+import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.totems.TotemStructure;
+import com.jkantrell.regionslib.regions.Rule;
 import org.bukkit.Bukkit;
 
 import java.io.*;
@@ -15,12 +17,13 @@ public abstract class Serializer {
     static {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(TotemStructure.class, new TotemStructure.JDeserializer());
+        builder.registerTypeAdapter(Rule.class, new Rule.JDeserializer());
 
         GSON = builder.create();
     }
 
     public static class FILES {
-        public static final File TOTEM_STRUCTURES = new File(ConfigManager.getConfigPath(), "totemStructures.json");
+        public static final File TOTEM_STRUCTURES = new File(Landlords.CONFIG.configPath, "totemStructures.json");
     }
 
     public static <T> T deserializeFile (File file, Class<T> typeOf) {

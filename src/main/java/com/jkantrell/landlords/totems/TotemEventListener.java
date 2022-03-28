@@ -1,7 +1,7 @@
 package com.jkantrell.landlords.totems;
 
 import com.jkantrell.landlords.Landlords;
-import com.jkantrell.landlords.io.ConfigManager;
+import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.Hierarchy;
 import com.jkantrell.regionslib.regions.Permission;
@@ -35,7 +35,6 @@ public class TotemEventListener implements Listener {
 
     //STATIC FIELDS
     private static HashMap<Player, EquipmentSlot> deedPlayerSlotMap_ = new HashMap<>();
-    private static final ConfigManager.groupLevelReach regionResizeMessageRange = ConfigManager.getTotemResizeMessageLevelReach();
 
     //EVENTS
     @EventHandler
@@ -62,11 +61,11 @@ public class TotemEventListener implements Listener {
                         item.getType() == Material.END_CRYSTAL
                 ) {
                     structure = TotemManager.chekStructuresFromPoint(block.getX(), block.getY() + 1, block.getZ(), player.getWorld());
-                    boolean onObsidian = block.getType().equals(Material.OBSIDIAN);
+                    boolean onValidBlock = block.getType().equals(Material.OBSIDIAN) || block.getType().equals(Material.BEDROCK);
 
-                    switch (ConfigManager.getEndCystalOnAnyBlock()) {
+                    switch (Landlords.CONFIG.endCrystalOnAnyBlock) {
                         case never:
-                            if (!onObsidian) {
+                            if (!onValidBlock) {
                                 break;
                             }
 
@@ -76,7 +75,7 @@ public class TotemEventListener implements Listener {
                             }
 
                         case always:
-                            if (structure == null && !onObsidian) {
+                            if (structure == null && !onValidBlock) {
                                 e.setCancelled(true);
                                 Totem.placeEndCrystal(player, block.getX(), block.getY() + 1, block.getZ());
                             }
@@ -212,45 +211,53 @@ public class TotemEventListener implements Listener {
                 Totem totem = Totem.getFromEndCrystal(crystal);
                 ItemStack handed = inventory.getItemInMainHand();
                 Material    item = handed.getType(),
-                        upgrade = ConfigManager.getTotemUpgradeItem(),
-                        downgrade = ConfigManager.getTotemDowngradeItem();
+                            upgrade = Landlords.CONFIG.totemUpgradeItem.item(),
+                            downgrade = Landlords.CONFIG.totemDowngradeItem.item();
 
                 if(upgrade.equals(item) || downgrade.equals(item)){
-                    boolean resized, consume; int toResize;
+                    boolean resized; int toResize;
+                    Config.TotemInteractionData interactionData;
 
                     e.setCancelled(true);
 
                     if (upgrade.equals(item)) {
                         toResize = 1;
-                        consume = ConfigManager.getTotemUpgradeItemConsume();
+                        interactionData = Landlords.CONFIG.totemUpgradeItem;
                     } else {
                         toResize = -1;
-                        consume = ConfigManager.getTotemDowngradeItemConsume();
+                        interactionData = Landlords.CONFIG.totemDowngradeItem;
                     }
                     try {
-                        resized = totem.resize(toResize, toResize);
+                        ItemStack itemStack = new ItemStack(item,interactionData.count());
+                        if (inventory.contains(itemStack,interactionData.count())) {
+                            resized = totem.resize(toResize, toResize);
+                        } else {
+                            resized = false;
+                        }
+
                         if(resized){
                             Region region = totem.getRegion();
                             String msgPath = "region_resize";
                             String[] msgArgs = { player.getName(), region.getName(), Double.toString(region.getWidthX()), Double.toString(region.getHeight()), Double.toString(region.getWidthZ()) };
+                            Config.GroupLevelReach msgReach = Landlords.CONFIG.msgReachRegionResize;
 
-                            switch (regionResizeMessageRange) {
-                                case lvl -> region.broadCastToMembersLang(msgPath, msgArgs, regionResizeMessageRange.getLevel());
+                            switch (msgReach) {
+                                case lvl -> region.broadCastToMembersLang(msgPath, msgArgs, msgReach.getLevel());
                                 case members -> region.broadCastToMembersLang(msgPath, msgArgs, region.getHierarchy().getHighestLevel());
                                 case all -> Landlords.Utils.broadcastMessageLang(msgPath, msgArgs);
                                 case responsible -> player.sendMessage(LangManager.getString(msgPath, player, msgArgs));
                                 default -> {}
                             }
 
-                            if (consume) {
-                                inventory.removeItem(new ItemStack(item));
+                            if (interactionData.consume()) {
+                                inventory.removeItem(itemStack);
                             }
                         }
                     } catch (TotemUnresizableException ignored) {
 
                     }
                 }
-                if (item.equals(ConfigManager.getScriptureExchangeItem())) {
+                if (item.equals(Landlords.CONFIG.deedsExchangeItem)) {
 
                     if(Deeds.isTotemDeeds(handed)) { return; }
 
@@ -335,7 +342,7 @@ public class TotemEventListener implements Listener {
 
             }
 
-            List<PotionType> effects = ConfigManager.getTotemDestroyArrowEffects();
+            List<PotionType> effects = Landlords.CONFIG.totemDestroyArrowEffects;
 
             if(effects.isEmpty()) {
                 totem.destroy();

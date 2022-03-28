@@ -1,6 +1,6 @@
 package com.jkantrell.landlords.totems;
 
-import com.jkantrell.landlords.io.ConfigManager;
+import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
@@ -36,8 +36,8 @@ public class Totem {
     private long lastInteraction_;
     private int cooldown_;
     private BoundingBox structureBox_;
-    private final ConfigManager.ParticleData placeParticle_ = ConfigManager.getTotemPlaceParticle();
-    private final int[] placeParticlePos_ = ConfigManager.getTotemPlaceParticlePos();
+    private final Config.ParticleData placeParticle_ = Landlords.CONFIG.totemPlaceParticleEffect;
+    private final int[] placeParticlePos_ = Landlords.CONFIG.totemPlaceParticlePos;
 
     private static List<Totem> totems_ = new ArrayList<>();
 
@@ -50,8 +50,8 @@ public class Totem {
         setPosition(x,y,z);
         setWorld(world);
         setStructure(structure);
-        cooldown_= ConfigManager.getTotemInteractCooldown();
-        lastInteraction_=System.currentTimeMillis() - cooldown_;
+        this.cooldown_= Landlords.CONFIG.totemInteractCoolDown;
+        this.lastInteraction_=System.currentTimeMillis() - cooldown_;
 
     }
 
@@ -139,7 +139,7 @@ public class Totem {
         Permission[] perms = {new Permission(
                 placer.getName(),
                 hierarchy,
-                ConfigManager.getDefaultGroupLevel()
+                Landlords.CONFIG.totemDefaultGroupLevel
             )};
         String name = LangManager.getString("totem_region_defauldName",placer,placer.getName());
         Region region = new Region(regionVertex,this.getWorld(),perms,name,hierarchy);
@@ -154,7 +154,7 @@ public class Totem {
         this.setRegionId(region.getId());
         this.saveOnEndCrystal(crystal);
         TotemManager.registerTotem(this);
-        region.displayBoundaries(ConfigManager.getRegionBorderRefreshRate(),ConfigManager.getRegionBorderPersistencePlaced());
+        region.displayBoundaries(Landlords.CONFIG.regionsBorderRefreshRate,Landlords.CONFIG.regionsBorderPersistencePlaced);
         world.playSound(this.getLocation(), Sound.BLOCK_BEACON_ACTIVATE,3, 0.5f);
         world.spawnParticle(
                 placeParticle_.particle(),
@@ -399,11 +399,11 @@ public class Totem {
     }
     private void dropItem_(int amount) {
 
-        if (this.getLevel() >0) {
+        if (this.getLevel() > 0) {
             for (int i = 0; i < amount; i++) {
                 double random = Math.random();
-                if (random <= ConfigManager.getTotemDropBackRate()) {
-                    Item item = this.getWorld().dropItem(this.getLocation(), new ItemStack(ConfigManager.getTotemUpgradeItem()));
+                if (random <= Landlords.CONFIG.totemDropBackRate) {
+                    Item item = this.getWorld().dropItem(this.getLocation(), new ItemStack(Landlords.CONFIG.totemUpgradeItem.item()));
                     item.setInvulnerable(true);
                 }
             }

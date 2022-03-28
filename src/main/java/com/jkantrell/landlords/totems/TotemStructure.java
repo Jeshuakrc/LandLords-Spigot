@@ -11,7 +11,6 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.BoundingBox;
-
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;

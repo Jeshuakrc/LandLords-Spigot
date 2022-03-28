@@ -1,6 +1,5 @@
 package com.jkantrell.landlords.totems;
 
-import com.jkantrell.landlords.io.ConfigManager;
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.*;
@@ -72,7 +71,7 @@ public class Deeds {
             permissionsMap.get(group).add(p.getPlayerName());
         }
 
-        int size, index, perPage = ConfigManager.getDeedsPlayersPerPage();
+        int size, index, perPage = Landlords.CONFIG.deedsPlayersPerPage;
         List<String> players;
         boolean newPage;
         List<String> names = new ArrayList<>();
@@ -92,7 +91,7 @@ public class Deeds {
                     pages.add(getStyledPermissionsPage_(g, names));
                     if (newPage) { break; }
                 }
-                newPage = (index % perPage) >= ConfigManager.getDeedsPlayersForNewPage() && !newPage;
+                newPage = (index % perPage) >= Landlords.CONFIG.deedsPlayersForNewPage && !newPage;
             } while (newPage);
         }
 
@@ -125,8 +124,8 @@ public class Deeds {
 
             String regionName = StringUtils.substringBetween(pag,"[","]");
             int     length = regionName.length(),
-                    minLength = ConfigManager.getRegionMinNameLength(),
-                    maxLength = ConfigManager.getRegionMaxNameLength();
+                    minLength = Landlords.CONFIG.regionsMinimumNameLength,
+                    maxLength = Landlords.CONFIG.regionsMaximumNameLength;
 
             if (length <= minLength) {
                 exceptionThrower.trowException("deeds_read_error_illegalNameLength_short",Integer.toString(minLength),Integer.toString(length),Integer.toString(minLength - length));
