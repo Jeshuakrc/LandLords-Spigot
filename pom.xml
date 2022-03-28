@@ -55,7 +55,7 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.3.1</version>
                 <configuration>
-                    <outputDirectory>F:\Minecrat\TestServer\plugins</outputDirectory>
+                    <outputDirectory>F:\Minecrat\TestServer2\plugins</outputDirectory>
                 </configuration>
             </plugin>
         </plugins>
@@ -82,7 +82,7 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.18.1-R0.1-SNAPSHOT</version>
+            <version>1.18.2-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
