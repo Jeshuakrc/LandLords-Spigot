@@ -4,7 +4,6 @@ import com.jkantrell.yamlizer.yaml.*;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.potion.PotionType;
-import org.checkerframework.checker.units.qual.C;
 
 import java.util.List;
 
@@ -128,6 +127,12 @@ public class Config extends AbstractYamlConfig {
 
     @ConfigField(path = "regions.border_persistence_placed")
     public int regionsBorderPersistencePlaced = 420;
+
+    @ConfigField(path = "regions.enforced_buttons")
+    public List<Material> regionsEnforcedButtons = List.of(Material.STONE_BUTTON, Material.POLISHED_BLACKSTONE_BUTTON);
+
+    @ConfigField(path = "regions.lever_locker_blocks")
+    public List<Material> regionsLeverLockerBlocks = List.of(Material.COPPER_BLOCK, Material.IRON_BLOCK);
 
     @ConfigField(path = "messages_reach.region_resize")
     public Config.GroupLevelReach msgReachRegionResize = GroupLevelReach.all;
