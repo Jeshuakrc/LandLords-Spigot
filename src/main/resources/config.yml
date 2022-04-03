@@ -1,3 +1,8 @@
+#The log statements minimum level that will be printed in the console.
+#Spigot does not allow printing logs under the 'INFO' level, then all below levels will be printed in the 'INFO' level at runtime.
+#Values: OFF, SEVERE, WARNING, INFO, CONFIG, FINE, FINER, FINEST, ALL
+logging_level: INFO
+
 #If the player's client is set to a language which isn't either built into this plugin or manually implemented,
 #this is the one it'll default.
 default_language: "en"

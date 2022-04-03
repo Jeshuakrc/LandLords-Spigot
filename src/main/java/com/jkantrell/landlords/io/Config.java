@@ -6,6 +6,8 @@ import org.bukkit.Particle;
 import org.bukkit.potion.PotionType;
 
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Config extends AbstractYamlConfig {
 
@@ -45,7 +47,9 @@ public class Config extends AbstractYamlConfig {
                 }
             }
         );
-
+        yamlizer_.addSerializationRule(Level.class,
+            (e,t) -> Level.parse(e.get(YamlElementType.STRING))
+        );
     }
 
     //ENUMS
@@ -73,6 +77,9 @@ public class Config extends AbstractYamlConfig {
 
     //FIELDS
     public String configPath = "plugins/Landlords";
+
+    @ConfigField(path = "logging_level")
+    public Level loggingLevel = Level.INFO;
 
     @ConfigField(path = "default_language")
     public String defaultLanguageCode = "en";
