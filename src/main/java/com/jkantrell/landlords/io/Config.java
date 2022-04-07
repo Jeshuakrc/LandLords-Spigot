@@ -1,13 +1,12 @@
 package com.jkantrell.landlords.io;
 
+import com.jkantrell.landlords.Landlords;
 import com.jkantrell.yamlizer.yaml.*;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.potion.PotionType;
-
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class Config extends AbstractYamlConfig {
 
@@ -48,7 +47,11 @@ public class Config extends AbstractYamlConfig {
             }
         );
         yamlizer_.addSerializationRule(Level.class,
-            (e,t) -> Level.parse(e.get(YamlElementType.STRING))
+            (e,t) -> {
+                Level level = Level.parse(e.get(YamlElementType.STRING));
+                Landlords.getMainInstance().getLogger().setLevel(level);
+                return level;
+            }
         );
     }
 

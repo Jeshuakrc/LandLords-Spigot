@@ -35,7 +35,6 @@ public final class Landlords extends JavaPlugin {
     public void onEnable() {
         //Setting Main Instance
         mainInstance = this;
-
         Landlords.CONFIG.setFilePath(this.getDataFolder().getPath() + "/config.yml");
         try {
             Landlords.CONFIG.load();
@@ -44,16 +43,15 @@ public final class Landlords extends JavaPlugin {
             this.onEnable();
             return;
         }
-        this.getLogger().setLevel(Landlords.CONFIG.loggingLevel);
 
         //Initializing and loading files
-        new Rule.Key("tntProtected", Landlords.RegionRules.TNT_PROTECTED_DT);
         this.getServer().getPluginManager().registerEvents(new TotemEventListener(),this);
 
         RegionsLib.configLocation = new String[] {"./plugins/Landlords/config.yml", "regions"};
         RegionsLib.enable(this);
         RegionsLib.getAbilityHandler().registerAll(LandlordsAbilities.class);
         TotemManager.loadTotemStructures();
+        Rule.registerKey("tntProtected", Landlords.RegionRules.TNT_PROTECTED_DT);
     }
 
     @Override
@@ -80,6 +78,7 @@ public final class Landlords extends JavaPlugin {
         public void log(LogRecord record){
             Level level = record.getLevel();
             if (level.intValue() < Level.INFO.intValue()) {
+                if (!this.isLoggable(level)) { return; }
                 record.setLevel(Level.INFO);
                 String message = record.getMessage();
                 record.setMessage("[" + level + "] " + message);
