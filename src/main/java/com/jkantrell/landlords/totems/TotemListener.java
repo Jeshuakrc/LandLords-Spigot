@@ -31,7 +31,7 @@ import org.bukkit.potion.PotionType;
 
 import java.util.*;
 
-public class TotemEventListener implements Listener {
+public class TotemListener implements Listener {
 
     //STATIC FIELDS
     private static HashMap<Player, EquipmentSlot> deedPlayerSlotMap_ = new HashMap<>();

@@ -82,6 +82,11 @@ regions:
   # - newest: the permissions of the newest region take over.
   overlapping_permissions_mode: all
 
+  #Value in ticks that determines how ofter will the game check the players' locations to determine if they've physically entered of left a region.
+  #Affects anything relying on PlayerEnterRegionEvent and PlayerLeftRegionEvent. Has no effect on abilities.
+  #Any value equal or lower than 0 will disable player sampling.
+  player_sampling_rate: 10
+
   #The following are merely visual settings. Set the particle used to define the walls of a region when a bell is ringed.
   border_particle:
     resolution: 1

@@ -2,7 +2,9 @@ package com.jkantrell.landlords;
 
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.totems.TotemEventListener;
+import com.jkantrell.landlords.region.LandlordsAbilities;
+import com.jkantrell.landlords.region.LandlordsRegionListeners;
+import com.jkantrell.landlords.totems.TotemListener;
 import com.jkantrell.landlords.totems.TotemManager;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.regions.*;
@@ -45,7 +47,8 @@ public final class Landlords extends JavaPlugin {
         }
 
         //Initializing and loading files
-        this.getServer().getPluginManager().registerEvents(new TotemEventListener(),this);
+        this.getServer().getPluginManager().registerEvents(new TotemListener(),this);
+        this.getServer().getPluginManager().registerEvents(new LandlordsRegionListeners(),this);
 
         RegionsLib.configLocation = new String[] {"./plugins/Landlords/config.yml", "regions"};
         RegionsLib.enable(this);

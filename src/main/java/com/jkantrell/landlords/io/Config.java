@@ -46,6 +46,16 @@ public class Config extends AbstractYamlConfig {
                 }
             }
         );
+        yamlizer_.addSerializationRule(Config.TitleData.class,
+            (e,t) -> {
+                YamlMap map = e.get(YamlElementType.MAP);
+                return new Config.TitleData(
+                        map.get("fadeIn").get(YamlElementType.INT),
+                        map.get("stay").get(YamlElementType.INT),
+                        map.get("fadeOut").get(YamlElementType.INT)
+                );
+            }
+        );
         yamlizer_.addSerializationRule(Level.class,
             (e,t) -> {
                 Level level = Level.parse(e.get(YamlElementType.STRING));
@@ -143,6 +153,12 @@ public class Config extends AbstractYamlConfig {
 
     @ConfigField(path = "regions.lever_locker_blocks")
     public List<Material> regionsLeverLockerBlocks = List.of(Material.COPPER_BLOCK, Material.IRON_BLOCK);
+
+    @ConfigField(path = "regions.name_title_display")
+    public Config.TitleData regionsNameTitleData = new TitleData(10,30,8);
+
+    @ConfigField(path = "regions.name_title_display.enabled")
+    public boolean regionsNameTitleEnabled = true;
 
     @ConfigField(path = "messages_reach.region_resize")
     public Config.GroupLevelReach msgReachRegionResize = GroupLevelReach.all;
