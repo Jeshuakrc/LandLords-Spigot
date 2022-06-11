@@ -40,7 +40,7 @@ totems:
   downgrade_item:
     item: STICK       #Must be defined as a Spigot's Material enum value. https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
     consume: false    #weather or not the item gets consumed when used.
-    count: 1          #how namy items to consume if the above is true.
+    count: 1          #how name items to consume if the above is true.
 
   #How long it takes to be able to interact with a totem once you've already updated it or downgraded it.
   #Defined in ticks.
@@ -75,6 +75,11 @@ deeds:
   players_for_new_page: 10
 
 regions:
+  #The minimum and maximum length a region name may have.
+  names_length_limit:
+    min: 4
+    max: 24     # '-1' = no limit.
+
   #Defines what happens when on the event the player doesn't have the same permissions in two overlapping regiosns
   # - all: The player must have permission on all of them.
   # - any: The player must have permission on any ot them.

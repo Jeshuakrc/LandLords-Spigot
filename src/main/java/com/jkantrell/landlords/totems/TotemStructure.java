@@ -3,7 +3,7 @@ package com.jkantrell.landlords.totems;
 import com.google.gson.*;
 import com.jkantrell.landlords.io.Serializer;
 import com.jkantrell.regionslib.regions.Hierarchy;
-import com.jkantrell.regionslib.regions.Rule;
+import com.jkantrell.regionslib.regions.rules.Rule;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;

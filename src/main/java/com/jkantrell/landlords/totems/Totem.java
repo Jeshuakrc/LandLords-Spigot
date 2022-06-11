@@ -5,6 +5,7 @@ import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import com.jkantrell.landlords.Landlords;
+import com.jkantrell.regionslib.regions.rules.Rule;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -113,7 +114,7 @@ public class Totem {
         return this.regionId_;
     }
     public Region getRegion(){
-        return Region.getFromId(this.getRegionId());
+        return Region.get(this.getRegionId());
     }
     public int getLevel(){
         return this.leveled_;
@@ -136,18 +137,14 @@ public class Totem {
             regionVertex[i+3] = vert[i+3] + totemPos[i] + 0.5;
         }
 
-        Permission[] perms = {new Permission(
-                placer.getName(),
-                hierarchy,
-                Landlords.CONFIG.totemDefaultGroupLevel
-            )};
         String name = LangManager.getString("totem_region_defauldName",placer,placer.getName());
-        Region region = new Region(regionVertex,this.getWorld(),perms,name,hierarchy);
+        Region region = new Region(regionVertex,this.getWorld(),name,hierarchy);
         RegionData totemData = new RegionData("totemRegion",true);
         region.getDataContainer().add(totemData);
         for (Rule rule : structure.getRules()) {
             region.addRule(rule);
         }
+        region.addPermission(placer,1);
         region.save();
 
         EnderCrystal crystal = placeEndCrystal(placer,this.getPosX(),this.getPosY(),this.getPosZ());

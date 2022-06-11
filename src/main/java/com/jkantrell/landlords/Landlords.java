@@ -2,12 +2,11 @@ package com.jkantrell.landlords;
 
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.region.LandlordsAbilities;
-import com.jkantrell.landlords.region.LandlordsRegionListeners;
-import com.jkantrell.landlords.totems.TotemListener;
+import com.jkantrell.landlords.region.LandLordsAbilities;
 import com.jkantrell.landlords.totems.TotemManager;
 import com.jkantrell.regionslib.RegionsLib;
-import com.jkantrell.regionslib.regions.*;
+import com.jkantrell.regionslib.regions.rules.RuleDataType;
+import com.jkantrell.regionslib.regions.rules.RuleEnumDataType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import javax.annotation.Nonnull;
@@ -28,7 +27,7 @@ public final class Landlords extends JavaPlugin {
     private final Logger LOGGER_ = new LandlordsLogger("LandLords",this.getServer().getLogger().getResourceBundleName(),this.getServer().getLogger());
 
     public static class RegionRules {
-        public static final Rule.DataType<tntProtectedType> TNT_PROTECTED_DT = new Rule.EnumDataType<>(tntProtectedType.class);
+        public static final RuleDataType<tntProtectedType> TNT_PROTECTED_DT = new RuleEnumDataType<>(tntProtectedType.class);
     }
 
     public enum tntProtectedType { none, all, ignitor }
@@ -47,14 +46,10 @@ public final class Landlords extends JavaPlugin {
         }
 
         //Initializing and loading files
-        this.getServer().getPluginManager().registerEvents(new TotemListener(),this);
-        this.getServer().getPluginManager().registerEvents(new LandlordsRegionListeners(),this);
-
         RegionsLib.configLocation = new String[] {"./plugins/Landlords/config.yml", "regions"};
         RegionsLib.enable(this);
-        RegionsLib.getAbilityHandler().registerAll(LandlordsAbilities.class);
+        RegionsLib.getAbilityHandler().registerAll(LandLordsAbilities.class);
         TotemManager.loadTotemStructures();
-        Rule.registerKey("tntProtected", Landlords.RegionRules.TNT_PROTECTED_DT);
     }
 
     @Override

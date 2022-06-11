@@ -14,7 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
-public class LandlordsRegionListeners implements Listener {
+public class RegionListener implements Listener {
 
     @EventHandler
     private void onPlayerEnterRegion(PlayerEnterRegionEvent e) {
@@ -62,7 +62,7 @@ public class LandlordsRegionListeners implements Listener {
                 ));
             }
             if (message.equals("")) { return; }
-            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, TextComponent.fromLegacyText(message));
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(message));
         } catch (NullPointerException ex) {
             Bukkit.getLogger().warning(String.format(
                     """

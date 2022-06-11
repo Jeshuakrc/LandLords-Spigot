@@ -3,7 +3,7 @@ package com.jkantrell.landlords.io;
 import com.google.gson.*;
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.totems.TotemStructure;
-import com.jkantrell.regionslib.regions.Rule;
+import com.jkantrell.regionslib.regions.rules.Rule;
 import org.bukkit.Bukkit;
 
 import java.io.*;

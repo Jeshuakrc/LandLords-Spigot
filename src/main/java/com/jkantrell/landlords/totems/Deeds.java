@@ -4,7 +4,7 @@ import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.*;
 import com.jkantrell.landlords.Landlords;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
@@ -292,7 +292,7 @@ public class Deeds {
         if (!Deeds.isTotemDeeds(bookMeta)) { return null; }
 
         PersistentDataContainer dataContainer = bookMeta.getPersistentDataContainer();
-        Region region = Region.getFromId(dataContainer.get(deedsRegionIdNsKey_,PersistentDataType.INTEGER));
+        Region region = Region.get(dataContainer.get(deedsRegionIdNsKey_,PersistentDataType.INTEGER));
         int id = dataContainer.get(deedsIdNsKey_,PersistentDataType.INTEGER);
         ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
         item.setItemMeta(bookMeta);
