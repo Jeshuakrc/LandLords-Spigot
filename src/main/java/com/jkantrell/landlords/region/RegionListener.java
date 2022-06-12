@@ -166,7 +166,7 @@ public class RegionListener implements Listener {
             Rule rule;
             for (Region r : Region.getRuleContainersAt(ruleLabel,dataType,block.getLocation().add(.5,.5,.5))) {
                 rule = r.getRule(ruleLabel);
-                if (predicate.test(rule,r)) { e.setCancelled(true); return; }
+                if (predicate.test(rule,r)) { i.remove(); }
             }
         }
     }
