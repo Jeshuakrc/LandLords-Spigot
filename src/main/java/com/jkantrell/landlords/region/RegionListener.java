@@ -119,7 +119,7 @@ public class RegionListener implements Listener {
         for (Region r :  Region.getRuleContainersAt("raidProtected",RuleDataType.BOOL,e.getRaid().getLocation())) {
             if (r.getRuleValue("raidProtected",RuleDataType.BOOL)) {
                 e.setCancelled(true);
-                Landlords.getMainInstance().getLogger().finest(
+                Landlords.getMainInstance().getLogger().fine(
                  "A raid was prevented from triggering in " + r.getName() + " as 'raidProtected' rule is enabled in the region."
                 );
                 return;
