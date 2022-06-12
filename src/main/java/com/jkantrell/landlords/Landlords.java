@@ -3,10 +3,11 @@ package com.jkantrell.landlords;
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.landlords.region.LandLordsAbilities;
+import com.jkantrell.landlords.region.LandLordsRuleKeys;
+import com.jkantrell.landlords.region.RegionListener;
+import com.jkantrell.landlords.totems.TotemListener;
 import com.jkantrell.landlords.totems.TotemManager;
 import com.jkantrell.regionslib.RegionsLib;
-import com.jkantrell.regionslib.regions.rules.RuleDataType;
-import com.jkantrell.regionslib.regions.rules.RuleEnumDataType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import javax.annotation.Nonnull;
@@ -20,22 +21,20 @@ public final class Landlords extends JavaPlugin {
 
     //FIELDS
     public static final Config CONFIG = new Config("");
-    private static Landlords mainInstance;
-    public static Landlords getMainInstance(){
-        return mainInstance;
-    }
+    private static Landlords mainInstance_;
     private final Logger LOGGER_ = new LandlordsLogger("LandLords",this.getServer().getLogger().getResourceBundleName(),this.getServer().getLogger());
+    private LandLordsRuleKeys ruleKeys_;
 
-    public static class RegionRules {
-        public static final RuleDataType<tntProtectedType> TNT_PROTECTED_DT = new RuleEnumDataType<>(tntProtectedType.class);
+    //STATIC METHODS
+    public static Landlords getMainInstance(){
+        return mainInstance_;
     }
 
-    public enum tntProtectedType { none, all, ignitor }
-
+    //PLUGIN EVENTS
     @Override
     public void onEnable() {
         //Setting Main Instance
-        mainInstance = this;
+        mainInstance_ = this;
         Landlords.CONFIG.setFilePath(this.getDataFolder().getPath() + "/config.yml");
         try {
             Landlords.CONFIG.load();
@@ -45,23 +44,34 @@ public final class Landlords extends JavaPlugin {
             return;
         }
 
-        //Initializing and loading files
+        //Initializing RegionsLib
         RegionsLib.configLocation = new String[] {"./plugins/Landlords/config.yml", "regions"};
+        this.ruleKeys_ = new LandLordsRuleKeys(this);
         RegionsLib.enable(this);
         RegionsLib.getAbilityHandler().registerAll(LandLordsAbilities.class);
-        TotemManager.loadTotemStructures();
-    }
 
+        //Initializing totems
+        TotemManager.loadTotemStructures();
+
+        //Registering listeners
+        this.getServer().getPluginManager().registerEvents(new TotemListener(),this);
+        this.getServer().getPluginManager().registerEvents(new RegionListener(),this);
+    }
     @Override
     public void onDisable() {
         // Plugin shutdown logic
     }
 
+    //METHODS
     @Override
     @Nonnull
     public Logger getLogger() {
         return this.LOGGER_;
     }
+    public LandLordsRuleKeys getRuleKeys() {
+        return this.ruleKeys_;
+    }
+
 
     private static class LandlordsLogger extends Logger {
 

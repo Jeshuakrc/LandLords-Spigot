@@ -15,7 +15,7 @@ import java.util.List;
 public abstract class TotemManager {
 
     private static List<TotemStructure> structures_ = null;
-    private static List<Totem> totems_ = new ArrayList<Totem>();
+    private static ArrayList<Totem> totems_ = new ArrayList<Totem>();
 
     public static List<TotemStructure> loadTotemStructures(){
         structures_ = Serializer.deserializeFileList(Serializer.FILES.TOTEM_STRUCTURES,TotemStructure.class);
@@ -28,7 +28,7 @@ public abstract class TotemManager {
         return structures_;
     }
     public static List<Totem> getTotems(){
-        return totems_;
+        return List.copyOf(totems_);
     }
     public static Totem getTotemFromEndCrystal(EnderCrystal enderCrystal){
 

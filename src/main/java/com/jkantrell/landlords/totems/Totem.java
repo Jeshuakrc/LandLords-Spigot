@@ -53,7 +53,6 @@ public class Totem {
         setStructure(structure);
         this.cooldown_= Landlords.CONFIG.totemInteractCoolDown;
         this.lastInteraction_=System.currentTimeMillis() - cooldown_;
-
     }
 
     //SETTERS

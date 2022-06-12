@@ -6,7 +6,9 @@ import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.Hierarchy;
 import com.jkantrell.regionslib.regions.Permission;
 import com.jkantrell.regionslib.regions.Region;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Lectern;
@@ -21,6 +23,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.event.world.ChunkUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -30,6 +33,8 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TotemListener implements Listener {
 
@@ -272,15 +277,14 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent e) {
+        if (Bukkit.getOnlinePlayers().size() > 0) { return; }
+        this.loadTotems_(Bukkit.getWorlds().stream().flatMap(w -> w.getEntities().stream()));
+    }
+
+    @EventHandler
     public void onChunkLoad(ChunkLoadEvent e) {
-        Entity[] entities = e.getChunk().getEntities();
-        for (Entity entity : entities) {
-            if (entity instanceof EnderCrystal crystal) {
-                if(Totem.isTotem(crystal)){
-                    TotemManager.getTotems().add(Totem.getFromEndCrystal(crystal));
-                }
-            }
-        }
+        this.loadTotems_(Arrays.stream(e.getChunk().getEntities()));
     }
 
     @EventHandler
@@ -394,5 +398,13 @@ public class TotemListener implements Listener {
 
         player.getInventory().setItem(deedPlayerSlotMap_.get(player),deeds.getItemStack());
 
+    }
+
+    private void loadTotems_(Stream<Entity> entities) {
+        entities
+                .filter(e -> e instanceof EnderCrystal)
+                .map(e -> (EnderCrystal) e)
+                .filter(Totem::isTotem)
+                .forEach(c -> TotemManager.removeTotem(Totem.getFromEndCrystal(c)));
     }
 }
