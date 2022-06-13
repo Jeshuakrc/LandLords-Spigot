@@ -1,14 +1,17 @@
 package com.jkantrell.landlords.totems;
 
 import com.jkantrell.landlords.Landlords;
+import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.regionslib.RegionsLib;
+import com.jkantrell.regionslib.events.RegionDestroyEvent;
 import com.jkantrell.regionslib.regions.Hierarchy;
 import com.jkantrell.regionslib.regions.Permission;
 import com.jkantrell.regionslib.regions.Region;
+import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
-import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Lectern;
@@ -31,9 +34,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
-
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class TotemListener implements Listener {
@@ -333,36 +335,37 @@ public class TotemListener implements Listener {
 
     @EventHandler
     public void onDestroyCrystal(EntityDamageByEntityEvent e){
+        if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
+        if (!Totem.isTotem(crystal)) { return; }
 
-        Entity entity = e.getEntity();
-        if(!entity.getType().equals(EntityType.ENDER_CRYSTAL)){ return; }
-        EnderCrystal crystal = (EnderCrystal) entity;
-        if(!Totem.isTotem(crystal)) { return; }
-        Totem totem = Totem.getFromEndCrystal(crystal);
-
-        entity = e.getDamager();
-        if(entity instanceof Arrow arrow) {
-            if(arrow.getShooter() instanceof Player player) {
-
-            }
-
-            List<PotionType> effects = Landlords.CONFIG.totemDestroyArrowEffects;
-
-            if(effects.isEmpty()) {
-                totem.destroy();
-                return;
-            }
-            if(effects.contains(arrow.getBasePotionData().getType())){
-                totem.destroy();
-                return;
-            }
-        } else if (entity instanceof Player player) {
-            if (totem.getLevel() == 0) {
-                totem.destroy();
-                return;
-            }
-        }
         e.setCancelled(true);
+        Totem totem = Totem.getFromEndCrystal(crystal);
+        BiConsumer<Player,Arrow> consumer = (p,a) -> {
+            TotemDestroyedByPlayerEvent event = new TotemDestroyedByPlayerEvent(p,totem,a);
+            RegionsLib.getMain().getServer().getPluginManager().callEvent(event);
+            if (!event.isCancelled()) { totem.getRegion().destroy(p); }
+        };
+
+        Entity destroyer = e.getDamager();
+        if (destroyer instanceof Player player) {
+            if (totem.getLevel() > 0) { return; }
+            consumer.accept(player,null);
+        } else if (destroyer instanceof Arrow arrow) {
+            if (!(arrow.getShooter() instanceof Player player)) { return; }
+            List<PotionType> effects = Landlords.CONFIG.totemDestroyArrowEffects;
+            if (!effects.isEmpty() && !effects.contains(arrow.getBasePotionData().getType())) { return; }
+            consumer.accept(player,arrow);
+        }
+
+    }
+
+    @EventHandler
+    public void onRegionDestroy(RegionDestroyEvent e) {
+        RegionData regionData = e.getRegion().getDataContainer().get("totemRegion");
+        if (regionData == null) { return; }
+        if (!regionData.getAsBoolean()) { return; }
+        Totem totem = TotemManager.getTotemFromId(e.getRegion().getId());
+        if (totem != null) { totem.destroy(); }
     }
 
     @EventHandler

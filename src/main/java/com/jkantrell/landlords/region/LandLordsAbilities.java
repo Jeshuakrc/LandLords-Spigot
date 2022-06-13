@@ -1,6 +1,7 @@
 package com.jkantrell.landlords.region;
 
 import com.jkantrell.landlords.Landlords;
+import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.totems.TotemLectern;
 import com.jkantrell.regionslib.events.BlockRightClickedEvent;
 import com.jkantrell.regionslib.regions.abilities.Ability;
@@ -56,4 +57,11 @@ public final class LandLordsAbilities {
             e -> TotemLectern.isTotemLectern(e.getLectern().getBlock())
     ).extend(com.jkantrell.regionslib.regions.abilities.Abilities.TAKE_BOOKS_FROM_LECTERNS);
 
+    @AbilityRegistration
+    public static final Ability<TotemDestroyedByPlayerEvent> DESTROY_TOTEMS = new Ability<>(
+            TotemDestroyedByPlayerEvent.class,
+            e -> true,
+            TotemDestroyedByPlayerEvent::getDestroyer,
+            e -> e.getTotem().getLocation()
+    );
 }

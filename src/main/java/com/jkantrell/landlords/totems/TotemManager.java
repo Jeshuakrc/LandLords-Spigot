@@ -11,6 +11,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public abstract class TotemManager {
 
@@ -113,20 +114,14 @@ public abstract class TotemManager {
     public static void removeTotem(Totem totem){
         totems_.remove(totem);
     }
-    public static void removeOrphanedRegions() {
-
-        List<Region> regionList = List.copyOf(Region.getAll());
-
-        for (Region r : regionList) {
-            RegionData data = r.getDataContainer().get("totemRegion");
-            if (data != null) {
-                if (data.getAsBoolean()) {
-                    Totem totem = getTotemFromId(r.getId());
-                    if (totem == null) {
-                        r.destroy();
-                    }
-                }
-            }
-        }
+    public static void removeOrphanedRegions(Stream<Region> regions) {
+        regions
+                .filter(r -> {
+                    RegionData data = r.getDataContainer().get("totemRegion");
+                    if (data == null) { return false; }
+                    return data.getAsBoolean();
+                })
+                .filter(r -> TotemManager.getTotemFromId(r.getId()) == null)
+                .forEach(Region::destroy);
     }
 }

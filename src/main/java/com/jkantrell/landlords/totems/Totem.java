@@ -345,10 +345,10 @@ public class Totem {
         return r;
     }
     public void destroy() {
-
         this.dropItem_(this.getLevel());
         TotemManager.removeTotem(this);
-        this.getRegion().destroy();
+        this.world_.createExplosion(this.endCrystal_.getLocation(), 6f,true,true);
+        this.endCrystal_.remove();
     }
 
     //PUBLIC STATIC METHODS

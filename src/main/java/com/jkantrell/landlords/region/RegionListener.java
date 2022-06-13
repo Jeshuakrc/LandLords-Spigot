@@ -20,14 +20,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
-import org.bukkit.event.entity.EntitySpawnEvent;
 import org.bukkit.event.raid.RaidTriggerEvent;
-
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.function.BiPredicate;
-import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public class RegionListener implements Listener {
 
