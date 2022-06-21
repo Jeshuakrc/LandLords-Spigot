@@ -4,6 +4,7 @@ import com.jkantrell.landlords.io.Serializer;
 import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import com.jkantrell.landlords.Landlords;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.entity.EnderCrystal;
@@ -15,14 +16,14 @@ import java.util.stream.Stream;
 
 public abstract class TotemManager {
 
-    private static List<TotemStructure> structures_ = null;
+    private static List<Blueprint> structures_ = null;
     private static ArrayList<Totem> totems_ = new ArrayList<Totem>();
 
-    public static List<TotemStructure> loadTotemStructures(){
-        structures_ = Serializer.deserializeFileList(Serializer.FILES.TOTEM_STRUCTURES,TotemStructure.class);
+    public static List<Blueprint> loadTotemStructures(){
+        structures_ = Serializer.deserializeFileList(Serializer.FILES.TOTEM_STRUCTURES, Blueprint.class);
         return structures_;
     }
-    public static List<TotemStructure> getTotemStructures(){
+    public static List<Blueprint> getTotemStructures(){
         if(structures_==null){
             loadTotemStructures();
         }
@@ -65,7 +66,7 @@ public abstract class TotemManager {
 
                     EnderCrystal crystal = (EnderCrystal) e;
                     if(Totem.isTotem(crystal)){
-                        totems_.add(Totem.getFromEndCrystal(crystal));
+                        totems_.add(Totem.fromEnderCrystal(crystal));
                     }
                 }
             }
@@ -73,23 +74,13 @@ public abstract class TotemManager {
         //removeOrphanedRegions(); //Causing regions in non-generated terrain to be deleted
         return totems_;
     }
-    public static Totem[] getPossibleTotemsAtBlock(Block block){
 
-        List<Totem> totems = new ArrayList<>();
-        for(Totem t : getTotems()){
-            if(t.structureContainsBlock(block)){
-                totems.add(t);
-            }
-        }
 
-        return totems.toArray(new Totem[0]);
-    }
+    public static Blueprint chekStructuresFromPoint(Location location) {
 
-    public static TotemStructure chekStructuresFromPoint(int x, int y, int z, World world) {
-
-        TotemStructure r = null;
-        for (TotemStructure s : getTotemStructures()){
-            if(s.chekStructureFromPoint(x, y, z, world)){
+        Blueprint r = null;
+        for (Blueprint s : getTotemStructures()){
+            if(s.chekStructureFromPoint(location)){
                 r=s;
                 break;
             }
@@ -100,7 +91,7 @@ public abstract class TotemManager {
 
         TotemLectern r = null;
         for (Totem t : TotemManager.getTotems()){
-            r = t.getLecternAtSpot(block);
+            r = t.getLecternAt(block);
             if (r != null) { break; }
         }
         return r;
@@ -110,6 +101,9 @@ public abstract class TotemManager {
         if (!totems_.contains(totem)) {
             totems_.add(totem);
         }
+    }
+    public static void unregisterTotem(Totem totem) {
+        TotemManager.totems_.remove(totem);
     }
     public static void removeTotem(Totem totem){
         totems_.remove(totem);

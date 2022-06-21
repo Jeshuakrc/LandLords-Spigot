@@ -10,12 +10,6 @@ default_language: "en"
 #The path where the plugin's data and files are stored (Does not include this file)
 config_folder: "plugins/Landlords"
 
-#Determines weather or not end crystals can only be placed on top of obsidian, just as in vanilla Minecraft.
-# never = End crystals can only be placed on obsidian and bedrock.
-# always = End crystals can always be placed on any block.
-# on_totem = End crystals can be placed on top of aby block, only if placing it enables a totem.
-end_crystal_on_any_block: on_totem
-
 #The maximum group level a player mush be a member of to receive a message.
 # Special arguments: noOne = no message sent.
 #                    all = all players in the server.

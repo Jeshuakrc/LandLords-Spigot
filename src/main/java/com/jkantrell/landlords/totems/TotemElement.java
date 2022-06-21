@@ -2,10 +2,10 @@ package com.jkantrell.landlords.totems;
 
 public abstract class TotemElement<T> implements TotemRelative {
 
-    private final TotemStructure structure_;
+    private final Blueprint structure_;
     private final T type_;
     private int[] pos_;
-    public TotemElement (T type, int x, int y, int z, TotemStructure structure) {
+    public TotemElement (T type, int x, int y, int z, Blueprint structure) {
         this.type_ = type;
         this.pos_ = new int[] {x,y,z};
         this.structure_ = structure;
@@ -21,7 +21,7 @@ public abstract class TotemElement<T> implements TotemRelative {
     };
 
     @Override
-    public TotemStructure getStructure() {
+    public Blueprint getStructure() {
         return this.structure_;
     }
 

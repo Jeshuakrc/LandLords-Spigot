@@ -4,6 +4,7 @@ import com.google.gson.*;
 import com.jkantrell.landlords.io.Serializer;
 import com.jkantrell.regionslib.regions.Hierarchy;
 import com.jkantrell.regionslib.regions.rules.Rule;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
@@ -12,13 +13,28 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.BoundingBox;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class TotemStructure {
+public class Blueprint {
 
+    //STATIC FIELDS
+    private static final ArrayList<Blueprint> blueprints_ = new ArrayList<>();
+
+    //STATIC METHODS
+    public static int getHighestId() {
+        if (Blueprint.blueprints_.isEmpty()) { return 0; }
+        Blueprint.blueprints_.sort(Comparator.comparingInt(Blueprint::getId));
+        return Blueprint.blueprints_.get(Blueprint.blueprints_.size() - 1).getId();
+    }
+    public static Blueprint get(int id) {
+        return Blueprint.blueprints_.stream().filter(b -> b.getId() == id).findFirst().orElse(null);
+    }
+
+    //FIELDS
+    public final Elements elements = new Elements(this);
+    public final Lecterns lecterns = new Lecterns(this);
+
+    private int id_;
     private double[] regionInitialVertex_ = new double[6];
     private double[] regionGrowthRate_ = new double[6];
     private double[] regionMaxSize_ = new double[3];
@@ -26,18 +42,20 @@ public class TotemStructure {
     private Hierarchy hierarchy_;
     private List<Rule> rules_;
 
-    public final Elements elements = new Elements(this);
-    public final Lecterns lecterns = new Lecterns(this);
-
     //CONSTRUCTORS
-    public TotemStructure(double[] regionBaseSize, double[] regionGrowthRate, double[] regionMaxSize, Hierarchy hierarchy){
+    public Blueprint(double[] regionBaseSize, double[] regionGrowthRate, double[] regionMaxSize, Hierarchy hierarchy){
+        this.id_ = Blueprint.getHighestId() + 1;
         this.setRegionInitialVertex(regionBaseSize);
         this.setRegionGrowthRate(regionGrowthRate);
         this.setRegionMaxSize(regionMaxSize);
         this.setHierarchy(hierarchy);
+        Blueprint.blueprints_.add(this);
     }
 
     //GETTERS
+    public int getId() {
+        return this.id_;
+    }
     public double[] getRegionInitialVertex(){
         return this.regionInitialVertex_;
     }
@@ -68,6 +86,13 @@ public class TotemStructure {
     }
 
     //SETTERS
+    private void setId(int id) {
+        if (this.getId() == id) { return; }
+        if (Blueprint.blueprints_.stream().anyMatch(b -> b.getId() == id)) {
+            throw new IllegalArgumentException("There's already a blueprint with ID " + id + ".");
+        }
+        this.id_ = id;
+    }
     public void setRegionInitialVertex(double[] baseSizeArray){
         regionInitialVertex_ = baseSizeArray;
     }
@@ -126,6 +151,12 @@ public class TotemStructure {
         }
         return r;
     }
+    public boolean chekStructureFromPoint(Location location) {
+        World world = location.getWorld();
+        if (world == null) { return false; }
+        Block block = location.getBlock();
+        return this.chekStructureFromPoint(block.getX(),block.getY(),block.getZ(), world);
+    }
 
     //PRIVATE METHODS
     private void setStructureBox_() {
@@ -154,9 +185,9 @@ public class TotemStructure {
 
     //CLASSES
     public static class Elements extends ArrayList<TotemElement<?>> {
-        private final TotemStructure structure_;
+        private final Blueprint structure_;
 
-        private Elements(TotemStructure structure) {
+        private Elements(Blueprint structure) {
             super();
             this.structure_ = structure;
         }
@@ -180,9 +211,9 @@ public class TotemStructure {
         }
     }
     public static class Lecterns extends ArrayList<TotemLectern> {
-        private final TotemStructure structure_;
+        private final Blueprint structure_;
 
-        private Lecterns(TotemStructure structure) {
+        private Lecterns(Blueprint structure) {
             this.structure_ = structure;
         }
         @Override
@@ -196,20 +227,22 @@ public class TotemStructure {
         }
     }
 
-    public static class JDeserializer implements JsonDeserializer<TotemStructure> {
+    public static class JDeserializer implements JsonDeserializer<Blueprint> {
 
         @Override
-        public TotemStructure deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+        public Blueprint deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 
             JsonObject jsonStructure = json.getAsJsonObject();
             JsonObject jsonRegion = jsonStructure.get("region").getAsJsonObject();
 
-            TotemStructure structure = new TotemStructure(
+            Blueprint structure = new Blueprint(
                     Serializer.GSON.fromJson(jsonRegion.get("initial_size"),double[].class),
                     Serializer.GSON.fromJson(jsonRegion.get("growth_rate"),double[].class),
                     Serializer.GSON.fromJson(jsonRegion.get("max_size"),double[].class),
                     Hierarchy.get(jsonRegion.get("hierarchy").getAsInt())
             );
+
+            structure.setId(jsonStructure.get("id").getAsInt());
 
             JsonObject jsonObject; TotemElement.ElementType type; int[] pos; String name;
             for (JsonElement elm : jsonStructure.get("elements").getAsJsonArray()) {

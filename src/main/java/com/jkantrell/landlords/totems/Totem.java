@@ -5,447 +5,344 @@ import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import com.jkantrell.landlords.Landlords;
-import com.jkantrell.regionslib.regions.rules.Rule;
+import com.jkantrell.regionslib.regions.dataContainers.RegionDataContainer;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.entity.EnderCrystal;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
+import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.logging.Logger;
 
 public class Totem {
 
-    //FIELDS
+    //STATIC FIELDS
+    private static List<Totem> totems_ = new ArrayList<>();
+    private static boolean listenerRegistered_ = false;
+    protected static NamespacedKey regionIdKey = new NamespacedKey(Landlords.getMainInstance(),"regionId");
+    protected static NamespacedKey blueprintIdKey = new NamespacedKey(Landlords.getMainInstance(),"blueprintId");
+    protected static NamespacedKey leveledKey = new NamespacedKey(Landlords.getMainInstance(),"leveled");
+    protected static NamespacedKey isTotemKey = new NamespacedKey(Landlords.getMainInstance(),"isTotem");
     protected static final BlockFace[] BLOCK_FACE_DIRECTIONS = new BlockFace[]{
-            BlockFace.WEST,BlockFace.DOWN,BlockFace.NORTH,BlockFace.EAST,BlockFace.UP,BlockFace.SOUTH
+        BlockFace.WEST,BlockFace.DOWN,BlockFace.NORTH,BlockFace.EAST,BlockFace.UP,BlockFace.SOUTH
     };
 
-    private int[] position_ = new int[3];
-    private World world_;
-    private TotemStructure structure_;
-    private boolean enabled_ = true;
+    //STATIC METHODS
+    public static void registerListener() {
+        Landlords mainInstance = Landlords.getMainInstance();
+    }
+    public static boolean isListenerRegistered() {
+        return Totem.listenerRegistered_;
+    }
+    public static boolean isTotem(Entity entity) {
+        if (!(entity instanceof EnderCrystal enderCrystal)) { return false; }
+        return Totem.isTotem(enderCrystal);
+    }
+    public static boolean isTotem(EnderCrystal enderCrystal) {
+        return enderCrystal.getPersistentDataContainer().has(isTotemKey,PersistentDataType.BYTE);
+    }
+    public static Totem fromRegion(Region region) {
+        RegionData data = region.getDataContainer().get("totemId");
+        if (data == null) { return null; }
+        String id = data.getAsString();
+        return Totem.totems_.stream()
+                .filter(t -> t.getRegionId() == region.getId())
+                .filter(t -> t.getUniqueId().toString().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+    @SuppressWarnings("ConstantConditions")
+    public static Totem fromEnderCrystal(EnderCrystal crystal) {
+        if (!Totem.isTotem(crystal)) { return null; }
+
+        PersistentDataContainer data = crystal.getPersistentDataContainer();
+        int bluePrintId = data.get(blueprintIdKey, PersistentDataType.INTEGER);
+        Location loc = crystal.getLocation();
+
+        Totem t = new Totem(loc.add(0,.5,0), Blueprint.get(bluePrintId));
+        t.regionId_ = data.get(regionIdKey, PersistentDataType.INTEGER);
+        t.leveled_ = data.get(leveledKey, PersistentDataType.INTEGER);
+        t.endCrystal_ = crystal;
+        t.placed_ = true;
+
+        if (t.blueprint_ == null) {
+            Logger logger = Landlords.getMainInstance().getLogger();
+            logger.warning("Loaded totem with blueprint ID " + bluePrintId + ", but no blueprint under such ID was found. The totem won't work properly.");
+            logger.warning("    UUID: " + crystal.getUniqueId().toString());
+            logger.warning("    Location: [" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ() + "]");
+            logger.warning("    Region ID: " + t.regionId_);
+        }
+
+        if (!Totem.totems_.contains(t)) {Totem.totems_.add(t);}
+
+        return t;
+    }
+
+    //FIELDS
+    private final Blueprint blueprint_;
+    private final Face[] faces_ = new Face[6];
+    private Location location_;
+    private boolean placed_ = false;
     private int leveled_ = 0;
     private int regionId_;
-    private EnderCrystal endCrystal_;
-    private long lastInteraction_;
-    private int cooldown_;
-    private BoundingBox structureBox_;
-    private final Config.ParticleData placeParticle_ = Landlords.CONFIG.totemPlaceParticleEffect;
-    private final int[] placeParticlePos_ = Landlords.CONFIG.totemPlaceParticlePos;
-
-    private static List<Totem> totems_ = new ArrayList<>();
-
-    private static NamespacedKey regionIdKey = new NamespacedKey(Landlords.getMainInstance(),"regionId");
-    private static NamespacedKey leveledKey = new NamespacedKey(Landlords.getMainInstance(),"leveled");
-    private static NamespacedKey isTotemKey = new NamespacedKey(Landlords.getMainInstance(),"isTotem");
+    private Region region_ = null;
+    private EnderCrystal endCrystal_ = null;
+    private int cooldown_ = Landlords.CONFIG.totemInteractCoolDown;
 
     //CONSTRUCTORS
-    public Totem(int x, int y, int z, World world, TotemStructure structure){
-        setPosition(x,y,z);
-        setWorld(world);
-        setStructure(structure);
-        this.cooldown_= Landlords.CONFIG.totemInteractCoolDown;
-        this.lastInteraction_=System.currentTimeMillis() - cooldown_;
-    }
-
-    //SETTERS
-    public void setPosition(int x, int y, int z){
-        position_[0] = x;
-        position_[1] = y;
-        position_[2] = z;
-    }
-    public void setWorld(World world){
-        world_ = world;
-    }
-    public void setStructure(TotemStructure structure){
-
-        structure_ = structure;
-
-        int[] corners = this.getStructure().getStructureBox();
-        structureBox_ = new BoundingBox(
-                corners[0]+this.getPosX(),corners[1]+this.getPosY(),corners[2]+this.getPosZ(),
-                corners[3]+this.getPosX(),corners[4]+this.getPosY(),corners[5]+this.getPosZ()
-        );
-    }
-    public void setRegionId(int id){
-        regionId_ = id;
-    }
-    public void setLevel(int level){
-        leveled_=level;
-    }
-    public void setEndCrystal(EnderCrystal endCrystal){
-        endCrystal_=endCrystal;
+    public Totem(Location location, Blueprint blueprint){
+        this.relocate(location);
+        this.blueprint_ = blueprint;
+        for (int i = 0; i < 6; i++) { faces_[i] = new Face(Totem.BLOCK_FACE_DIRECTIONS[i]); }
     }
 
     //GETTERS
-    public int[] getPosition(){
-        return this.position_;
+    public Blueprint getBlueprint() {
+        return blueprint_;
     }
-    public int getPosX(){
-        return this.position_[0];
+    public Location getLocation() {
+        return location_;
     }
-    public int getPosY(){
-        return this.position_[1];
+    public Block getContainingBlock() {
+        return this.location_.getBlock();
     }
-    public int getPosZ(){
-        return this.position_[2];
+    public World getWorld() {
+        return this.location_.getWorld();
     }
-    public Location getLocation(){
-        return new Location(this.getWorld(),this.getPosX(),this.getPosY(),this.getPosZ());
+    public boolean isEnabled() {
+        Region region = this.getRegion();
+        if (region == null) { return false; }
+        return region.isEnabled();
     }
-    public World getWorld(){
-        return this.world_;
+    public boolean isPlaced() {
+        return placed_;
     }
-    public TotemStructure getStructure(){
-        return this.structure_;
-    }
-    public boolean isEnabled(){
-        return this.enabled_;
-    }
-    public int getRegionId(){
-        return this.regionId_;
-    }
-    public Region getRegion(){
-        return Region.get(this.getRegionId());
-    }
-    public int getLevel(){
+    public int getLevel() {
         return this.leveled_;
     }
-    public EnderCrystal getEndCrystal(){
-        return this.endCrystal_;
+    public Region getRegion() {
+        if (this.region_ == null) {
+            if (!this.placed_) { return null; }
+            Region r = Region.get(this.regionId_);
+            if (r == null) { return null; }
+            RegionData regionData = r.getDataContainer().get("totemId");
+            if (regionData == null) { return null; }
+            if (!regionData.getAsString().equals(this.getUniqueId().toString())) { return null; }
+            this.region_ = r;
+        }
+        return this.region_;
+    }
+    public int getRegionId() {
+        return regionId_;
+    }
+    public UUID getUniqueId() {
+        if (this.endCrystal_ == null) { return null; }
+        return this.endCrystal_.getUniqueId();
+    }
+    public EnderCrystal getEndCrystal() {
+        return endCrystal_;
     }
 
-    //PUBLIC METHODS
-    public void place(Player placer){
+    //SETTERS
+    public void relocate(Location loc) {
+        if (loc.getWorld() == null) {
+            throw new NullPointerException("The 'World' parameter passed to a totem's constructor cannot be null.");
+        }
+        this.location_ = loc;
 
-        TotemStructure structure = this.getStructure();
-        double[] vert = structure.getRegionInitialVertex();
-        double[] regionVertex = new double[6];
-        int[] totemPos = this.getPosition();
-        Hierarchy hierarchy = structure.getHierarchy();
-        World world = this.getWorld();
+        if (this.endCrystal_ == null) { return; }
+
+        this.endCrystal_.teleport(loc.add(0,-.5,0));
+
+        Region r = this.getRegion();
+        if (r == null) { return; }
+        RegionDataContainer dataContainer = r.getDataContainer();
+        Block b = this.getContainingBlock();
+        dataContainer.remove("totemLoc");
+        dataContainer.add(new RegionData("totemLoc", new int[] {b.getX(), b.getY(), b.getZ()}));
+    }
+    public void setEnabled(Boolean isEnabled) {
+        try {
+            this.getRegion().enabled(isEnabled);
+        } catch (NullPointerException ignored) {}
+    }
+
+    //METHODS
+    public Region place(Player placer) {
+        //Creating the region
+        BoundingBox vertex = new BoundingBox();
+        vertex.shift(this.location_);
         for (int i = 0; i < 3; i++) {
-            regionVertex[i] = vert[i] + totemPos[i] + 0.5;
-            regionVertex[i+3] = vert[i+3] + totemPos[i] + 0.5;
+            vertex.expand(Totem.BLOCK_FACE_DIRECTIONS[i], this.blueprint_.getRegionInitialVertex()[i]);
+            vertex.expand(Totem.BLOCK_FACE_DIRECTIONS[i+3], -this.blueprint_.getRegionInitialVertex()[i+3]);
         }
 
-        String name = LangManager.getString("totem_region_defauldName",placer,placer.getName());
-        Region region = new Region(regionVertex,this.getWorld(),name,hierarchy);
-        RegionData totemData = new RegionData("totemRegion",true);
-        region.getDataContainer().add(totemData);
-        for (Rule rule : structure.getRules()) {
-            region.addRule(rule);
-        }
-        region.addPermission(placer,1);
-        region.save();
-
-        EnderCrystal crystal = placeEndCrystal(placer,this.getPosX(),this.getPosY(),this.getPosZ());
-        this.setRegionId(region.getId());
-        this.saveOnEndCrystal(crystal);
-        TotemManager.registerTotem(this);
-        region.displayBoundaries(Landlords.CONFIG.regionsBorderRefreshRate,Landlords.CONFIG.regionsBorderPersistencePlaced);
-        world.playSound(this.getLocation(), Sound.BLOCK_BEACON_ACTIVATE,3, 0.5f);
-        world.spawnParticle(
-                placeParticle_.particle(),
-                this.getPosX() + placeParticlePos_[0],
-                this.getPosY() + placeParticlePos_[1],
-                this.getPosZ() + placeParticlePos_[2],
-                placeParticle_.count(),
-                placeParticle_.delta()[0], placeParticle_.delta()[1], placeParticle_.delta()[2]
+        this.region_ = new Region(
+            new double[] { vertex.getMinX(), vertex.getMinY(), vertex.getMinZ(), vertex.getMaxX(), vertex.getMaxY(), vertex.getMaxZ() },
+            this.location_.getWorld(),
+            (placer == null) ? "Unnamed Region" : LangManager.getString("totem_region_playerPlacedName",placer,placer.getName()),
+            this.blueprint_.getHierarchy(),
+            placer
         );
-    }
-    public boolean resize(int amount, int level) throws TotemUnresizableException {
+        this.regionId_ = this.region_.getId();
 
-        try { checkCoolDown_(); } catch (TotemNonColdDownException e) { return false; }
+        //Spawning an EndCrystal
+        this.endCrystal_ = (EnderCrystal) this.location_.getWorld().spawnEntity(this.location_.add(0,-.5,0), EntityType.ENDER_CRYSTAL);
+        this.endCrystal_.setShowingBottom(false);
 
-        Region region = this.getRegion();
-        RegionBoundingBox regBox = region.getBoundingBox();
-        double[] exp = this.getStructure().getRegionGrowthRate().clone();
-        double[] size = {regBox.getWidthX(),regBox.getHeight(),regBox.getWidthZ()};
-        double[] max = this.getStructure().getRegionMaxSize();
+        //Assigning the region to the crystal
+        RegionDataContainer regionData = this.region_.getDataContainer();
+        Block b = this.getContainingBlock();
+        regionData.add(new RegionData("totemId", this.getUniqueId().toString()));
+        regionData.add(new RegionData("totemLoc", new int[] {b.getX(), b.getY(), b.getZ()}));
 
-        for (int i = 0; i < 6; i++) {       //Multiply the growth rate by the amount factor
-            exp[i] = exp[i]*amount;
-        }
+        //Enabling
+        this.placed_ = true;
+        this.save();
 
-        if (amount > 0) {
-
-            HashMap<Integer,Double> dues = new HashMap<Integer,Double>();
-
-            for (int i = 0; i < 3; i++ ) {      //Limit and adjust expansion based on max size
-                double expt = exp[i] + exp[i+3];
-                if (size[i] + expt >= max[i] && max[i] > 0 && expt != 0) {
-                    double frac = (max[i] - size[i]) / expt;
-                    exp[i] = exp[i] * frac;
-                    exp[i+3] = exp[i+3] * frac;
-                }
-            }
-
-            for (int i = 0; i < 6; i++) {       //Putting the values to de dues list
-                if (exp[i] > 0) {
-                    dues.put(i, exp[i]);
-                }
-            }
-
-            double pending;
-            do {
-                pending = 0;
-                for (int i : new HashMap<Integer,Double>(dues).keySet()){
-
-                    double d = dues.get(i);
-                    double dif = expandRegionDirectional_(i,d);
-                    dues.put(i,0d);
-                    pending += dif;
-
-                    if(dif > 0){
-                        dues.remove(i);
-                        int ic = getComplement_(i);
-
-                        if (dues.containsKey(ic)) {
-                            dues.put(ic, dues.get(ic) + dif);
-                        } else {
-                            int in1 = getNext_(i), in2 = getComplement_(in1);
-                            double[] rate = this.getStructure().getRegionGrowthRate();
-                            double part, v, whole;
-
-                            if (in1 == -1) {
-                                int[] indexes = {0,2,3,5};
-                                whole = 0;
-                                for (int j : indexes) { whole += rate[j]; }
-                                for (int j : indexes) {
-                                    part = rate[j]/whole;
-                                    v = dif * part;
-
-                                    if(dues.containsKey(j)) { v += dues.get(j); }
-                                    dues.put(j,v);
-                                }
-
-                            } else if (dues.containsKey(in1) || dues.containsKey(in2)) {
-                                int[] indexes = {in1,in2};
-                                whole = rate[in1] + rate [in2];
-                                for (int j : indexes) {
-                                    part = rate[j]/whole;
-                                    v = dif * part;
-
-                                    if(dues.containsKey(j)) { v += dues.get(j); }
-                                    dues.put(j,v);
-                                }
-
-                            } else if (dues.containsKey(1) || dues.containsKey(4)) {
-                                int[] indexes = {1,4};
-                                whole = rate[1] + rate [4];
-                                for (int j : indexes) {
-                                    part = rate[j]/whole;
-                                    v = dif * part;
-
-                                    if(dues.containsKey(j)) { v += dues.get(j); }
-                                    dues.put(j,v);
-                                }
-
-                            } else {
-                                this.setLastInteraction_();
-                                throw new TotemUnresizableException();
-                            }
-                        }
-                    }
-                }
-            } while (pending>0);
-
-
-        } else {
-
-            double[] min = this.getStructure().getRegionInitialSize();
-            for (int i = 0; i < 3; i++ ) {      //Limit and adjust expansion based on max size
-                int p1=0, p2=0;
-                switch (i) {
-                    case 0: p1 = 1; p2 = 2; break;
-                    case 1: p1 = 0; p2 = 2; break;
-                    case 2: p1 = 0; p2 = 1; break;
-                }
-                if ((size[i] >= max[i]) && (size[i]*2 < size[p1] + size[p2]) && max[i] > 0) {
-                    exp[i] = 0; exp[i+3] = 0;
-                }
-
-                double expt = exp[i] + exp[i+3];
-                double x = (min[i]+expt);
-                if (size[i] + expt <= min[i] && expt != 0) {
-
-                    double frac = (size[i] - min[i]) / -expt;
-                    exp[i] = exp[i] * frac;
-                    exp[i+3] = exp[i+3] * frac;
-                }
-            }
-            for (int i = 0; i < 6; i++) {
-                regBox.expand(BLOCK_FACE_DIRECTIONS[i], exp[i]);
-            }
-        }
-
-        region.save();
-        setLevel(Math.max(getLevel()+level,0));
-        saveOnEndCrystal(getEndCrystal());
-        if (level < 0) {
-            this.dropItem_(-level);
-        }
-
-        double[] s = {
-                region.getWidthX(), region.getHeight(), region.getWidthZ()
-        };
-
-        setLastInteraction_();
-
-        return true;
-    }
-    public void saveOnEndCrystal(EnderCrystal endCrystal){
-
-        PersistentDataContainer data = endCrystal.getPersistentDataContainer();
-        data.set(isTotemKey, PersistentDataType.BYTE, (byte)1);
-        data.set(regionIdKey, PersistentDataType.INTEGER, getRegionId());
-        data.set(leveledKey, PersistentDataType.INTEGER, getLevel());
-        setEndCrystal(endCrystal);
-    }
-    public boolean structureContainsBlock(Block block){
-
-        Location loc = block.getLocation();
-        loc.add(0.5,0.5,0.5);
-
-        return (
-                this.getWorld().equals(loc.getWorld()) &&
-                this.structureBox_.contains(loc.getX(),loc.getY(), loc.getZ())
+        //Diegetic feedback
+        this.region_.displayBoundaries(Landlords.CONFIG.regionsBorderRefreshRate,Landlords.CONFIG.regionsBorderPersistencePlaced);
+        this.getWorld().playSound(this.getLocation(), Sound.BLOCK_BEACON_ACTIVATE,3, 0.5f);
+        double[] particlePos = Landlords.CONFIG.totemPlaceParticlePos;
+        Config.ParticleData particleData = Landlords.CONFIG.totemPlaceParticleEffect;
+        this.getWorld().spawnParticle(
+                particleData.particle(),
+                this.location_.add(particlePos[0], particlePos[1], particlePos[2]),
+                particleData.count(),
+                particleData.delta()[0], particleData.delta()[1], particleData.delta()[2]
         );
-    };
-    public void enabled(boolean enabled){
-        this.getRegion().enabled(enabled);
-        this.getRegion().save();
-    };
-    public TotemLectern getLecternAtSpot(Block block) {
+
+
+        return this.region_;
+    }
+    public void scale(int levelAdd) throws TotemUnresizableException {
+        for (int i = 0; i < 6; i++) {
+            faces_[i].expand(this.getBlueprint().getRegionGrowthRate()[i] * levelAdd);
+        }
+        this.leveled_ += levelAdd;
+        this.save();
+    }
+    public TotemLectern getLecternAt(int x, int y, int z) {
 
         TotemLectern r = null;
-        if (block.getWorld().equals(this.getWorld())) {
-            int[]   pos = this.getPosition(),
-                    blockPos = {block.getX(), block.getY(), block.getZ()},
-                    lPos;
+        Block containingBlock = this.getContainingBlock();
+        int[]   pos = {containingBlock.getX(), containingBlock.getY(), containingBlock.getX()},
+                blockPos = {x, y, z},
+                lPos;
 
-            for (TotemLectern l : this.getStructure().lecterns) {
-                lPos = l.getAbsolutePosition(pos[0], pos[1], pos[2]);
-
-                if (Arrays.equals(lPos, blockPos)) {
-                    r = l.clone();
-                    r.setTotem(this);
-                    break;
-                }
+        for (TotemLectern l : this.getBlueprint().lecterns) {
+            lPos = l.getAbsolutePosition(pos[0], pos[1], pos[2]);
+            if (Arrays.equals(lPos, blockPos)) {
+                r = l.clone();
+                r.setTotem(this);
+                break;
             }
         }
         return r;
+    }
+    public TotemLectern getLecternAt(Block block) {
+        if (!block.getWorld().equals(this.getWorld())) { return null; }
+        return this.getLecternAt(block.getX(), block.getY(), block.getZ());
+    }
+    public void save() {
+        PersistentDataContainer endCrystalData = this.endCrystal_.getPersistentDataContainer();
+        endCrystalData.set(Totem.isTotemKey, PersistentDataType.BYTE, (byte)1);
+        endCrystalData.set(Totem.regionIdKey, PersistentDataType.INTEGER, this.regionId_);
+        endCrystalData.set(Totem.blueprintIdKey, PersistentDataType.INTEGER, this.blueprint_.getId());
+        endCrystalData.set(Totem.leveledKey, PersistentDataType.INTEGER, this.leveled_);
+        try { this.getRegion().save(); } catch (NullPointerException ignored) {}
+        if (!Totem.totems_.contains(this)) { Totem.totems_.add(this); }
     }
     public void destroy() {
         this.dropItem_(this.getLevel());
         TotemManager.removeTotem(this);
-        this.world_.createExplosion(this.endCrystal_.getLocation(), 6f,true,true);
+        this.getWorld().createExplosion(this.endCrystal_.getLocation(), 6f,true,true);
         this.endCrystal_.remove();
     }
 
-    //PUBLIC STATIC METHODS
-    public static EnderCrystal placeEndCrystal(Player placer, double x, double y, double z){
-
-        Location l = new Location(placer.getWorld(),x+0.5,y,z+0.5);
-        EnderCrystal endCrystal = (EnderCrystal)placer.getWorld().spawnEntity(l, EntityType.ENDER_CRYSTAL);
-        endCrystal.setShowingBottom(false);
-        ItemStack item = new ItemStack(Material.END_CRYSTAL);
-        placer.getInventory().removeItem(item);
-        return endCrystal;
-    }
-    public static boolean isTotem(EnderCrystal enderCrystal){
-        PersistentDataContainer data = enderCrystal.getPersistentDataContainer();
-        return data.has(isTotemKey,PersistentDataType.BYTE);
-    }
-    public static Totem getFromEndCrystal(EnderCrystal enderCrystal){
-
-        Totem t = TotemManager.getTotemFromEndCrystal(enderCrystal);
-        if(t == null) {
-            PersistentDataContainer data = enderCrystal.getPersistentDataContainer();
-            int level = data.get(leveledKey, PersistentDataType.INTEGER);
-            int regionID = data.get(regionIdKey, PersistentDataType.INTEGER);
-            Location loc = enderCrystal.getLocation();
-            TotemStructure structure = TotemManager.chekStructuresFromPoint(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), enderCrystal.getWorld());
-            t = new Totem(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), enderCrystal.getWorld(), structure);
-            t.setRegionId(regionID);
-            t.setLevel(level);
-            t.setEndCrystal(enderCrystal);
-            TotemManager.registerTotem(t);
-        }
-        return t;
-
-    }
-
     //PRIVATE METHODS
-    private void checkCoolDown_() throws TotemNonColdDownException {
-        if(lastInteraction_ + cooldown_ > System.currentTimeMillis()){
-            throw new TotemNonColdDownException();
-        }
-    }
-    private void setLastInteraction_() {
-        lastInteraction_ = System.currentTimeMillis();
-    }
     private void dropItem_(int amount) {
+        for (int i = 0; i < amount; i++) {
+            double random = Math.random();
+            if (random <= Landlords.CONFIG.totemDropBackRate) {
+                Item item = this.getWorld().dropItem(this.getLocation(), new ItemStack(Landlords.CONFIG.totemUpgradeItem.item()));
+                item.setInvulnerable(true);
+            }
+        }
+    }
 
-        if (this.getLevel() > 0) {
-            for (int i = 0; i < amount; i++) {
-                double random = Math.random();
-                if (random <= Landlords.CONFIG.totemDropBackRate) {
-                    Item item = this.getWorld().dropItem(this.getLocation(), new ItemStack(Landlords.CONFIG.totemUpgradeItem.item()));
-                    item.setInvulnerable(true);
+    //CLASSES
+    private class Face {
+
+        //FIELDS
+        private final BlockFace face_;
+        private final Function<BoundingBox, Double> overlappingCalc_;
+        private boolean colliding_ = false;
+
+        //CONSTRUCTOR
+        Face(BlockFace face) {
+            this.face_ = face;
+            this.overlappingCalc_ = switch (face) {
+                case NORTH, SOUTH -> BoundingBox::getWidthZ;
+                case WEST, EAST -> BoundingBox::getWidthX;
+                default -> BoundingBox::getHeight;
+            };
+        }
+
+        //GETTERS
+        BlockFace getBlocFace() {
+            return this.face_;
+        }
+        Face getOpposite() {
+            return Arrays.stream(Totem.this.faces_)
+                    .filter(f -> f.getBlocFace().equals(this.getBlocFace().getOppositeFace()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        boolean isColliding() {
+            return this.colliding_;
+        }
+
+        //METHODS
+        void expand(double amount) throws TotemUnresizableException {
+            Region reg = Totem.this.getRegion();
+            if (reg == null) { return; }
+
+            reg.expand(this.getBlocFace(),amount);
+
+            if (amount < 0) { return; }
+
+            double leftOver = 0;
+            for (Region r : reg.getOverlappingRegions()) {
+                leftOver = Math.max(leftOver, this.overlappingCalc_.apply(reg.getBoundingBox().intersection(r.getBoundingBox())));
+            }
+            if (leftOver == 0) {
+                this.colliding_ = false;
+                return;
+            }
+
+            reg.expand(this.getBlocFace(), - leftOver );
+
+            this.colliding_ = true;
+            Face opposite = this.getOpposite();
+
+            if (opposite.isColliding()) {
+                List<Face> faces = Arrays.stream(Totem.this.faces_).filter(f -> !f.isColliding()).toList();
+                if (faces.isEmpty()) {
+                    Bukkit.broadcastMessage("Unexpandable region");
+                    throw new TotemUnresizableException();
                 }
+                double frac = leftOver / faces.size();
+                for (Face f : faces) { f.expand(frac); }
+            } else {
+               opposite.expand(leftOver);
             }
         }
-    }
-    private double expandRegionDirectional_(int index, double amount) {
-
-        BlockFace direction = BLOCK_FACE_DIRECTIONS[index];
-        double dif = 0;
-        Region region = this.getRegion();
-        RegionBoundingBox box = region.getBoundingBox();
-
-        box.expand(direction,amount);
-        List<Region> overlapping = region.getOverlappingRegions();
-        if (!overlapping.isEmpty()) {
-            for (Region r : overlapping) {
-                dif = Math.max(dif, Math.abs(r.getVertex()[getComplement_(index)] - box.getCorners()[index]));
-            }
-            box.expand(direction,-dif);
-        }
-        return dif;
-    }
-    private int getComplement_(int index){
-        if (index == -1) { return -1; }
-        if (index < 3) {
-            return index + 3;
-        } else {
-            return index - 3;
-        }
-    }
-    private int getNext_(int index) {
-
-        int r = -1;
-        switch (index) {
-            case 0:
-            case 3:
-                r = index + 2;
-                break;
-
-            case 2:
-            case 5:
-                r = index - 2;
-                break;
-
-            default: break;
-        }
-        return r;
     }
 }

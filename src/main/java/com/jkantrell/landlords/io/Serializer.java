@@ -2,7 +2,7 @@ package com.jkantrell.landlords.io;
 
 import com.google.gson.*;
 import com.jkantrell.landlords.Landlords;
-import com.jkantrell.landlords.totems.TotemStructure;
+import com.jkantrell.landlords.totems.Blueprint;
 import com.jkantrell.regionslib.regions.rules.Rule;
 import org.bukkit.Bukkit;
 
@@ -16,7 +16,7 @@ public abstract class Serializer {
     public static final Gson GSON;
     static {
         GsonBuilder builder = new GsonBuilder();
-        builder.registerTypeAdapter(TotemStructure.class, new TotemStructure.JDeserializer());
+        builder.registerTypeAdapter(Blueprint.class, new Blueprint.JDeserializer());
         builder.registerTypeAdapter(Rule.class, new Rule.JDeserializer());
 
         GSON = builder.create();

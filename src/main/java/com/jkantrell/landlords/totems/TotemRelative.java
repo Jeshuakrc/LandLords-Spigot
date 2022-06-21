@@ -12,5 +12,5 @@ public interface TotemRelative {
         }
         return r;
     }
-    TotemStructure getStructure();
+    Blueprint getStructure();
 }

@@ -66,11 +66,6 @@ public class Config extends AbstractYamlConfig {
     }
 
     //ENUMS
-    public enum EndCrystalOnAnyBlock {
-        never,
-        always,
-        on_totem
-    }
     public enum GroupLevelReach {
         noOne, all, responsible, members, lvl;
         private int level_ = -1;
@@ -97,9 +92,6 @@ public class Config extends AbstractYamlConfig {
     @ConfigField(path = "default_language")
     public String defaultLanguageCode = "en";
 
-    @ConfigField(path = "end_crystal_on_any_block")
-    public EndCrystalOnAnyBlock endCrystalOnAnyBlock = EndCrystalOnAnyBlock.on_totem;
-
     @ConfigField(path = "totems.default_group_level")
     public int totemDefaultGroupLevel = 1;
 
@@ -119,7 +111,7 @@ public class Config extends AbstractYamlConfig {
     public Config.ParticleData totemPlaceParticleEffect = new ParticleData(Particle.REVERSE_PORTAL,400,new int[] {0,0,0});
 
     @ConfigField(path = "totems.place_particle_effect.position")
-    public int[] totemPlaceParticlePos = {0,-3,0};
+    public double[] totemPlaceParticlePos = {0,-3,0};
 
     @ConfigField(path = "totems.destroy_arrow_effects")
     public List<PotionType> totemDestroyArrowEffects = List.of(PotionType.POISON);

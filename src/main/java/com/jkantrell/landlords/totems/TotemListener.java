@@ -6,34 +6,34 @@ import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.events.RegionDestroyEvent;
-import com.jkantrell.regionslib.regions.Hierarchy;
-import com.jkantrell.regionslib.regions.Permission;
 import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
 import org.bukkit.block.Lectern;
 import org.bukkit.block.data.Directional;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.event.world.ChunkUnloadEvent;
+import org.bukkit.event.world.EntitiesLoadEvent;
+import org.bukkit.event.world.EntitiesUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
+
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Stream;
@@ -45,237 +45,26 @@ public class TotemListener implements Listener {
 
     //EVENTS
     @EventHandler
-    public void onPlayerInteraction(PlayerInteractEvent e) {
+    public void onPlaceTotem(PlayerInteractEvent e) {
+        if (!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) { return; }
 
         ItemStack item = e.getItem();
         if (item == null) { return; }
-        Player player = e.getPlayer();
-        BlockFace blockFace = e.getBlockFace();
+        if (!item.getType().equals(Material.END_CRYSTAL)) { return; }
+
         Block block = e.getClickedBlock();
-        Action action = e.getAction();
-        TotemStructure structure;
+        if (block == null) { return; }
 
-        if (Deeds.isTotemDeeds(item) && action.equals(Action.RIGHT_CLICK_BLOCK)) {
-            deedPlayerSlotMap_.put(player,e.getHand());
-        } else {
-            deedPlayerSlotMap_.remove(player);
+        Location loc = block.getRelative(e.getBlockFace()).getLocation().add(.5,.5,.5);
+        Blueprint blueprint = TotemManager.chekStructuresFromPoint(loc);
+        if (blueprint == null) { return; }
+
+        Player player = e.getPlayer();
+        e.setCancelled(true);
+        if (!player.getGameMode().equals(GameMode.CREATIVE)) {
+            player.getInventory().removeItem(new ItemStack(Material.END_CRYSTAL,1));
         }
-
-        if (block != null) {
-            if (action == Action.RIGHT_CLICK_BLOCK) {
-                if (
-                        blockFace == BlockFace.UP &&
-                        item.getType() == Material.END_CRYSTAL
-                ) {
-                    structure = TotemManager.chekStructuresFromPoint(block.getX(), block.getY() + 1, block.getZ(), player.getWorld());
-                    boolean onValidBlock = block.getType().equals(Material.OBSIDIAN) || block.getType().equals(Material.BEDROCK);
-
-                    switch (Landlords.CONFIG.endCrystalOnAnyBlock) {
-                        case never:
-                            if (!onValidBlock) {
-                                break;
-                            }
-
-                        case on_totem:
-                            if (structure == null) {
-                                break;
-                            }
-
-                        case always:
-                            if (structure == null && !onValidBlock) {
-                                e.setCancelled(true);
-                                Totem.placeEndCrystal(player, block.getX(), block.getY() + 1, block.getZ());
-                            }
-                            if (structure != null) {
-                                e.setCancelled(true);
-                                Totem totem = new Totem(block.getX(), block.getY() + 1, block.getZ(), player.getWorld(), structure);
-                                totem.place(player);
-                            }
-
-                        default:
-                    }
-                }
-                if (Deeds.isTotemDeeds(item) && TotemLectern.isTotemLectern(block)) {
-
-                    TotemLectern lectern = TotemManager.getLecternAtSpot(block);
-                    if (lectern == null ) { return; }
-
-                    try {
-                        Region region = lectern.getTotem().getRegion();
-                        List<Permission>    oldPerms = new ArrayList<>(Arrays.asList(region.getPermissions().clone())),
-                                newPerms;
-                        String              oldName = region.getName(),
-                                newName;
-                        lectern.readDeeds(item,player);
-                        newPerms = new ArrayList<>(Arrays.asList(region.getPermissions()));
-                        newName = region.getName();
-
-                        if (oldPerms.equals(newPerms) && oldName.equals(newName)) { return; }
-
-                        HashMap<Player,List<String>> playerMessagesMap = new HashMap<>();
-                        List<Player> msgRecipients = new ArrayList<>(Landlords.getMainInstance().getServer().getOnlinePlayers());
-                        for (Player p : msgRecipients) {
-                            playerMessagesMap.put(p,new ArrayList<>());
-                        }
-
-                        List<String> messages;
-                        StringBuilder messagePath = new StringBuilder();
-                        if(!oldName.equals(newName)){
-                            for (Player p : msgRecipients) {
-                                messages = playerMessagesMap.get(p);
-                                messagePath.setLength(0);
-                                messagePath.append("region_name_update_");
-                                messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson");
-
-                                messages.add(LangManager.getString(messagePath.toString(),p,oldName,newName,player.getName()));
-                            }
-                        }
-
-                        HashMap<String,List<Hierarchy.Group>> playerPermissionsMap = new HashMap<>();
-                        for (Permission oldPerm : oldPerms) {
-                            String p = oldPerm.getPlayerName();
-                            if (!playerPermissionsMap.containsKey(p)) {
-                                playerPermissionsMap.put(p,new ArrayList<>());
-                            }
-                            playerPermissionsMap.get(p).add(oldPerm.getGroup());
-                        }
-
-                        for (Permission perm : newPerms) {
-
-                            String affected = perm.getPlayerName();
-                            List<Hierarchy.Group> groups = playerPermissionsMap.getOrDefault(affected,Collections.emptyList());
-                            if(groups.isEmpty()){
-                                for (Player p : msgRecipients) {
-                                    messages = playerMessagesMap.get(p);
-                                    messagePath.setLength(0);
-                                    messagePath.append("region_permission_add_");
-                                    messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
-                                    messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
-
-                                    messages.add(LangManager.getString(messagePath.toString(),p,affected,player.getName(),perm.getGroup().getName(),region.getName()));
-                                }
-                            } else{
-                                Hierarchy.Group group = groups.get(0);
-                                if (!groups.contains(perm.getGroup())) {
-                                    for (Player p : msgRecipients) {
-                                        messages = playerMessagesMap.get(p);
-                                        messagePath.setLength(0);
-                                        messagePath.append("region_permission_change_");
-                                        messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
-                                        messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
-
-                                        messages.add(LangManager.getString(messagePath.toString(), p, affected, player.getName(), group.getName(), perm.getGroup().getName(), region.getName()));
-                                    }
-                                }
-                                groups.remove(group);
-                            }
-                        }
-
-                        for (String name : playerPermissionsMap.keySet()) {
-                            for (Hierarchy.Group g : playerPermissionsMap.get(name)) {
-                                for (Player p : msgRecipients) {
-                                    messages = playerMessagesMap.get(p);
-                                    messagePath.setLength(0);
-                                    messagePath.append("region_permission_remove_");
-                                    messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
-                                    messagePath.append(p.getName().equals(name) ? "firstPerson" : "thirdPerson");
-
-                                    messages.add(LangManager.getString(messagePath.toString(),p,name,player.getName(),g.getName(),region.getName()));
-                                }
-                            }
-                        }
-
-                        for (Player p : msgRecipients) {
-                            for (String s : playerMessagesMap.get(p)) {
-                                p.sendMessage(s);
-                            }
-                        }
-
-                    } catch (IllegalArgumentException ex) {
-                        player.sendMessage(ex.getMessage());
-                        e.setCancelled(true);
-                    } catch (TotemLectern.unreadableDeedsException ex) {
-                        StringBuilder message = new StringBuilder();
-                        message.append(ex.getMessage()).append("§r");
-                        for (String error : ex.errors) {
-                            message.append("\n").append(error);
-                        }
-                        player.sendMessage(message.toString());
-                        e.setCancelled(true);
-                    }
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    public void onInteractWithTotem(PlayerInteractEntityEvent e){
-
-        if(e.getRightClicked() instanceof EnderCrystal crystal){
-            if(Totem.isTotem(crystal)){
-                Player player = e.getPlayer();
-                PlayerInventory inventory = player.getInventory();
-                Totem totem = Totem.getFromEndCrystal(crystal);
-                ItemStack handed = inventory.getItemInMainHand();
-                Material    item = handed.getType(),
-                            upgrade = Landlords.CONFIG.totemUpgradeItem.item(),
-                            downgrade = Landlords.CONFIG.totemDowngradeItem.item();
-
-                if(upgrade.equals(item) || downgrade.equals(item)){
-                    boolean resized; int toResize;
-                    Config.TotemInteractionData interactionData;
-
-                    e.setCancelled(true);
-
-                    if (upgrade.equals(item)) {
-                        toResize = 1;
-                        interactionData = Landlords.CONFIG.totemUpgradeItem;
-                    } else {
-                        toResize = -1;
-                        interactionData = Landlords.CONFIG.totemDowngradeItem;
-                    }
-                    try {
-                        ItemStack itemStack = new ItemStack(item,interactionData.count());
-                        if (inventory.contains(itemStack,interactionData.count())) {
-                            resized = totem.resize(toResize, toResize);
-                        } else {
-                            resized = false;
-                        }
-
-                        if(resized){
-                            Region region = totem.getRegion();
-                            String msgPath = "region_resize";
-                            String[] msgArgs = { player.getName(), region.getName(), Double.toString(region.getWidthX()), Double.toString(region.getHeight()), Double.toString(region.getWidthZ()) };
-                            Config.GroupLevelReach msgReach = Landlords.CONFIG.msgReachRegionResize;
-
-                            switch (msgReach) {
-                                case lvl -> region.broadCastToMembersLang(msgPath, msgArgs, msgReach.getLevel());
-                                case members -> region.broadCastToMembersLang(msgPath, msgArgs, region.getHierarchy().getHighestLevel());
-                                case all -> Landlords.Utils.broadcastMessageLang(msgPath, msgArgs);
-                                case responsible -> player.sendMessage(LangManager.getString(msgPath, player, msgArgs));
-                                default -> {}
-                            }
-
-                            if (interactionData.consume()) {
-                                inventory.removeItem(itemStack);
-                            }
-                        }
-                    } catch (TotemUnresizableException ignored) {
-
-                    }
-                }
-                if (item.equals(Landlords.CONFIG.deedsExchangeItem)) {
-
-                    if(Deeds.isTotemDeeds(handed)) { return; }
-
-                    Deeds deeds = new Deeds(totem.getRegion(),player);
-                    ItemStack book = deeds.write();
-                    player.closeInventory();
-                    inventory.removeItem(handed);
-                    inventory.setItemInMainHand(book);
-                }
-            }
-        }
+        new Totem(loc,blueprint).place(player);
     }
 
     @EventHandler
@@ -285,35 +74,26 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onChunkLoad(ChunkLoadEvent e) {
-        this.loadTotems_(Arrays.stream(e.getChunk().getEntities()));
+    public void onChunkLoad(EntitiesLoadEvent e) {
+        this.loadTotems_(e.getEntities().stream());
     }
 
     @EventHandler
-    public void onChunkUnload(ChunkUnloadEvent e) {
-        Entity[] entities = e.getChunk().getEntities();
-        for (Entity entity : entities) {
-            if (entity instanceof EnderCrystal crystal) {
-                if(Totem.isTotem(crystal)){
-                    TotemManager.getTotems().remove(Totem.getFromEndCrystal(crystal));
-                }
-            }
-        }
+    public void onChunkUnload(EntitiesUnloadEvent e) {
+        e.getEntities().stream()
+                .filter(ent -> ent instanceof EnderCrystal)
+                .map(ent -> (EnderCrystal) ent)
+                .filter(Totem::isTotem)
+                .map(Totem::fromEnderCrystal)
+                .forEach(t -> {
+                    TotemManager.unregisterTotem(t);
+                    Bukkit.broadcastMessage("Totem unloaded. ID: " + t.getRegionId());
+                });
     }
 
     @EventHandler
     public void onBlockUpdateEvent(BlockPhysicsEvent e){
-        TotemStructure structure;
-        Totem[] totems = TotemManager.getPossibleTotemsAtBlock(e.getBlock());
-        for(Totem t : totems){
-            structure = TotemManager.chekStructuresFromPoint(t.getPosX(), t.getPosY(), t.getPosZ(),t.getWorld());
-            if(structure == null){
-                t.enabled(false);
-            }else{
-                t.setStructure(structure);
-                t.enabled(true);
-            }
-        }
+
     }
 
     @EventHandler
@@ -334,38 +114,117 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onDestroyCrystal(EntityDamageByEntityEvent e){
+    public void onFeedTotem(PlayerInteractEntityEvent e){
+        if (!(e.getRightClicked() instanceof EnderCrystal crystal)) { return; }
+        if (!Totem.isTotem(crystal)) { return; }
+
+        Player player = e.getPlayer();
+        PlayerInventory inventory = player.getInventory();
+        ItemStack item = inventory.getItem(e.getHand());
+
+        if (item == null) { return; }
+
+        Config.TotemInteractionData totemData = null;
+        for (Config.TotemInteractionData d : new Config.TotemInteractionData[]{Landlords.CONFIG.totemUpgradeItem, Landlords.CONFIG.totemDowngradeItem}) {
+            if (item.getType().equals(d.item())) { totemData = d; break; }
+        }
+
+        if (totemData == null) { return; }
+
+        try {
+            if (totemData.consume()) {
+                if (!inventory.contains(totemData.item(), totemData.count())) { return; }
+                if (!player.getGameMode().equals(GameMode.CREATIVE)) {
+                    inventory.removeItem(new ItemStack(totemData.item(), totemData.count()));
+                }
+            }
+            int toResize = (totemData.equals(Landlords.CONFIG.totemDowngradeItem)) ? -1 : 1;
+            Totem.fromEnderCrystal(crystal).scale(toResize);
+        } catch (TotemUnresizableException ignored) {}
+    }
+
+    @EventHandler
+    public void onHurtTotem(EntityDamageByEntityEvent e){
         if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
 
         e.setCancelled(true);
-        Totem totem = Totem.getFromEndCrystal(crystal);
-        BiConsumer<Player,Arrow> consumer = (p,a) -> {
-            TotemDestroyedByPlayerEvent event = new TotemDestroyedByPlayerEvent(p,totem,a);
-            RegionsLib.getMain().getServer().getPluginManager().callEvent(event);
-            if (!event.isCancelled()) { totem.getRegion().destroy(p); }
-        };
+        Totem totem = Totem.fromEnderCrystal(crystal);
 
+        Player player = null;
+        Arrow arrow = null;
         Entity destroyer = e.getDamager();
-        if (destroyer instanceof Player player) {
-            if (totem.getLevel() > 0) { return; }
-            consumer.accept(player,null);
-        } else if (destroyer instanceof Arrow arrow) {
-            if (!(arrow.getShooter() instanceof Player player)) { return; }
+        if (destroyer instanceof Player player_) {
+            player = player_;
+        } else if (destroyer instanceof Arrow arrow_) {
+            if (!(arrow_.getShooter() instanceof Player player_)) { return; }
             List<PotionType> effects = Landlords.CONFIG.totemDestroyArrowEffects;
-            if (!effects.isEmpty() && !effects.contains(arrow.getBasePotionData().getType())) { return; }
-            consumer.accept(player,arrow);
+            if (!effects.isEmpty() && !effects.contains(arrow_.getBasePotionData().getType())) { return; }
+            player = player_; arrow = arrow_;
         }
 
+        if (player == null) { return; }
+
+        TotemDestroyedByPlayerEvent event = new TotemDestroyedByPlayerEvent(player,totem,arrow);
+        RegionsLib.getMain().getServer().getPluginManager().callEvent(event);
+        if (event.isCancelled()) { return; }
+
+        if (totem.getLevel() > 0) {
+            try {
+                totem.scale(-1);
+            } catch (TotemUnresizableException ignored) {}
+        } else {
+            totem.getRegion().destroy(player);
+        }
+        World world = totem.getWorld();
+        Location loc = totem.getLocation();
+        world.playSound(loc, Sound.ENTITY_BLAZE_HURT,SoundCategory.AMBIENT,5f, 0.5f);
+        world.spawnParticle(Particle.DRAGON_BREATH, loc, 80, 0.2,0.2,0.2);
+
+        if (Math.random() > Landlords.CONFIG.totemDropBackRate) { return; }
+        Config.TotemInteractionData itemData = Landlords.CONFIG.totemUpgradeItem;
+        totem.getWorld().dropItemNaturally(totem.getLocation(),new ItemStack(itemData.item(), itemData.count())).setInvulnerable(true);
     }
 
     @EventHandler
+    public void OnTotemKilled(EntityDeathEvent e) {
+        if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
+        if (!Totem.isTotem(crystal)) { return; }
+        Region region = Totem.fromEnderCrystal(crystal).getRegion();
+        if (region == null) { return; }
+        region.destroy();
+    }
+
+    @EventHandler
+    public void onTotemDamaged(EntityDamageEvent e) {
+        if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
+        if (!Totem.isTotem(crystal)) { return; }
+        e.setCancelled(true);
+    }
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onRegionDestroy(RegionDestroyEvent e) {
-        RegionData regionData = e.getRegion().getDataContainer().get("totemRegion");
+        Region region = e.getRegion();
+        RegionData regionData = region.getDataContainer().get("totemId");
         if (regionData == null) { return; }
-        if (!regionData.getAsBoolean()) { return; }
-        Totem totem = TotemManager.getTotemFromId(e.getRegion().getId());
+
+        Totem totem = Totem.fromRegion(region);
         if (totem != null) { totem.destroy(); }
+    }
+
+    @EventHandler
+    public void onPlayerOpenBook(PlayerInteractEvent e) {
+
+        ItemStack item = e.getItem();
+        if (item == null) { return; }
+        Player player = e.getPlayer();
+
+        if (Deeds.isTotemDeeds(item)) {
+            deedPlayerSlotMap_.put(player,e.getHand());
+        } else {
+            deedPlayerSlotMap_.remove(player);
+        }
+
     }
 
     @EventHandler
@@ -408,6 +267,11 @@ public class TotemListener implements Listener {
                 .filter(e -> e instanceof EnderCrystal)
                 .map(e -> (EnderCrystal) e)
                 .filter(Totem::isTotem)
-                .forEach(c -> TotemManager.removeTotem(Totem.getFromEndCrystal(c)));
+                .forEach(c -> {
+                    Totem totem = Totem.fromEnderCrystal(c);
+                    TotemManager.registerTotem(totem);
+                    if (totem.getRegion() == null) {totem.destroy();}
+                    Bukkit.broadcastMessage("Totem loaded. ID: " +totem.getRegionId());
+                });
     }
 }

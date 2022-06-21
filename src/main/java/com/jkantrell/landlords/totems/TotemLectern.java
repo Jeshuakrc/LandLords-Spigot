@@ -20,14 +20,14 @@ public class TotemLectern implements TotemRelative, Cloneable {
     //FIELDS
     private int[] position_ = new int[3];
     private BlockFace facing_;
-    private final TotemStructure structure_;
+    private final Blueprint structure_;
     private Totem totem_;
 
     //STATIC FIELDS
     private static NamespacedKey lecternRegionIDKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedLecternRegionID");
 
     //CONSTRUCTORS
-    public TotemLectern(int x, int y, int z, BlockFace facing, TotemStructure structure){
+    public TotemLectern(int x, int y, int z, BlockFace facing, Blueprint structure){
         this.setPosition(x,y,z);
         this.setFacing(facing);
         this.structure_ = structure;
@@ -53,7 +53,7 @@ public class TotemLectern implements TotemRelative, Cloneable {
     public BlockFace getFacing() {
         return facing_;
     }
-    public TotemStructure getStructure() {
+    public Blueprint getStructure() {
         return this.structure_;
     }
     public Totem getTotem() {
