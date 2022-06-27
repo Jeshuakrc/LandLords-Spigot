@@ -10,7 +10,6 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
-import org.bukkit.event.Listener;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -129,7 +128,7 @@ public class Totem {
     public Region getRegion() {
         if (this.region_ == null) {
             if (!this.placed_) { return null; }
-            Region r = Region.get(this.regionId_);
+            Region r = Regions.get(this.regionId_);
             if (r == null) { return null; }
             RegionData regionData = r.getDataContainer().get("totemId");
             if (regionData == null) { return null; }
@@ -320,8 +319,10 @@ public class Totem {
 
             double leftOver = 0;
             for (Region r : reg.getOverlappingRegions()) {
-                leftOver = Math.max(leftOver, this.overlappingCalc_.apply(reg.getBoundingBox().intersection(r.getBoundingBox())));
+                leftOver = Math.max(leftOver, Math.abs(reg.getFacePos(this.getBlocFace()) - r.getFacePos(this.getOpposite().getBlocFace())));
             }
+
+
             if (leftOver == 0) {
                 this.colliding_ = false;
                 return;

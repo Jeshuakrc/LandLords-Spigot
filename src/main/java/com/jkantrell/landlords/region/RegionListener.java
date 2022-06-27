@@ -7,6 +7,7 @@ import com.jkantrell.regionslib.events.AbilityTriggeredEvent;
 import com.jkantrell.regionslib.events.PlayerEnterRegionEvent;
 import com.jkantrell.regionslib.events.PlayerLeaveRegionEvent;
 import com.jkantrell.regionslib.regions.Region;
+import com.jkantrell.regionslib.regions.Regions;
 import com.jkantrell.regionslib.regions.abilities.Abilities;
 import com.jkantrell.regionslib.regions.rules.Rule;
 import com.jkantrell.regionslib.regions.rules.RuleDataType;
@@ -88,7 +89,7 @@ public class RegionListener implements Listener {
         if (!e.getSpawnReason().equals(CreatureSpawnEvent.SpawnReason.NATURAL)) { return; }
         if (!(e.getEntity() instanceof Monster monster)) { return; }
 
-        for (Region r : Region.getRuleContainersAt("noMonsterSpawn",RuleDataType.BOOL,monster.getLocation())) {
+        for (Region r : Regions.getRuleContainersAt("noMonsterSpawn",RuleDataType.BOOL,monster.getLocation())) {
             if (r.getRuleValue("noMonsterSpawn",RuleDataType.BOOL)) {
                 e.setCancelled(true);
                 Landlords.getMainInstance().getLogger().finest(
@@ -101,7 +102,7 @@ public class RegionListener implements Listener {
 
     @EventHandler
     public void onFireSpread(BlockBurnEvent e) {
-        for (Region r :  Region.getRuleContainersAt("fireProtected",RuleDataType.BOOL,e.getBlock().getLocation().add(.5,.5,.5))) {
+        for (Region r :  Regions.getRuleContainersAt("fireProtected",RuleDataType.BOOL,e.getBlock().getLocation().add(.5,.5,.5))) {
             if (r.getRuleValue("fireProtected",RuleDataType.BOOL)) {
                 e.setCancelled(true);
                 return;
@@ -111,7 +112,7 @@ public class RegionListener implements Listener {
 
     @EventHandler
     public void onRaidStart(RaidTriggerEvent e) {
-        for (Region r :  Region.getRuleContainersAt("raidProtected",RuleDataType.BOOL,e.getRaid().getLocation())) {
+        for (Region r :  Regions.getRuleContainersAt("raidProtected",RuleDataType.BOOL,e.getRaid().getLocation())) {
             if (r.getRuleValue("raidProtected",RuleDataType.BOOL)) {
                 e.setCancelled(true);
                 Landlords.getMainInstance().getLogger().fine(
@@ -159,7 +160,7 @@ public class RegionListener implements Listener {
         while (i.hasNext()) {
             block = i.next();
             Rule rule;
-            for (Region r : Region.getRuleContainersAt(ruleLabel,dataType,block.getLocation().add(.5,.5,.5))) {
+            for (Region r : Regions.getRuleContainersAt(ruleLabel,dataType,block.getLocation().add(.5,.5,.5))) {
                 rule = r.getRule(ruleLabel);
                 if (predicate.test(rule,r)) { i.remove(); }
             }
