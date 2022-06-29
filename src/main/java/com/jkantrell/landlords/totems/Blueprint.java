@@ -12,6 +12,8 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.BoundingBox;
+import org.bukkit.util.Vector;
+
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -37,13 +39,14 @@ public class Blueprint {
     private int id_;
     private double[] regionInitialVertex_ = new double[6];
     private double[] regionGrowthRate_ = new double[6];
-    private double[] regionMaxSize_ = new double[3];
     private int[] structureBox_;
+    private Vector regionMaxSize_;
     private Hierarchy hierarchy_;
     private List<Rule> rules_;
+    private BoundingBox initialSiz3e_;
 
     //CONSTRUCTORS
-    public Blueprint(double[] regionBaseSize, double[] regionGrowthRate, double[] regionMaxSize, Hierarchy hierarchy){
+    public Blueprint(double[] regionBaseSize, double[] regionGrowthRate, Vector regionMaxSize, Hierarchy hierarchy){
         this.id_ = Blueprint.getHighestId() + 1;
         this.setRegionInitialVertex(regionBaseSize);
         this.setRegionGrowthRate(regionGrowthRate);
@@ -62,7 +65,7 @@ public class Blueprint {
     public double[] getRegionGrowthRate(){
         return this.regionGrowthRate_;
     };
-    public double[] getRegionMaxSize() {
+    public Vector getRegionMaxSize() {
         return this.regionMaxSize_;
     }
     int[] getStructureBox() {
@@ -99,8 +102,8 @@ public class Blueprint {
     public void setRegionGrowthRate(double[] growthRateArray){
         regionGrowthRate_ = growthRateArray;
     };
-    public void setRegionMaxSize(double[] maxSizeArray) {
-        regionMaxSize_ = maxSizeArray;
+    public void setRegionMaxSize(Vector maxSize) {
+        this.regionMaxSize_ = maxSize;
     }
     public void setHierarchy(Hierarchy hierarchy) {
         this.hierarchy_ = hierarchy;
@@ -235,10 +238,11 @@ public class Blueprint {
             JsonObject jsonStructure = json.getAsJsonObject();
             JsonObject jsonRegion = jsonStructure.get("region").getAsJsonObject();
 
+            double[] maxSize = Serializer.GSON.fromJson(jsonRegion.get("max_size"),double[].class);
             Blueprint structure = new Blueprint(
                     Serializer.GSON.fromJson(jsonRegion.get("initial_size"),double[].class),
                     Serializer.GSON.fromJson(jsonRegion.get("growth_rate"),double[].class),
-                    Serializer.GSON.fromJson(jsonRegion.get("max_size"),double[].class),
+                    new Vector(maxSize[0], maxSize[1], maxSize[2]),
                     Hierarchy.get(jsonRegion.get("hierarchy").getAsInt())
             );
 

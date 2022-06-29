@@ -35,7 +35,6 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 public class TotemListener implements Listener {
@@ -131,6 +130,8 @@ public class TotemListener implements Listener {
 
         if (totemData == null) { return; }
 
+        Totem totem = Totem.fromEnderCrystal(crystal);
+        Region region = totem.getRegion();
         try {
             if (totemData.consume()) {
                 if (!inventory.contains(totemData.item(), totemData.count())) { return; }
@@ -139,8 +140,10 @@ public class TotemListener implements Listener {
                 }
             }
             int toResize = (totemData.equals(Landlords.CONFIG.totemDowngradeItem)) ? -1 : 1;
-            Totem.fromEnderCrystal(crystal).scale(toResize);
+            totem.scale(toResize);
         } catch (TotemUnresizableException ignored) {}
+
+        Bukkit.broadcastMessage("Size: " + region.getWidthX() + " x " + region.getHeight() + " x " + region.getWidthZ() + ".");
     }
 
     @EventHandler
