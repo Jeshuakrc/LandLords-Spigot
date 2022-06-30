@@ -2,6 +2,7 @@ package com.jkantrell.landlords.totems;
 
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.totems.Exception.*;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import com.jkantrell.landlords.Landlords;
@@ -15,11 +16,10 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+
+import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 public class Totem {
@@ -149,6 +149,15 @@ public class Totem {
     public EnderCrystal getEndCrystal() {
         return endCrystal_;
     }
+    public BoundingBox getBaseRegionBox() {
+        BoundingBox box = new BoundingBox();
+        box.shift(this.location_);
+        for (int i = 0; i < 3; i++) {
+            box.expand(Totem.BLOCK_FACE_DIRECTIONS[i], this.blueprint_.getRegionInitialVertex()[i]);
+            box.expand(Totem.BLOCK_FACE_DIRECTIONS[i+3], -this.blueprint_.getRegionInitialVertex()[i+3]);
+        }
+        return box;
+    }
 
     //SETTERS
     public void relocate(Location loc) {
@@ -177,15 +186,8 @@ public class Totem {
     //METHODS
     public Region place(Player placer) {
         //Creating the region
-        BoundingBox vertex = new BoundingBox();
-        vertex.shift(this.location_);
-        for (int i = 0; i < 3; i++) {
-            vertex.expand(Totem.BLOCK_FACE_DIRECTIONS[i], this.blueprint_.getRegionInitialVertex()[i]);
-            vertex.expand(Totem.BLOCK_FACE_DIRECTIONS[i+3], -this.blueprint_.getRegionInitialVertex()[i+3]);
-        }
-
         this.region_ = new Region(
-            new double[] { vertex.getMinX(), vertex.getMinY(), vertex.getMinZ(), vertex.getMaxX(), vertex.getMaxY(), vertex.getMaxZ() },
+            this.getBaseRegionBox(),
             this.location_.getWorld(),
             (placer == null) ? "Unnamed Region" : LangManager.getString("totem_region_playerPlacedName",placer,placer.getName()),
             this.blueprint_.getHierarchy(),
@@ -223,13 +225,16 @@ public class Totem {
         return this.region_;
     }
     public void scale(int levelAdd) throws TotemUnresizableException {
-        double[] expansions = this.getBlueprint().getRegionGrowthRate();
+        double[] expansions = (levelAdd > 0) ?
+                this.getBlueprint().getRegionGrowthRate() :
+                new double[] {1,1,1,1,1,1};
         try {
             for (int i = 0; i < 3; i++) {
                 this.directions_[i].expand(expansions[i] * levelAdd, expansions[i + 3] * levelAdd);
             }
             this.leveled_ += levelAdd;
         } finally {
+            Arrays.stream(this.directions_).forEach(Direction::resetCollisions);
             this.save();
         }
     }
@@ -289,7 +294,10 @@ public class Totem {
         private final Face max_;
         private final Axis axis_;
         private final Function<Vector,Double> vectorExtractor_;
+        private final Function<BoundingBox, Double> boxExtractorMin_;
+        private final Function<BoundingBox, Double> boxExtractorMax_;
         private boolean maxed_;
+        private boolean minned_;
 
         //CONSTRUCTOR
         Direction(Axis axis) {
@@ -299,18 +307,24 @@ public class Totem {
                     min = BlockFace.WEST;
                     max = BlockFace.EAST;
                     this.vectorExtractor_ = Vector::getX;
+                    this.boxExtractorMin_ = BoundingBox::getMinX;
+                    this.boxExtractorMax_ = BoundingBox::getMaxX;
                 }
                 case Z -> {
                     min = BlockFace.NORTH;
                     max = BlockFace.SOUTH;
                     this.vectorExtractor_ = Vector::getZ;
+                    this.boxExtractorMin_ = BoundingBox::getMinZ;
+                    this.boxExtractorMax_ = BoundingBox::getMaxZ;
                 }
                 case Y -> {
                     min = BlockFace.DOWN;
                     max = BlockFace.UP;
                     this.vectorExtractor_ = Vector::getY;
+                    this.boxExtractorMin_ = BoundingBox::getMinY;
+                    this.boxExtractorMax_ = BoundingBox::getMaxY;
                 }
-                default -> { min = null; max = null; this.vectorExtractor_ = null; }
+                default -> throw new IllegalArgumentException("Axis must be either X, Y or Z");
             }
             this.min_ = new Face(min,this);
             this.max_ = new Face(max, this);
@@ -332,23 +346,37 @@ public class Totem {
         boolean isMaxed() {
             return this.maxed_;
         }
+        boolean isMinned() {
+            return this.minned_;
+        }
 
         //METHODS
         void expand(double minDir, double maxDir) throws TotemUnresizableException {
             Region reg = Totem.this.getRegion();
             if (reg == null) { return; }
 
-            TotemUnresizableException.Reason errorReason = TotemUnresizableException.Reason.SIZE_MAXED_OUT;
             double  toExpandMin = minDir, toExpandMax = maxDir,
                     leftOverMin = 0, leftOverMax =0,
                     toExpand = toExpandMin + toExpandMax,
-                    allowedExpansion = this.vectorExtractor_.apply(Totem.this.getBlueprint().getRegionMaxSize()) - reg.getLength(this.axis_);
+                    regionMazSize = this.vectorExtractor_.apply(Totem.this.getBlueprint().getRegionMaxSize()),
+                    allowedExpansion = regionMazSize - reg.getLength(this.axis_);
 
+            if (toExpand == 0) { return; }
+
+            UnresizableReason reason = null;
             if (toExpand < 0) {
-
-
-
-            } else if (toExpand > allowedExpansion) {
+                toExpand = 0;
+                BoundingBox baseBox = Totem.this.getBaseRegionBox(), regBox = reg.getBoundingBox();
+                Function<BoundingBox, Double>[] extractors = new Function[] { this.boxExtractorMin_, this.boxExtractorMax_ };
+                double[] toExpands = new double[2];
+                double[] orgExpands = {minDir, maxDir};
+                for (int i = 0; i < 2; i++) {
+                    double distance = Math.abs(extractors[i].apply(regBox) - extractors[i].apply(baseBox));
+                    toExpands[i] = distance / Totem.this.getLevel() * orgExpands[i];
+                    toExpand += toExpands[i];
+                }
+                toExpandMin = toExpands[0]; toExpandMax = toExpands[1];
+            } else if ((regionMazSize > 0) && (toExpand > allowedExpansion)) {
                 toExpandMax = allowedExpansion / 2;
                 toExpandMin = allowedExpansion / 2;
                 if (toExpandMin > minDir) {
@@ -360,36 +388,65 @@ public class Totem {
                     toExpandMax = maxDir;
                 }
                 leftOverMin = minDir - toExpandMin; leftOverMax = maxDir - toExpandMax;
+                reason = new MaxSizeUnresizableReason(this.axis_);
             }
 
+            List<UnresizableReason> innerReasons = Collections.emptyList();
             try {
                 this.min_.expand(toExpandMin);
                 this.max_.expand(toExpandMax);
             } catch (TotemUnresizableException e) {
                 leftOverMin += e.getExceeded(this.min_.getBlocFace());
                 leftOverMax += e.getExceeded(this.max_.getBlocFace());
-                errorReason = TotemUnresizableException.Reason.FACE_COLLISION;
+                innerReasons = e.getReasons();
+                if (innerReasons.stream().allMatch(r -> r instanceof OverShrunkUnresizableReason)) {
+                    innerReasons = Collections.emptyList();
+                    reason = new MinSizeUnresizableReason(this.axis_);
+                } else {
+                    reason = null;
+                }
             }
 
             double leftOver = leftOverMin + leftOverMax;
-            if (leftOver <= 0) {  this.maxed_ = false; return; }
-            this.maxed_ = true;
+            if (leftOver == 0) {
+                this.maxed_ = false;
+                this.minned_ = false;
+                return;
+            }
+            if (leftOver < 0) { minned_ = true; } else { maxed_ = true; }
 
-            List<Direction> availableDirections = Arrays.stream(Totem.this.directions_).filter(d -> !d.isMaxed()).toList();
+            Predicate<Direction> checker = (leftOver < 0) ? Direction::isMinned : Direction::isMaxed;
+            List<Direction> availableDirections = Arrays.stream(Totem.this.directions_).filter(d -> !checker.test(d)).toList();
             if (availableDirections.isEmpty()) {
-                throw new TotemUnresizableException(leftOverMin,leftOverMax,this.axis_, errorReason);
+                TotemUnresizableException e = new TotemUnresizableException(Totem.this, leftOverMin,leftOverMax,this.axis_, null);
+                e.addReason(reason);
+                e.addReasons(innerReasons);
+                throw e;
             }
             toExpand = leftOver / availableDirections.size();
             for (Direction d : availableDirections) {
-                d.expand(toExpand/2, toExpand/2);
+                try {
+                    d.expand(toExpand/2, toExpand/2);
+                } catch (TotemUnresizableException e) {
+                    e.addReasons(innerReasons);
+                    e.addReason(reason);
+                    throw e;
+                }
             }
+        }
+        void resetCollisions() {
+            this.maxed_ = false;
+            this.minned_ = false;
+            this.min_.resetCollisions();
+            this.min_.resetCollisions();
         }
     }
     private class Face {
         //FIELDS
         private final BlockFace face_;
         private final Direction direction_;
-        private boolean colliding_ = false;
+        private boolean collidingOut_ = false;
+        private boolean collidingIn_ = false;
 
         //CONSTRUCTOR
         Face(BlockFace face, Direction direction) {
@@ -404,8 +461,28 @@ public class Totem {
         Face getOpposite() {
             return this.direction_.getOppositeFace(this);
         }
-        boolean isColliding() {
-            return this.colliding_;
+        boolean isCollidingOut() {
+            return this.collidingOut_;
+        }
+        boolean isCollidingIn() {
+            return this.collidingIn_;
+        }
+        byte getSign() {
+            return (byte) switch (this.getBlocFace()) {
+                case DOWN, WEST, NORTH -> -1;
+                default -> 1;
+            };
+        }
+        double getFacePos(BoundingBox box) {
+            return switch (this.getBlocFace()) {
+                case UP -> box.getMaxY();
+                case DOWN -> box.getMinY();
+                case SOUTH -> box.getMaxZ();
+                case NORTH -> box.getMinZ();
+                case EAST -> box.getMaxX();
+                case WEST -> box.getMinX();
+                default -> throw new IllegalArgumentException("The provided BlockFace must be cartesian (NORTH, SOUTH, EAST, WEST, UP, DOWN).");
+            };
         }
 
         //METHODS
@@ -416,26 +493,56 @@ public class Totem {
 
             reg.expand(this.getBlocFace(),amount);
 
-            if (amount < 0) { return; }
-
             double leftOver = 0;
-            for (Region r : reg.getOverlappingRegions()) {
-                leftOver = Math.max(leftOver, Math.abs(reg.getFacePos(this.getBlocFace()) - r.getFacePos(this.getOpposite().getBlocFace())));
+            Region collidingWith = null;
+
+            if (amount > 0) {
+                for (Region r : reg.getOverlappingRegions()) {
+                    double length = Math.abs(reg.getFacePos(this.getBlocFace()) - r.getFacePos(this.getOpposite().getBlocFace()));
+                    if (leftOver > length) { continue; }
+                    leftOver = length;
+                    collidingWith = r;
+                }
+            } else {
+                double distance = (reg.getFacePos(this.getBlocFace()) - this.getFacePos(Totem.this.getBaseRegionBox())) * this.getSign();
+                leftOver = Math.min(0, distance);
             }
+
             if (leftOver == 0) {
-                this.colliding_ = false;
+                this.collidingOut_ = false;
+                this.collidingIn_ = false;
                 return;
             }
 
-            reg.expand(this.getBlocFace(), -leftOver);
-            this.colliding_ = true;
-
+            OneDirectionalUnresizableReason reason = null;
             Face opposite = this.getOpposite();
-            if (opposite.isColliding()) {
-                throw new TotemUnresizableException(leftOver, this.getBlocFace(), TotemUnresizableException.Reason.FACE_COLLISION);
+            boolean check;
+            if (leftOver > 0) {
+                this.collidingOut_ = true;
+                reason = new RegionCollisionUnresizableReason(collidingWith, this.getBlocFace());
+                check = opposite.isCollidingOut();
             } else {
-               opposite.expand(leftOver);
+                this.collidingIn_ = true;
+                reason = new OverShrunkUnresizableReason(this.getBlocFace());
+                check = opposite.isCollidingIn();
             }
+
+            reg.expand(this.getBlocFace(), -leftOver);
+
+            if (check) {
+                throw new TotemUnresizableException(Totem.this, leftOver, reason);
+            } else {
+                try {
+                    opposite.expand(leftOver);
+                } catch (TotemUnresizableException e) {
+                    e.addReason(new RegionCollisionUnresizableReason(collidingWith,this.getBlocFace()));
+                    throw e;
+                }
+            }
+        }
+        void resetCollisions() {
+            this.collidingIn_ = false;
+            this.collidingOut_ = false;
         }
     }
 }

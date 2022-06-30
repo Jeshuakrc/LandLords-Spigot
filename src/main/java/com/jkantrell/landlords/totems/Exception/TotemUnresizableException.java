@@ -1,43 +1,51 @@
-package com.jkantrell.landlords.totems;
+package com.jkantrell.landlords.totems.Exception;
 
+import com.jkantrell.landlords.totems.Totem;
 import org.bukkit.Axis;
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.function.Function;
 
 public class TotemUnresizableException extends Exception{
 
-    //ASSETS
-    public enum Reason { FACE_COLLISION, SIZE_MAXED_OUT, SIZE_MAXED_IN, VOLUME_MAXED_OUT }
-
     //FIELDS
+    private final Totem totem_;
     private final Vector exceededNegative_;
     private final Vector exceededPositive_;
-    private final Reason reason_;
+    private final LinkedList<UnresizableReason> reasons_ = new LinkedList<>();
 
     //CONSTRUCTORS
-    TotemUnresizableException(double exceededNegative, double exceededPositive, Axis direction, Reason reason) {
+    public TotemUnresizableException(Totem totem, double exceededNegative, double exceededPositive, Axis direction, @Nullable UnresizableReason reason) {
+        this.totem_ = totem;
         double[] magnitudesPositive = {0, 0, 0}, magnitudesNegative = {0, 0, 0};
         int locator = switch (direction) { case X -> 0; case Y -> 1; default -> 2; };
         magnitudesPositive[locator] = exceededPositive; magnitudesNegative[locator] = exceededNegative;
         this.exceededNegative_ = new Vector(magnitudesNegative[0], magnitudesNegative[1], magnitudesNegative[2]);
         this.exceededPositive_ = new Vector(magnitudesPositive[0], magnitudesPositive[1], magnitudesPositive[2]);
-        this.reason_ = reason;
+        this.addReason(reason);
     }
-    TotemUnresizableException(Vector exceededNegative, Vector exceededPositive, Reason reason) {
+    public TotemUnresizableException(Totem totem, Vector exceededNegative, Vector exceededPositive, @Nullable UnresizableReason reason) {
+        this.totem_ = totem;
         this.exceededNegative_ = exceededNegative;
         this.exceededPositive_ = exceededPositive;
-        this.reason_ = reason;
+        this.addReason(reason);
     }
-    TotemUnresizableException(double exceededXNeg, double exceededYNeg, double exceededZNeg, double exceededXPos, double exceededYPos, double exceededZPos, Reason reason) {
+    public TotemUnresizableException(Totem totem, double exceededXNeg, double exceededYNeg, double exceededZNeg, double exceededXPos, double exceededYPos, double exceededZPos, @Nullable UnresizableReason reason) {
         this(
+                totem,
                 new Vector(exceededXNeg, exceededYNeg, exceededZNeg),
                 new Vector(exceededXPos, exceededYPos, exceededZPos),
                 reason
         );
     }
-    TotemUnresizableException(double exceededMagnitude, BlockFace direction, Reason reason){
+    public TotemUnresizableException(Totem totem, double exceededMagnitude, BlockFace direction, @Nullable UnresizableReason reason){
         if (!direction.isCartesian()) {
             throw new IllegalArgumentException("The provided BlockFace must be cartesian (NORTH, SOUTH, EAST, WEST, UP, DOWN).");
         }
@@ -45,25 +53,36 @@ public class TotemUnresizableException extends Exception{
         Vector magVector = direction.getDirection().multiply(exceededMagnitude);
         Vector zeroVector = new Vector(0,0,0);
 
+        this.totem_ = totem;
         switch (direction) {
             case WEST, NORTH, DOWN ->
                     { this.exceededNegative_ = magVector; this.exceededPositive_ = zeroVector; }
             default ->
                     { this.exceededNegative_ = zeroVector; this.exceededPositive_ = magVector; }
         }
-        this.reason_ = reason;
+        this.addReason(reason);
+    }
+    public TotemUnresizableException(Totem totem, double exceededMagnitude, @Nonnull OneDirectionalUnresizableReason reason) {
+        this(totem, exceededMagnitude, reason.getDirection(), reason);
     }
 
     //GETTERS
-
     public Vector getExceededNegative() {
         return exceededNegative_;
     }
     public Vector getExceededPositive() {
         return exceededPositive_;
     }
-    public Reason getReason() {
-        return reason_;
+    public double getTotalExceeded() {
+        Vector[] vectors = {this.exceededNegative_, this.exceededPositive_};
+        double r = 0;
+        for (int i = 0; i < 2; i++) {
+            r += vectors[i].getX() + vectors[i].getY() + vectors[i].getZ();
+        }
+        return r;
+    }
+    public List<UnresizableReason> getReasons() {
+        return new ArrayList<>(this.reasons_);
     }
     public double getExceeded(BlockFace direction) {
         return switch (direction) {
@@ -82,7 +101,22 @@ public class TotemUnresizableException extends Exception{
             case Y -> Vector::getY;
             case Z -> Vector::getZ;
         };
-
         return extractor.apply(this.exceededNegative_) + extractor.apply(this.exceededPositive_);
+    }
+    public Totem getTotem() {
+        return this.totem_;
+    }
+
+    //METHODS
+    public void addReason(UnresizableReason reason) {
+        if (reason == null) { return; }
+        reason.setTotem(this.getTotem());
+        this.reasons_.add(reason);
+    }
+    public void addReasons(Collection<UnresizableReason> reasons) {
+        for (UnresizableReason reason : reasons) { this.addReason(reason); }
+    }
+    public void addReasons(UnresizableReason... reasons) {
+        this.addReasons(List.of(reasons));
     }
 }

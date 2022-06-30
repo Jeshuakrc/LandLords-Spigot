@@ -4,6 +4,8 @@ import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.totems.Exception.TotemUnresizableException;
+import com.jkantrell.landlords.totems.Exception.UnresizableReason;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.events.RegionDestroyEvent;
 import com.jkantrell.regionslib.regions.Region;
@@ -141,9 +143,9 @@ public class TotemListener implements Listener {
             }
             int toResize = (totemData.equals(Landlords.CONFIG.totemDowngradeItem)) ? -1 : 1;
             totem.scale(toResize);
-        } catch (TotemUnresizableException ignored) {}
-
-        Bukkit.broadcastMessage("Size: " + region.getWidthX() + " x " + region.getHeight() + " x " + region.getWidthZ() + ".");
+        } catch (TotemUnresizableException ex) {
+            // Future exception handling to provide feedback to the player.
+        }
     }
 
     @EventHandler

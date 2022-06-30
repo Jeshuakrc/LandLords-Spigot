@@ -43,7 +43,7 @@ public class Blueprint {
     private Vector regionMaxSize_;
     private Hierarchy hierarchy_;
     private List<Rule> rules_;
-    private BoundingBox initialSiz3e_;
+    private BoundingBox baseBox_;
 
     //CONSTRUCTORS
     public Blueprint(double[] regionBaseSize, double[] regionGrowthRate, Vector regionMaxSize, Hierarchy hierarchy){
@@ -67,6 +67,9 @@ public class Blueprint {
     };
     public Vector getRegionMaxSize() {
         return this.regionMaxSize_;
+    }
+    public BoundingBox getBaseSizeBox() {
+        return new BoundingBox().copy(this.baseBox_);
     }
     int[] getStructureBox() {
         this.setStructureBox_();;
@@ -97,7 +100,8 @@ public class Blueprint {
         this.id_ = id;
     }
     public void setRegionInitialVertex(double[] baseSizeArray){
-        regionInitialVertex_ = baseSizeArray;
+        this.regionInitialVertex_ = baseSizeArray;
+        this.baseBox_ = new BoundingBox(baseSizeArray[0], baseSizeArray[1], baseSizeArray[2], baseSizeArray[3], baseSizeArray[4], baseSizeArray[5]);
     }
     public void setRegionGrowthRate(double[] growthRateArray){
         regionGrowthRate_ = growthRateArray;
@@ -239,6 +243,7 @@ public class Blueprint {
             JsonObject jsonRegion = jsonStructure.get("region").getAsJsonObject();
 
             double[] maxSize = Serializer.GSON.fromJson(jsonRegion.get("max_size"),double[].class);
+            if (maxSize == null) { maxSize = new double[] {-1,-1,-1}; }
             Blueprint structure = new Blueprint(
                     Serializer.GSON.fromJson(jsonRegion.get("initial_size"),double[].class),
                     Serializer.GSON.fromJson(jsonRegion.get("growth_rate"),double[].class),
