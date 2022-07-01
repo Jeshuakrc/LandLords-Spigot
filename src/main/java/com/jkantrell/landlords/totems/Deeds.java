@@ -245,10 +245,10 @@ public class Deeds {
         }
         void trowException(String path, String... parms){
             throw new IllegalArgumentException(
-                        LangManager.getString("deeds_read_errorPageIndicator",holder_,Integer.toString(this.page)) + "§r" +
-                        LangManager.getString("deeds_read_errorGeneralStyle",holder_) +
-                        LangManager.getString(path,holder_,parms) + "§r"
-                        );
+                    LangManager.getString("deeds.error_message.compose.page_indicator",holder_,Integer.toString(this.page)) + "§r" +
+                    LangManager.getString("deeds.error_message.compose.general_style",holder_) +
+                    LangManager.getString(path,holder_,parms) + "§r"
+            );
         }
     }
 
@@ -263,7 +263,7 @@ public class Deeds {
         dataContainer.set(deedsIdNsKey_,PersistentDataType.INTEGER,this.getId());
         dataContainer.set(deedsRegionIdNsKey_,PersistentDataType.INTEGER,this.getRegion().getId());
         meta.addEnchant(Enchantment.BINDING_CURSE,1,true);
-        meta.setDisplayName(LangManager.getString("deeds_bookTittle", holder, this.getRegion().getName()));
+        meta.setDisplayName(LangManager.getString("deeds.book.title", holder, this.getRegion().getName()));
 
         itemStack.setItemMeta(meta);
 
@@ -314,16 +314,16 @@ public class Deeds {
     private String getStyledFirstPage_(String name){
         String  nameField = "[" + name + "]",
                 deedsId = String.format("%03d",this.getId()),
-                firstPage = LangManager.getStringNonFormatted("deeds_bookContent",this.holder_)+"§r";
+                firstPage = LangManager.getStringNonFormatted("deeds.book.first_page",this.holder_)+"§r";
         firstPage = firstPage.replaceAll("\\[","").replaceAll("]","");
         return String.format(firstPage,nameField,deedsId,this.getRegion().getId());
     }
     private String getStyledPermissionsPage_(Hierarchy.Group group, List<String> players){
         StringBuilder page = new StringBuilder();
-        page.append(extractStyle_(LangManager.getString("deeds_bookHeaders_style", this.holder_)))
+        page.append(extractStyle_(LangManager.getString("deeds.book.styles.headers", this.holder_)))
                 .append(group.getName())
                 .append(":§r")
-                .append(extractStyle_(LangManager.getString("deeds_bookPlayerNames_style", this.holder_)));
+                .append(extractStyle_(LangManager.getString("deeds.book.styles.player_names", this.holder_)));
         for (String p : players) {
             page.append("\n").append(p);
         }

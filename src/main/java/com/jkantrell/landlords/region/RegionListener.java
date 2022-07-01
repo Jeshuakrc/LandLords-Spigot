@@ -36,8 +36,8 @@ public class RegionListener implements Listener {
         String mainOwner = (region.getPermissions().length < 1) ? "" : region.getPermissions()[0].getPlayerName();
         Config.TitleData titleData = Landlords.CONFIG.regionsNameTitleData;
         player.sendTitle(
-                LangManager.getString("region_enter_title",player,region.getName(),mainOwner),
-                LangManager.getString("region_enter_title_subtitle",player,region.getName(),mainOwner),
+                LangManager.getString("regions.enter_title.title",player,region.getName(),mainOwner),
+                LangManager.getString("regions.enter_title.subtitle",player,region.getName(),mainOwner),
                 titleData.fadeIn(),
                 titleData.stay(),
                 titleData.fadeOut()
@@ -59,11 +59,11 @@ public class RegionListener implements Listener {
 
         try {
             String  message,
-                    path = "action_denied." + abilityName.toLowerCase();
+                    path = "not_allowed." + abilityName.toLowerCase();
             try {
                 message = LangManager.getString(path, player, regionName);
             } catch (NullPointerException ex) {
-                message = LangManager.getString("action_denied.default", player, regionName);
+                message = LangManager.getString("not_allowed.default", player, regionName);
                 Bukkit.getLogger().warning(String.format(
                         """
                             %1$s doesn't have the ability "%2$s" in the region "%3$s", but a specific denial message wasn't found in the "%4$s" lang file.

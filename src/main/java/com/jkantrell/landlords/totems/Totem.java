@@ -186,10 +186,11 @@ public class Totem {
     //METHODS
     public Region place(Player placer) {
         //Creating the region
+        String namePath = "totems.default_name." + ((placer == null) ? "undefined_placer" : "player_placed");
         this.region_ = new Region(
             this.getBaseRegionBox(),
             this.location_.getWorld(),
-            (placer == null) ? "Unnamed Region" : LangManager.getString("totem_region_playerPlacedName",placer,placer.getName()),
+            LangManager.getString(namePath,placer,placer.getName()),
             this.blueprint_.getHierarchy(),
             placer
         );

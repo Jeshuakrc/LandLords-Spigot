@@ -99,19 +99,14 @@ public class TotemListener implements Listener {
 
     @EventHandler
     public void onPlaceLectern(BlockPlaceEvent e) {
-
         Block block = e.getBlock();
         if (!(block.getState() instanceof Lectern)) { return; }
-
         TotemLectern totemLectern = TotemManager.getLecternAtSpot(block);
-        if (totemLectern == null) {
-            return;
-        }
+        if (totemLectern == null) { return; }
         Directional dir = (Directional) block.getBlockData();
         dir.setFacing(totemLectern.getFacing());
         totemLectern.convert(block);
         block.setBlockData(dir);
-
     }
 
     @EventHandler
@@ -200,13 +195,6 @@ public class TotemListener implements Listener {
         region.destroy();
     }
 
-    @EventHandler
-    public void onTotemDamaged(EntityDamageEvent e) {
-        if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
-        if (!Totem.isTotem(crystal)) { return; }
-        e.setCancelled(true);
-    }
-
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onRegionDestroy(RegionDestroyEvent e) {
         Region region = e.getRegion();
@@ -256,7 +244,7 @@ public class TotemListener implements Listener {
 
         if (!errors.isEmpty()) {
             StringBuilder message = new StringBuilder();
-            message.append(LangManager.getString("deeds_read_errorHeader",player,Integer.toString(errors.size())) + "§r");
+            message.append(LangManager.getString("deeds.error_message.compose.header",player,Integer.toString(errors.size())) + "§r");
             for (String error : errors) {
                 message.append("\n" + error);
             }

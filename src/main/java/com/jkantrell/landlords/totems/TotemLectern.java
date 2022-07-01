@@ -76,16 +76,16 @@ public class TotemLectern implements TotemRelative, Cloneable {
         Deeds deeds = Deeds.getFromBook(itemStack, player);
         Region deedsRegion = deeds.getRegion(), lecternRegion = this.getTotem().getRegion();
         if (!deedsRegion.equals(lecternRegion)) {
-            throw new IllegalArgumentException(LangManager.getString("deeds_placing_error_regionsMismatch",player,deedsRegion.getName(),lecternRegion.getName()));
+            throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.region_mismatch",player,deedsRegion.getName(),lecternRegion.getName()));
         }
         Integer deedsID = deeds.getId(), regionID = lecternRegion.getDataContainer().get(Deeds.deedsIdContainerKey).getAsInt();
         if (!deedsID.equals(regionID)) {
-            throw new IllegalArgumentException(LangManager.getString("deeds_placing_error_idMismatch",player,deedsID.toString(),regionID.toString()));
+            throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.id_mismatch",player,deedsID.toString(),regionID.toString()));
         }
 
         Deeds.ReadingResults read = deeds.read();
         if(!read.errors().isEmpty()){
-            throw new unreadableDeedsException(LangManager.getString("deeds_placing_error_readingErrors",player),read.errors());
+            throw new unreadableDeedsException(LangManager.getString("deeds.error_message.place.reading_errors",player),read.errors());
         }
 
         if (read.name() != null) {

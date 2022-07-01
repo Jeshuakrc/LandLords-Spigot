@@ -65,12 +65,12 @@ public abstract class LangManager {
                 String add;
                 if (i > maxToInclude - 1) {
                     String rem = Integer.toString(length - i);
-                    add = LangManager.getString("lists_remaining", player, rem);
+                    add = LangManager.getString("lists.remaining", player, rem);
                     s.append(add);
                     break;
                 } else {
-                    add = ( isLast  ? LangManager.getString("lists_lastSeparator", player)
-                                    : LangManager.getString("lists_separator", player) ) + list[i];
+                    add = ( isLast  ? LangManager.getString("lists.lastSeparator", player)
+                                    : LangManager.getString("lists.separator", player) ) + list[i];
                     s.append(add);
                 }
             }
