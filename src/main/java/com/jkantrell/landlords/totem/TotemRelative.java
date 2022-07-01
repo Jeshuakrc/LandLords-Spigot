@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totems;
+package com.jkantrell.landlords.totem;
 
 public interface TotemRelative {
 

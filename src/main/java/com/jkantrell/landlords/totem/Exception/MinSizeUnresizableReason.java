@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totems.Exception;
+package com.jkantrell.landlords.totem.Exception;
 
 import org.bukkit.Axis;
 

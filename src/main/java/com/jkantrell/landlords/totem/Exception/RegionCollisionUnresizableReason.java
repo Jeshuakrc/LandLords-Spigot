@@ -1,8 +1,6 @@
-package com.jkantrell.landlords.totems.Exception;
+package com.jkantrell.landlords.totem.Exception;
 
-import com.jkantrell.landlords.totems.Totem;
 import com.jkantrell.regionslib.regions.Region;
-import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 
 public class RegionCollisionUnresizableReason extends OneDirectionalUnresizableReason {

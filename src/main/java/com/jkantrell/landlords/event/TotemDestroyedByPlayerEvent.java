@@ -1,6 +1,6 @@
 package com.jkantrell.landlords.event;
 
-import com.jkantrell.landlords.totems.Totem;
+import com.jkantrell.landlords.totem.Totem;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Cancellable;

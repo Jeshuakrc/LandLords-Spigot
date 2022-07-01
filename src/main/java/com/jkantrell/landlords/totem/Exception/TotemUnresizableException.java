@@ -1,6 +1,6 @@
-package com.jkantrell.landlords.totems.Exception;
+package com.jkantrell.landlords.totem.Exception;
 
-import com.jkantrell.landlords.totems.Totem;
+import com.jkantrell.landlords.totem.Totem;
 import org.bukkit.Axis;
 import org.bukkit.block.BlockFace;
 import org.bukkit.util.Vector;

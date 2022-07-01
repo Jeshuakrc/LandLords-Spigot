@@ -1,11 +1,10 @@
-package com.jkantrell.landlords.totems;
+package com.jkantrell.landlords.totem;
 
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.totems.Exception.TotemUnresizableException;
-import com.jkantrell.landlords.totems.Exception.UnresizableReason;
+import com.jkantrell.landlords.totem.Exception.TotemUnresizableException;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.events.RegionDestroyEvent;
 import com.jkantrell.regionslib.regions.Region;
@@ -22,7 +21,6 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPhysicsEvent;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;

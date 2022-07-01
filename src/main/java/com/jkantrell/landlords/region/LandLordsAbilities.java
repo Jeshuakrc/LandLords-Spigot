@@ -2,7 +2,7 @@ package com.jkantrell.landlords.region;
 
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
-import com.jkantrell.landlords.totems.TotemLectern;
+import com.jkantrell.landlords.totem.TotemLectern;
 import com.jkantrell.regionslib.events.BlockRightClickedEvent;
 import com.jkantrell.regionslib.regions.abilities.Ability;
 import com.jkantrell.regionslib.regions.abilities.AbilityRegistration;

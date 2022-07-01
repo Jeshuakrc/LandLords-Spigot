@@ -1,4 +1,4 @@
-package com.jkantrell.landlords.totems;
+package com.jkantrell.landlords.totem;
 
 import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.regionslib.regions.Permission;
