@@ -68,7 +68,7 @@ public class RegionListener implements Listener {
                         """
                             %1$s doesn't have the ability "%2$s" in the region "%3$s", but a specific denial message wasn't found in the "%4$s" lang file.
                             Displaying the default denied action message.
-                            Include the "action_denied.%2$s" entry in the lang file to provide an specific message.""",
+                            Include the "not_allowed.%2$s" entry in the lang file to provide an specific message.""",
                         player.getName(), abilityName, regionName, LangManager.getLangFileName(player)
                 ));
             }
@@ -78,7 +78,7 @@ public class RegionListener implements Listener {
             Bukkit.getLogger().warning(String.format(
                     """
                             %1$s doesn't have the ability "%2$s" in the region "%3$s", but neither a specific nor default denial message was found in the "%4$s" lang file.
-                            Make sure to include the "action_denied.%2$s" or "action_denier.default" entry in the lang file.""",
+                            Make sure to include the "not_allowed.%2$s" or "not_allowed.default" entry in the lang file.""",
                     player.getName(), abilityName, regionName, LangManager.getLangFileName(player)
             ));
         }
