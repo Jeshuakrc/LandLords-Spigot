@@ -119,4 +119,36 @@ public class TotemUnresizableException extends Exception{
     public void addReasons(UnresizableReason... reasons) {
         this.addReasons(List.of(reasons));
     }
+
+    public void addExceeded(double exceededNegative, double exceededPositive, Axis direction) {
+        double[] magnitudesPositive = {0, 0, 0}, magnitudesNegative = {0, 0, 0};
+        int locator = switch (direction) { case X -> 0; case Y -> 1; default -> 2; };
+        magnitudesPositive[locator] = exceededPositive; magnitudesNegative[locator] = exceededNegative;
+        this.exceededNegative_.add(new Vector(magnitudesNegative[0], magnitudesNegative[1], magnitudesNegative[2]));
+        this.exceededPositive_.add(new Vector(magnitudesPositive[0], magnitudesPositive[1], magnitudesPositive[2]));
+    }
+    public void addExceeded(Vector exceededNegative, Vector exceededPositive) {
+        this.exceededNegative_.add(exceededNegative);
+        this.exceededPositive_.add(exceededPositive);
+    }
+    public void addExceeded(double exceededXNeg, double exceededYNeg, double exceededZNeg, double exceededXPos, double exceededYPos, double exceededZPos, @Nullable UnresizableReason reason) {
+        this.addExceeded(
+                new Vector(exceededXNeg, exceededYNeg, exceededZNeg),
+                new Vector(exceededXPos, exceededYPos, exceededZPos)
+        );
+    }
+    public void addExceeded(double exceededMagnitude, BlockFace direction){
+        if (!direction.isCartesian()) {
+            throw new IllegalArgumentException("The provided BlockFace must be cartesian (NORTH, SOUTH, EAST, WEST, UP, DOWN).");
+        }
+        Vector magVector = direction.getDirection().multiply(exceededMagnitude);
+        Vector zeroVector = new Vector(0,0,0);
+
+        switch (direction) {
+            case WEST, NORTH, DOWN ->
+                    { this.exceededNegative_.add(magVector); this.exceededPositive_.add(zeroVector); }
+            default ->
+                    { this.exceededNegative_.add(zeroVector); this.exceededPositive_.add(magVector); }
+        }
+    }
 }

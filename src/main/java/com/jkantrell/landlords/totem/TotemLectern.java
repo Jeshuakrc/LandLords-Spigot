@@ -74,7 +74,7 @@ public class TotemLectern implements TotemRelative, Cloneable {
         if (!Deeds.isTotemDeeds(itemStack)) { throw new IllegalArgumentException(); }
 
         Deeds deeds = Deeds.getFromBook(itemStack, player);
-        Region deedsRegion = deeds.getRegion(), lecternRegion = this.getTotem().getRegion();
+        Region deedsRegion = deeds.getRegion(), lecternRegion = this.getTotem().getRegion().orElseThrow();
         if (!deedsRegion.equals(lecternRegion)) {
             throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.region_mismatch",player,deedsRegion.getName(),lecternRegion.getName()));
         }

@@ -292,7 +292,7 @@ public class Deeds {
         if (!Deeds.isTotemDeeds(bookMeta)) { return null; }
 
         PersistentDataContainer dataContainer = bookMeta.getPersistentDataContainer();
-        Region region = Regions.get(dataContainer.get(deedsRegionIdNsKey_,PersistentDataType.INTEGER));
+        Region region = Regions.get(dataContainer.get(deedsRegionIdNsKey_,PersistentDataType.INTEGER)).orElseThrow();
         int id = dataContainer.get(deedsIdNsKey_,PersistentDataType.INTEGER);
         ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
         item.setItemMeta(bookMeta);

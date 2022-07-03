@@ -4,7 +4,7 @@ import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
-import com.jkantrell.landlords.totem.Exception.TotemUnresizableException;
+import com.jkantrell.landlords.totem.Exception.*;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.events.RegionDestroyEvent;
 import com.jkantrell.regionslib.regions.Region;
@@ -33,8 +33,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
+import org.bukkit.util.Vector;
 
+import java.text.DecimalFormat;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class TotemListener implements Listener {
@@ -109,36 +113,121 @@ public class TotemListener implements Listener {
 
     @EventHandler
     public void onFeedTotem(PlayerInteractEntityEvent e){
+        //Checking if the entity is a totem
         if (!(e.getRightClicked() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
 
+        //Checking if the totem has a region
+        Totem totem = Totem.fromEnderCrystal(crystal);
+        Optional<Region> region = totem.getRegion();
+        if (region.isEmpty()) { return; }
+
+        //Checking if the item can interact with a totem
         Player player = e.getPlayer();
         PlayerInventory inventory = player.getInventory();
         ItemStack item = inventory.getItem(e.getHand());
-
         if (item == null) { return; }
-
-        Config.TotemInteractionData totemData = null;
-        for (Config.TotemInteractionData d : new Config.TotemInteractionData[]{Landlords.CONFIG.totemUpgradeItem, Landlords.CONFIG.totemDowngradeItem}) {
-            if (item.getType().equals(d.item())) { totemData = d; break; }
-        }
-
+        Config.TotemInteractionData totemData = Stream.of(Landlords.CONFIG.totemUpgradeItem, Landlords.CONFIG.totemDowngradeItem)
+                .filter(d -> item.getType().equals(d.item())).findFirst().orElse(null);
         if (totemData == null) { return; }
 
-        Totem totem = Totem.fromEnderCrystal(crystal);
-        Region region = totem.getRegion();
+        //Checking if the player has enough items to interact
+        if (totemData.consume() && !inventory.contains(totemData.item(), totemData.count())) { return; }
+
+        //Saving the region's original size
+        double[] originalSize = region.get().getCorners();
+
+        //Placeholder for possible exceptions
+        List<UnresizableReason> unresizableReasons = null;
+
+        //Expanding the region
         try {
-            if (totemData.consume()) {
-                if (!inventory.contains(totemData.item(), totemData.count())) { return; }
-                if (!player.getGameMode().equals(GameMode.CREATIVE)) {
-                    inventory.removeItem(new ItemStack(totemData.item(), totemData.count()));
-                }
-            }
-            int toResize = (totemData.equals(Landlords.CONFIG.totemDowngradeItem)) ? -1 : 1;
+            int toResize = (totemData.equals(Landlords.CONFIG.totemDowngradeItem)) ? -1 : 1; //Scale in or out depending on the item
             totem.scale(toResize);
         } catch (TotemUnresizableException ex) {
-            // Future exception handling to provide feedback to the player.
+            unresizableReasons = ex.getReasons(); //Fills placeholder for exception handling to execute.
         }
+
+        //Checks if the region's size actually changed.
+        String regionName = region.get().getName();
+        if (!Arrays.equals(region.get().getCorners(), originalSize)) {
+            if (totemData.consume() && !player.getGameMode().equals(GameMode.CREATIVE)) {
+                inventory.removeItem(new ItemStack(totemData.item(), totemData.count()));
+            }
+            Vector size = region.get().getDimensions();
+            DecimalFormat formater = new DecimalFormat("#0.00");
+            World world = totem.getWorld();
+            Location loc = totem.getLocation();
+            player.sendMessage(LangManager.getString("totems.resized",
+                    player,
+                    regionName,
+                    formater.format(size.getX()),
+                    formater.format(size.getY()),
+                    formater.format(size.getZ())
+                    ));
+            world.playSound(loc, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE,SoundCategory.AMBIENT,3f, 1.5f);
+            world.spawnParticle(Particle.PORTAL, loc, 120, 0.1,0.1,0.1,6);
+            return;
+        }
+
+        //Checks if there is any exception to handle
+        if (unresizableReasons == null) { return; }
+        player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 3f, 0.5f);
+
+        String  header = LangManager.getString("totems.unrezisable.header",player,regionName),
+                basePath = "totems.unrezisable.", subPath = "default";
+        String[] params = {};
+        LinkedList<String> messages = new LinkedList<>();
+        LinkedList<MaxSizeUnresizableReason> maxSizeReasons = new LinkedList<>();
+
+        //Properly handling all unscaling reasons
+        for (UnresizableReason reason : unresizableReasons) {
+            if (reason instanceof MaxSizeUnresizableReason r) {
+                maxSizeReasons.add(r);
+            } else if (reason instanceof RegionCollisionUnresizableReason r) {
+                subPath = "region_collision";
+                params = new String[] {regionName, r.getCollidingRegion().getName(), r.getDirection().toString().toLowerCase()};
+            } else if (reason instanceof OverShrunkUnresizableReason r) {
+                subPath = "overshrink";
+                params = new String[] {regionName, r.getDirection().toString().toLowerCase()};
+            } else {
+                continue;
+            }
+            messages.add(LangManager.getString(basePath + subPath, player, params));
+        }
+
+        //Unifying maz size unrezisable reasons, if eny
+        if (!maxSizeReasons.isEmpty()) {
+            Function<Axis, String> extractor = (a) -> {
+                Vector v = totem.getBlueprint().getRegionMaxSize();
+                return Double.toString(switch (a) { case X -> v.getX(); case Y -> v.getY(); case Z -> v.getZ(); });
+            };
+            int size = maxSizeReasons.size();
+            subPath = "max_size.";
+            if (size < 2) {
+                Axis axis = maxSizeReasons.get(0).getAxis();
+                subPath += "one";
+                params = new String[] {regionName, axis.toString(), extractor.apply(axis)};
+            } else if (size < 3) {
+                Axis axis1 = maxSizeReasons.get(0).getAxis(), axis2 = maxSizeReasons.get(1).getAxis();
+                subPath += "two";
+                params = new String[] {regionName, axis1.toString(), axis2.toString(), extractor.apply(axis1), extractor.apply(axis2)};
+            } else {
+                subPath += "three";
+                params = new String[] {regionName, extractor.apply(Axis.X), extractor.apply(Axis.Y), extractor.apply(Axis.Z)};
+            }
+            messages.add(LangManager.getString(basePath + subPath,player,params));
+        }
+
+        //If not a singe reason could be handled, adds a default message to the header.
+        if (messages.isEmpty()) {
+            String def = LangManager.getString("totems.unrezisable.default",player,region.get().getName());
+            if (!def.equals("")) { header += " " + def; }
+        }
+        messages.push(header);
+
+        //Warns the player of why the region could not be resized
+        messages.stream().distinct().filter(m -> !m.equals("")).forEach(player::sendMessage);
     }
 
     @EventHandler
@@ -172,7 +261,8 @@ public class TotemListener implements Listener {
                 totem.scale(-1);
             } catch (TotemUnresizableException ignored) {}
         } else {
-            totem.getRegion().destroy(player);
+            Player finalPlayer = player;
+            totem.getRegion().ifPresent(r -> r.destroy(finalPlayer));
         }
         World world = totem.getWorld();
         Location loc = totem.getLocation();
@@ -188,9 +278,9 @@ public class TotemListener implements Listener {
     public void OnTotemKilled(EntityDeathEvent e) {
         if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
-        Region region = Totem.fromEnderCrystal(crystal).getRegion();
-        if (region == null) { return; }
-        region.destroy();
+        Totem.fromEnderCrystal(crystal)
+                .getRegion()
+                .ifPresent(Region::destroy);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)

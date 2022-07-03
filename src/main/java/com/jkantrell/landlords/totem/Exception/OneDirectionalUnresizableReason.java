@@ -13,7 +13,7 @@ public abstract class OneDirectionalUnresizableReason extends UnresizableReason 
     }
 
     //GETTERS
-    BlockFace getDirection() {
+    public BlockFace getDirection() {
         return this.direction;
     }
 }

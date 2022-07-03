@@ -117,9 +117,7 @@ public class Totem {
         return this.location_.getWorld();
     }
     public boolean isEnabled() {
-        Region region = this.getRegion();
-        if (region == null) { return false; }
-        return region.isEnabled();
+        return this.getRegion().map(Region::isEnabled).orElse(false);
     }
     public boolean isPlaced() {
         return placed_;
@@ -127,17 +125,17 @@ public class Totem {
     public int getLevel() {
         return this.leveled_;
     }
-    public Region getRegion() {
+    public Optional<Region> getRegion() {
         if (this.region_ == null) {
-            if (!this.placed_) { return null; }
-            Region r = Regions.get(this.regionId_);
-            if (r == null) { return null; }
-            RegionData regionData = r.getDataContainer().get("totemId");
-            if (regionData == null) { return null; }
-            if (!regionData.getAsString().equals(this.getUniqueId().toString())) { return null; }
-            this.region_ = r;
+            if (!this.placed_) { return Optional.empty(); }
+            Optional<Region> r = Regions.get(this.regionId_);
+            if (r.isEmpty()) { return r; }
+            RegionData regionData = r.get().getDataContainer().get("totemId");
+            if (regionData == null) { return Optional.empty(); }
+            if (!regionData.getAsString().equals(this.getUniqueId().toString())) { return Optional.empty(); }
+            this.region_ = r.get();
         }
-        return this.region_;
+        return Optional.of(this.region_);
     }
     public int getRegionId() {
         return regionId_;
@@ -170,17 +168,15 @@ public class Totem {
 
         this.endCrystal_.teleport(loc.add(0,-.5,0));
 
-        Region r = this.getRegion();
-        if (r == null) { return; }
-        RegionDataContainer dataContainer = r.getDataContainer();
+        Optional<Region> r = this.getRegion();
+        if (r.isEmpty()) { return; }
+        RegionDataContainer dataContainer = r.get().getDataContainer();
         Block b = this.getContainingBlock();
         dataContainer.remove("totemLoc");
         dataContainer.add(new RegionData("totemLoc", new int[] {b.getX(), b.getY(), b.getZ()}));
     }
     public void setEnabled(Boolean isEnabled) {
-        try {
-            this.getRegion().enabled(isEnabled);
-        } catch (NullPointerException ignored) {}
+        this.getRegion().ifPresent(r -> r.enabled(isEnabled));
     }
 
     //METHODS
@@ -267,7 +263,7 @@ public class Totem {
         endCrystalData.set(Totem.regionIdKey, PersistentDataType.INTEGER, this.regionId_);
         endCrystalData.set(Totem.blueprintIdKey, PersistentDataType.INTEGER, this.blueprint_.getId());
         endCrystalData.set(Totem.leveledKey, PersistentDataType.INTEGER, this.leveled_);
-        try { this.getRegion().save(); } catch (NullPointerException ignored) {}
+        this.getRegion().ifPresent(Region::save);
         if (!Totem.totems_.contains(this)) { Totem.totems_.add(this); }
     }
     public void destroy() {
@@ -353,7 +349,7 @@ public class Totem {
 
         //METHODS
         void expand(double minDir, double maxDir) throws TotemUnresizableException {
-            Region reg = Totem.this.getRegion();
+            Region reg = Totem.this.getRegion().orElse(null);
             if (reg == null) { return; }
 
             double  toExpandMin = minDir, toExpandMax = maxDir,
@@ -397,7 +393,7 @@ public class Totem {
                 this.min_.expand(toExpandMin);
                 this.max_.expand(toExpandMax);
             } catch (TotemUnresizableException e) {
-                leftOverMin += e.getExceeded(this.min_.getBlocFace());
+                leftOverMin += Math.abs(e.getExceeded(this.min_.getBlocFace()));
                 leftOverMax += e.getExceeded(this.max_.getBlocFace());
                 innerReasons = e.getReasons();
                 if (innerReasons.stream().allMatch(r -> r instanceof OverShrunkUnresizableReason)) {
@@ -429,6 +425,7 @@ public class Totem {
                 try {
                     d.expand(toExpand/2, toExpand/2);
                 } catch (TotemUnresizableException e) {
+                    e.addExceeded(leftOverMin,leftOverMax,this.axis_);
                     e.addReasons(innerReasons);
                     e.addReason(reason);
                     throw e;
@@ -489,7 +486,7 @@ public class Totem {
         //METHODS
         void expand(double amount) throws TotemUnresizableException {
             if (amount == 0) { return; }
-            Region reg = Totem.this.getRegion();
+            Region reg = Totem.this.getRegion().orElse(null);
             if (reg == null) { return; }
 
             reg.expand(this.getBlocFace(),amount);
@@ -537,6 +534,7 @@ public class Totem {
                     opposite.expand(leftOver);
                 } catch (TotemUnresizableException e) {
                     e.addReason(new RegionCollisionUnresizableReason(collidingWith,this.getBlocFace()));
+                    e.addExceeded(leftOver, this.getBlocFace());
                     throw e;
                 }
             }
