@@ -107,6 +107,7 @@ public class Deeds {
         if (page < 1 || !checkMaterial_(book)) { throw new IllegalArgumentException(); }
         //if (!(page <= bookMeta.getPages().size())) { throw new IllegalArgumentException(); }
         String pag = removeStyle_(bookMeta.getPage(page));
+        String errorBasePath = "deeds.error_message.compose.";
         readExceptionThrower_ exceptionThrower = new readExceptionThrower_(page);
         Change change;
         BookMeta meta = (BookMeta) book.getItemMeta();
@@ -116,10 +117,10 @@ public class Deeds {
             if (hasInBracket || hasOutBrackets) {
                 if (!(hasInBracket && hasOutBrackets)) {
                     String missing = hasOutBrackets ? "[" : "]";
-                    exceptionThrower.trowException("deeds_read_error_enclosureNotFound_singular",missing);
+                    exceptionThrower.trowException(errorBasePath + "enclosure_not_found.singular",missing);
                 }
             } else {
-                exceptionThrower.trowException("deeds_read_error_enclosureNotFound_plural","[","]");
+                exceptionThrower.trowException(errorBasePath + "enclosure_not_found.plural","[","]");
             }
 
             String regionName = StringUtils.substringBetween(pag,"[","]");
@@ -128,10 +129,10 @@ public class Deeds {
                     maxLength = Landlords.CONFIG.regionsMaximumNameLength;
 
             if (length <= minLength) {
-                exceptionThrower.trowException("deeds_read_error_illegalNameLength_short",Integer.toString(minLength),Integer.toString(length),Integer.toString(minLength - length));
+                exceptionThrower.trowException(errorBasePath + "illegal_name_length.short",Integer.toString(minLength),Integer.toString(length),Integer.toString(minLength - length));
             }
             if (length >= maxLength) {
-                exceptionThrower.trowException("deeds_read_error_illegalNameLength_long",Integer.toString(maxLength),Integer.toString(length),Integer.toString(length - maxLength));
+                exceptionThrower.trowException(errorBasePath + "illegal_name_length.long",Integer.toString(maxLength),Integer.toString(length),Integer.toString(length - maxLength));
             }
 
             change = new Change(regionName,null);
@@ -139,17 +140,17 @@ public class Deeds {
 
         } else {
             if (pag.indexOf(':') == -1) {
-                exceptionThrower.trowException("deeds_error_permissionMissingSeparator");
+                exceptionThrower.trowException(errorBasePath + "permission_separator.missing");
             }
             String[] sections = StringUtils.split(pag,":");
             if (sections.length > 2) {
-                exceptionThrower.trowException("deeds_error_permissionOverSeparators",Integer.toString(sections.length-1));
+                exceptionThrower.trowException(errorBasePath + "permission_separator.too_many",Integer.toString(sections.length-1));
             }
 
             Hierarchy hierarchy = this.getRegion().getHierarchy();
             Hierarchy.Group regionGroup = hierarchy.getGroup(sections[0]);
             if (regionGroup == null){
-                exceptionThrower.trowException("deeds_error_groupNotFound",sections[0]);
+                exceptionThrower.trowException(errorBasePath + "group_not_found",sections[0]);
             }
 
             String[] players = new String[0];

@@ -35,19 +35,13 @@ import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
 import org.bukkit.util.Vector;
-
 import java.text.DecimalFormat;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class TotemListener implements Listener {
 
-    //STATIC FIELDS
-    private static HashMap<Player, EquipmentSlot> deedPlayerSlotMap_ = new HashMap<>();
-
-    //EVENTS
     @EventHandler
     public void onPlaceTotem(PlayerInteractEvent e) {
         if (!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) { return; }
@@ -69,6 +63,11 @@ public class TotemListener implements Listener {
             player.getInventory().removeItem(new ItemStack(Material.END_CRYSTAL,1));
         }
         new Totem(loc,blueprint).place(player);
+    }
+
+    @EventHandler
+    public void onPlaceDeeds(PlayerInteractEvent e) {
+
     }
 
     @EventHandler
@@ -95,17 +94,18 @@ public class TotemListener implements Listener {
         //CHeckling if the item isn't already a deeds item
         if(Deeds.isTotemDeeds(item)) { return; }
 
+        //Closing players inventory and cancelling event
+        e.setCancelled(true);
+        player.closeInventory();
+
         //Firing DeedsCreateEvent and checking if it hasn't been cancelled.
         Deeds deeds = new Deeds(totem.getRegion().get(),player);
         DeedsCreateEvent event = new DeedsCreateEvent(player,deeds,totem);
         Landlords.getMainInstance().getServer().getPluginManager().callEvent(event);
         if (event.isCancelled()) { return; }
 
-        //Finally, the magic happens
         ItemStack book = deeds.write();
-        player.closeInventory();
-        inventory.setItem(hand,book);
-        e.setCancelled(true);
+        inventory.getItem(hand).setItemMeta(book.getItemMeta());
     }
 
     @EventHandler
@@ -326,35 +326,18 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerOpenBook(PlayerInteractEvent e) {
-
-        ItemStack item = e.getItem();
-        if (item == null) { return; }
-        Player player = e.getPlayer();
-
-        if (Deeds.isTotemDeeds(item)) {
-            deedPlayerSlotMap_.put(player,e.getHand());
-        } else {
-            deedPlayerSlotMap_.remove(player);
-        }
-
-    }
-
-    @EventHandler
     public void onEditBook(PlayerEditBookEvent e){
+        //Checking if the edited book is a deeds book
         Player player = e.getPlayer();
-
-        if (!deedPlayerSlotMap_.containsKey(player)) {
-            return;
-        }
-
         BookMeta oldMeta = e.getPreviousBookMeta();
         Deeds deeds = Deeds.getFromBook(oldMeta, player);
         if (deeds == null) { return; }
 
-        List<String> errors = new ArrayList<>();
+        //Reading the book
+        LinkedList<String> errors = new LinkedList<>();
         BookMeta newMeta = e.getNewBookMeta();
-        for (int i = 1; i <= newMeta.getPages().size(); i++) {
+        int size = newMeta.getPages().size();
+        for (int i = 1; i <= size; i++) {
             try {
                 deeds.readPage(newMeta,i);
             } catch (IllegalArgumentException ex) {
@@ -362,17 +345,28 @@ public class TotemListener implements Listener {
             }
         }
 
+        //Checking if there were no reading errors
+        if (errors.isEmpty() && size > 0) { return; }       //The size check is for bedrock support. En EditBookEvent is triggered right away.
+
+        //Presenting errors to the player
         if (!errors.isEmpty()) {
             StringBuilder message = new StringBuilder();
-            message.append(LangManager.getString("deeds.error_message.compose.header",player,Integer.toString(errors.size())) + "§r");
+            message.append(LangManager.getString("deeds.error_message.compose.header", player, Integer.toString(errors.size()))).append("§r");
             for (String error : errors) {
-                message.append("\n" + error);
+                message.append("\n").append(error);
             }
             player.sendMessage(message.toString());
         }
 
-        player.getInventory().setItem(deedPlayerSlotMap_.get(player),deeds.getItemStack());
-
+        //Overwriting book to old one
+        ItemStack book = new ItemStack(Material.WRITABLE_BOOK);
+        book.setItemMeta(oldMeta);
+        e.setCancelled(true);
+        try {
+            player.getInventory().setItem(e.getSlot(),book);
+        } catch (IndexOutOfBoundsException ex) {
+            player.getInventory().setItem(EquipmentSlot.OFF_HAND, book);
+        }
     }
 
     private void loadTotems_(Stream<Entity> entities) {
