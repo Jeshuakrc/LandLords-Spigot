@@ -1,6 +1,7 @@
 package com.jkantrell.landlords.totem;
 
 import com.jkantrell.landlords.Landlords;
+import com.jkantrell.landlords.event.DeedsCreateEvent;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangManager;
@@ -71,48 +72,44 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent e) {
-        if (Bukkit.getOnlinePlayers().size() > 0) { return; }
-        this.loadTotems_(Bukkit.getWorlds().stream().flatMap(w -> w.getEntities().stream()));
+    public void onDeedsCreate(PlayerInteractEntityEvent e) {
+        //Checking if the clicked entity is an EndCrystal
+        if (!(e.getRightClicked() instanceof EnderCrystal enderCrystal)) { return; }
+
+        //Checking if the clicked EndCrystal is a Totem
+        Totem totem = Totem.fromEnderCrystal(enderCrystal);
+        if (totem == null) { return; }
+
+        //Checking if the clicked Totem has a region
+        Optional<Region> region = totem.getRegion();
+        if (region.isEmpty()) { return; }
+
+        //Checking if the item used can be converted to deeds
+        Player player = e.getPlayer();
+        PlayerInventory inventory = player.getInventory();
+        EquipmentSlot hand = e.getHand();
+        ItemStack item = inventory.getItem(hand);
+        if (item == null) { return; }
+        if (!item.getType().equals(Landlords.CONFIG.deedsExchangeItem)) { return; }
+
+        //CHeckling if the item isn't already a deeds item
+        if(Deeds.isTotemDeeds(item)) { return; }
+
+        //Firing DeedsCreateEvent and checking if it hasn't been cancelled.
+        Deeds deeds = new Deeds(totem.getRegion().get(),player);
+        DeedsCreateEvent event = new DeedsCreateEvent(player,deeds,totem);
+        Landlords.getMainInstance().getServer().getPluginManager().callEvent(event);
+        if (event.isCancelled()) { return; }
+
+        //Finally, the magic happens
+        ItemStack book = deeds.write();
+        player.closeInventory();
+        inventory.setItem(hand,book);
+        e.setCancelled(true);
     }
 
     @EventHandler
-    public void onChunkLoad(EntitiesLoadEvent e) {
-        this.loadTotems_(e.getEntities().stream());
-    }
-
-    @EventHandler
-    public void onChunkUnload(EntitiesUnloadEvent e) {
-        e.getEntities().stream()
-                .filter(ent -> ent instanceof EnderCrystal)
-                .map(ent -> (EnderCrystal) ent)
-                .filter(Totem::isTotem)
-                .map(Totem::fromEnderCrystal)
-                .forEach(t -> {
-                    TotemManager.unregisterTotem(t);
-                    Bukkit.broadcastMessage("Totem unloaded. ID: " + t.getRegionId());
-                });
-    }
-
-    @EventHandler
-    public void onBlockUpdateEvent(BlockPhysicsEvent e){
-
-    }
-
-    @EventHandler
-    public void onPlaceLectern(BlockPlaceEvent e) {
-        Block block = e.getBlock();
-        if (!(block.getState() instanceof Lectern)) { return; }
-        TotemLectern totemLectern = TotemManager.getLecternAtSpot(block);
-        if (totemLectern == null) { return; }
-        Directional dir = (Directional) block.getBlockData();
-        dir.setFacing(totemLectern.getFacing());
-        totemLectern.convert(block);
-        block.setBlockData(dir);
-    }
-
-    @EventHandler
-    public void onFeedTotem(PlayerInteractEntityEvent e){
+    public void onFeedTotem(PlayerInteractEntityEvent e) {
         //Checking if the entity is a totem
         if (!(e.getRightClicked() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
@@ -158,13 +155,7 @@ public class TotemListener implements Listener {
             DecimalFormat formater = new DecimalFormat("#0.00");
             World world = totem.getWorld();
             Location loc = totem.getLocation();
-            player.sendMessage(LangManager.getString("totems.resized",
-                    player,
-                    regionName,
-                    formater.format(size.getX()),
-                    formater.format(size.getY()),
-                    formater.format(size.getZ())
-                    ));
+            player.sendMessage(LangManager.getString("totems.resized", player, regionName, formater.format(size.getX()), formater.format(size.getY()), formater.format(size.getZ())));
             world.playSound(loc, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE,SoundCategory.AMBIENT,3f, 1.5f);
             world.spawnParticle(Particle.PORTAL, loc, 120, 0.1,0.1,0.1,6);
             return;
@@ -231,7 +222,7 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onHurtTotem(EntityDamageByEntityEvent e){
+    public void onHurtTotem(EntityDamageByEntityEvent e) {
         if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
 
@@ -281,6 +272,47 @@ public class TotemListener implements Listener {
         Totem.fromEnderCrystal(crystal)
                 .getRegion()
                 .ifPresent(Region::destroy);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent e) {
+        if (Bukkit.getOnlinePlayers().size() > 0) { return; }
+        this.loadTotems_(Bukkit.getWorlds().stream().flatMap(w -> w.getEntities().stream()));
+    }
+
+    @EventHandler
+    public void onChunkLoad(EntitiesLoadEvent e) {
+        this.loadTotems_(e.getEntities().stream());
+    }
+
+    @EventHandler
+    public void onChunkUnload(EntitiesUnloadEvent e) {
+        e.getEntities().stream()
+                .filter(ent -> ent instanceof EnderCrystal)
+                .map(ent -> (EnderCrystal) ent)
+                .filter(Totem::isTotem)
+                .map(Totem::fromEnderCrystal)
+                .forEach(t -> {
+                    TotemManager.unregisterTotem(t);
+                    Bukkit.broadcastMessage("Totem unloaded. ID: " + t.getRegionId());
+                });
+    }
+
+    @EventHandler
+    public void onBlockUpdateEvent(BlockPhysicsEvent e) {
+
+    }
+
+    @EventHandler
+    public void onPlaceLectern(BlockPlaceEvent e) {
+        Block block = e.getBlock();
+        if (!(block.getState() instanceof Lectern)) { return; }
+        TotemLectern totemLectern = TotemManager.getLecternAtSpot(block);
+        if (totemLectern == null) { return; }
+        Directional dir = (Directional) block.getBlockData();
+        dir.setFacing(totemLectern.getFacing());
+        totemLectern.convert(block);
+        block.setBlockData(dir);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)

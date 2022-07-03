@@ -1,6 +1,7 @@
 package com.jkantrell.landlords.region;
 
 import com.jkantrell.landlords.Landlords;
+import com.jkantrell.landlords.event.DeedsCreateEvent;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.totem.TotemLectern;
 import com.jkantrell.regionslib.events.BlockRightClickedEvent;
@@ -63,5 +64,12 @@ public final class LandLordsAbilities {
             e -> true,
             TotemDestroyedByPlayerEvent::getDestroyer,
             e -> e.getTotem().getLocation()
+    );
+
+    @AbilityRegistration
+    public static final Ability<DeedsCreateEvent> CREATE_DEEDS = new Ability<>(
+            DeedsCreateEvent.class,
+            e -> true,
+            DeedsCreateEvent::getLocation
     );
 }
