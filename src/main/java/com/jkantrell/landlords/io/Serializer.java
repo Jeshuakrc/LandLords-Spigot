@@ -16,6 +16,7 @@ public abstract class Serializer {
     public static final Gson GSON;
     static {
         GsonBuilder builder = new GsonBuilder();
+        builder.setPrettyPrinting();
         builder.registerTypeAdapter(Blueprint.class, new Blueprint.JDeserializer());
         builder.registerTypeAdapter(Rule.class, new Rule.JDeserializer());
 
@@ -23,7 +24,7 @@ public abstract class Serializer {
     }
 
     public static class FILES {
-        public static final File TOTEM_STRUCTURES = new File(Landlords.CONFIG.configPath, "totemStructures.json");
+        public static final File BLUEPRINTS = new File(Landlords.CONFIG.configPath, "blueprints.json");
     }
 
     public static <T> T deserializeFile (File file, Class<T> typeOf) {

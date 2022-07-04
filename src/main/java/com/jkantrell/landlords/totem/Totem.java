@@ -27,7 +27,6 @@ public class Totem {
 
     //STATIC FIELDS
     private static List<Totem> totems_ = new ArrayList<>();
-    private static boolean listenerRegistered_ = false;
     protected static NamespacedKey regionIdKey = new NamespacedKey(Landlords.getMainInstance(),"regionId");
     protected static NamespacedKey blueprintIdKey = new NamespacedKey(Landlords.getMainInstance(),"blueprintId");
     protected static NamespacedKey leveledKey = new NamespacedKey(Landlords.getMainInstance(),"leveled");
@@ -113,11 +112,12 @@ public class Totem {
     private int regionId_;
     private Region region_ = null;
     private EnderCrystal endCrystal_ = null;
+    private BoundingBox structuralBox_ = null;
 
     //CONSTRUCTORS
     public Totem(Location location, Blueprint blueprint){
-        this.relocate(location);
         this.blueprint_ = blueprint;
+        this.relocate(location);
     }
 
     //GETTERS
@@ -125,7 +125,7 @@ public class Totem {
         return blueprint_;
     }
     public Location getLocation() {
-        return location_;
+        return location_.clone();
     }
     public Block getContainingBlock() {
         return this.location_.getBlock();
@@ -173,6 +173,9 @@ public class Totem {
         }
         return box;
     }
+    public BoundingBox getStructuralBox() {
+        return new BoundingBox().copy(this.structuralBox_);
+    }
 
     //SETTERS
     public void relocate(Location loc) {
@@ -180,6 +183,7 @@ public class Totem {
             throw new NullPointerException("The 'World' parameter passed to a totem's constructor cannot be null.");
         }
         this.location_ = loc;
+        this.structuralBox_ = this.blueprint_.getStructuralBox().shift(loc.clone().add(-.5,-.5,-.5));
 
         if (this.endCrystal_ == null) { return; }
 
@@ -192,8 +196,12 @@ public class Totem {
         dataContainer.remove("totemLoc");
         dataContainer.add(new RegionData("totemLoc", new int[] {b.getX(), b.getY(), b.getZ()}));
     }
-    public void setEnabled(Boolean isEnabled) {
-        this.getRegion().ifPresent(r -> r.enabled(isEnabled));
+    public void setEnabled(boolean isEnabled) {
+        if (isEnabled == isEnabled()) { return; }
+        this.getRegion().ifPresent(r -> { r.enabled(isEnabled); r.save();});
+
+        Sound sound = (isEnabled) ? Sound.BLOCK_BEACON_ACTIVATE : Sound.BLOCK_CONDUIT_DEACTIVATE;
+        this.getWorld().playSound(this.location_,sound,1f,1.3f);
     }
 
     //METHODS
@@ -210,7 +218,7 @@ public class Totem {
         this.regionId_ = this.region_.getId();
 
         //Spawning an EndCrystal
-        this.endCrystal_ = (EnderCrystal) this.location_.getWorld().spawnEntity(this.location_.add(0,-.5,0), EntityType.ENDER_CRYSTAL);
+        this.endCrystal_ = (EnderCrystal) this.location_.getWorld().spawnEntity(this.location_.clone().add(0,-.5,0), EntityType.ENDER_CRYSTAL);
         this.endCrystal_.setShowingBottom(false);
 
         //Assigning the region to the crystal
@@ -252,7 +260,9 @@ public class Totem {
             this.save();
         }
     }
-    public TotemLectern getLecternAt(int x, int y, int z) {
+    public TotemLectern getLecternAt(int x, int y, int z, World world) {
+
+        if (!world.equals(this.getWorld())) { return null; }
 
         TotemLectern r = null;
         Block containingBlock = this.getContainingBlock();
@@ -260,7 +270,7 @@ public class Totem {
                 blockPos = {x, y, z},
                 lPos;
 
-        for (TotemLectern l : this.getBlueprint().lecterns) {
+        for (TotemLectern l : this.getBlueprint().getLecterns()) {
             lPos = l.getAbsolutePosition(pos[0], pos[1], pos[2]);
             if (Arrays.equals(lPos, blockPos)) {
                 r = l.clone();
@@ -271,8 +281,15 @@ public class Totem {
         return r;
     }
     public TotemLectern getLecternAt(Block block) {
-        if (!block.getWorld().equals(this.getWorld())) { return null; }
-        return this.getLecternAt(block.getX(), block.getY(), block.getZ());
+        return this.getLecternAt(block.getX(), block.getY(), block.getZ(), block.getWorld());
+    }
+    public boolean contains(Vector vector, World world) {
+        if (!this.getWorld().equals(world)) { return false; }
+        if (this.structuralBox_ == null) { return false; }
+        return this.structuralBox_.contains(vector);
+    }
+    public boolean contains(Block block) {
+        return this.contains(new Vector(block.getX() + .5, block.getY() + .5 , block.getZ() + .5), block.getWorld());
     }
     public void save() {
         PersistentDataContainer endCrystalData = this.endCrystal_.getPersistentDataContainer();
@@ -285,9 +302,13 @@ public class Totem {
     }
     public void destroy() {
         this.dropItem_(this.getLevel());
-        TotemManager.removeTotem(this);
         this.getWorld().createExplosion(this.endCrystal_.getLocation(), 6f,true,true);
         this.endCrystal_.remove();
+        Totem.totems_.remove(this);
+    }
+    public void unload() {
+        Totem.totems_.remove(this);
+        Landlords.getMainInstance().getLogger().fine("Unloaded totem. Region Id: " + this.getRegionId() + ". Totem Id: " + this.getUniqueId().toString() + ".");
     }
 
     //PRIVATE METHODS

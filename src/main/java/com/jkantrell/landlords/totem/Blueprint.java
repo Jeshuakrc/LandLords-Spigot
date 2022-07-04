@@ -13,7 +13,6 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
-
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -33,17 +32,16 @@ public class Blueprint {
     }
 
     //FIELDS
-    public final Elements elements = new Elements(this);
-    public final Lecterns lecterns = new Lecterns(this);
-
+    private final Elements elements_ = new Elements(this);
+    private final Lecterns lecterns_ = new Lecterns(this);
     private int id_;
     private double[] regionInitialVertex_ = new double[6];
     private double[] regionGrowthRate_ = new double[6];
-    private int[] structureBox_;
     private Vector regionMaxSize_;
     private Hierarchy hierarchy_;
     private List<Rule> rules_;
-    private BoundingBox baseBox_;
+    private BoundingBox regionBaseBox_;
+    private final BoundingBox structuralBox_ = new BoundingBox();
 
     //CONSTRUCTORS
     public Blueprint(double[] regionBaseSize, double[] regionGrowthRate, Vector regionMaxSize, Hierarchy hierarchy){
@@ -69,11 +67,10 @@ public class Blueprint {
         return this.regionMaxSize_;
     }
     public BoundingBox getBaseSizeBox() {
-        return new BoundingBox().copy(this.baseBox_);
+        return new BoundingBox().copy(this.regionBaseBox_);
     }
-    int[] getStructureBox() {
-        this.setStructureBox_();;
-        return this.structureBox_;
+    public BoundingBox getStructuralBox() {
+        return new BoundingBox().copy(this.structuralBox_);
     }
     public double[] getRegionInitialSize(){
 
@@ -90,6 +87,12 @@ public class Blueprint {
     public Rule[] getRules() {
         return this.rules_.toArray(new Rule[0]);
     }
+    public TotemLectern[] getLecterns() {
+        return this.lecterns_.toArray(new TotemLectern[0]);
+    }
+    public TotemElement<?>[] getElements() {
+        return this.elements_.toArray(new TotemElement<?>[0]);
+    }
 
     //SETTERS
     private void setId(int id) {
@@ -101,7 +104,7 @@ public class Blueprint {
     }
     public void setRegionInitialVertex(double[] baseSizeArray){
         this.regionInitialVertex_ = baseSizeArray;
-        this.baseBox_ = new BoundingBox(baseSizeArray[0], baseSizeArray[1], baseSizeArray[2], baseSizeArray[3], baseSizeArray[4], baseSizeArray[5]);
+        this.regionBaseBox_ = new BoundingBox(baseSizeArray[0], baseSizeArray[1], baseSizeArray[2], baseSizeArray[3], baseSizeArray[4], baseSizeArray[5]);
     }
     public void setRegionGrowthRate(double[] growthRateArray){
         regionGrowthRate_ = growthRateArray;
@@ -115,20 +118,29 @@ public class Blueprint {
     public void setRules (List<Rule> rules) {
         this.rules_ = rules;
     }
+    public void addElement(TotemElement<?> element) {
+        this.elements_.add(element);
+        this.setStructureBox_();
+    }
+    public <T> void addElement(T element, int x, int y, int z) {
+        this.elements_.add(element,x,y,z);
+        this.setStructureBox_();
+    }
 
     //PUBLIC METHODS
-    public boolean chekStructureFromPoint(int x, int y, int z, World world){
+    public boolean testStructure(int x, int y, int z, World world){
 
         boolean r = true;
-        for (TotemElement<?> i : this.elements){
-
+        for (TotemElement<?> i : this.elements_){
+            Vector pos = i.getPosition();
             Block b = world.getBlockAt(
-                    x + i.getPosition()[0],
-                    y + i.getPosition()[1],
-                    z + i.getPosition()[2]
+                    x + pos.getBlockX(),
+                    y + pos.getBlockY(),
+                    z + pos.getBlockZ()
                     );
             if(i instanceof TotemBlock){
-                if(!b.getType().equals(i.getType())){
+                Material type = b.getType();
+                if(!type.equals(i.getType())){
                     r=false;
                     break;
                 }
@@ -158,40 +170,37 @@ public class Blueprint {
         }
         return r;
     }
-    public boolean chekStructureFromPoint(Location location) {
+    public boolean testStructure(Location location) {
         World world = location.getWorld();
         if (world == null) { return false; }
         Block block = location.getBlock();
-        return this.chekStructureFromPoint(block.getX(),block.getY(),block.getZ(), world);
+        return this.testStructure(block.getX(),block.getY(),block.getZ(), world);
     }
 
     //PRIVATE METHODS
     private void setStructureBox_() {
-        Elements elements = this.elements;
+        Elements elements = this.elements_;
 
-        int[] mins = elements.get(0).getPosition().clone();
-        int[] maxs = elements.get(0).getPosition().clone();
+        int[] mins = elements.get(0).getBlockPositionArray();
+        int[] maxs = elements.get(0).getBlockPositionArray();
 
         for (TotemElement<?> e : elements) {
-            int[] pos = e.getPosition();
+            int[] pos = e.getBlockPositionArray();
             for(int i = 0; i < 3; i++){
                 maxs[i] = Math.max(maxs[i],pos[i]);
                 mins[i] = Math.min(mins[i],pos[i]);
             }
         }
 
-        structureBox_ = new int[6];
+        double[] toResize = new double[6];
         for (int i = 0; i < 6 ; i++){
-            if(i<3){
-                structureBox_[i]=mins[i];
-            }else{
-                structureBox_[i]=maxs[i-3]+1;
-            }
+            toResize[i] = (i < 3) ? mins[i] : maxs[i-3]+1;
         }
+        this.structuralBox_.resize(toResize[0],toResize[1],toResize[2],toResize[3],toResize[4],toResize[5]);
     }
 
     //CLASSES
-    public static class Elements extends ArrayList<TotemElement<?>> {
+    private static class Elements extends ArrayList<TotemElement<?>> {
         private final Blueprint structure_;
 
         private Elements(Blueprint structure) {
@@ -217,7 +226,7 @@ public class Blueprint {
             return super.add(element);
         }
     }
-    public static class Lecterns extends ArrayList<TotemLectern> {
+    private static class Lecterns extends ArrayList<TotemLectern> {
         private final Blueprint structure_;
 
         private Lecterns(Blueprint structure) {
@@ -261,12 +270,12 @@ public class Blueprint {
                 name = jsonObject.get("name").getAsString();
 
                 switch (type) {
-                    case block -> structure.elements.add(
+                    case block -> structure.addElement(
                             Material.valueOf(name),
                             pos[0], pos[1], pos [2]
                     );
 
-                    default -> structure.elements.add(
+                    default -> structure.addElement(
                             EntityType.valueOf(name),
                             pos[0], pos[1], pos [2]
                     );
@@ -278,7 +287,7 @@ public class Blueprint {
                 pos = Serializer.GSON.fromJson(jsonObject.get("position"),int[].class);
                 facing = BlockFace.valueOf(jsonObject.get("direction").getAsString());
 
-                structure.lecterns.add(pos[0],pos[1],pos[2],facing);
+                structure.lecterns_.add(pos[0],pos[1],pos[2],facing);
             }
             if (jsonRegion.has("rules")) {
                 JsonObject jsonRules = jsonRegion.get("rules").getAsJsonObject();

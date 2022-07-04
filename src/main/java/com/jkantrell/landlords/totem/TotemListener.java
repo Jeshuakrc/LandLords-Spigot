@@ -28,7 +28,6 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerEditBookEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.event.world.EntitiesUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -40,6 +39,7 @@ import org.bukkit.util.Vector;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 public class TotemListener implements Listener {
@@ -402,32 +402,34 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent e) {
-        //if (Bukkit.getOnlinePlayers().size() > 0) { return; }
-        //Totem.loadAll(Bukkit.getWorlds().stream().flatMap(w -> w.getEntities().stream()));
-    }
-
-    @EventHandler
-    public void onChunkLoad(EntitiesLoadEvent e) {
+    public void onEntitiesLoad(EntitiesLoadEvent e) {
         Totem.loadAll(e.getEntities().stream());
     }
 
     @EventHandler
-    public void onChunkUnload(EntitiesUnloadEvent e) {
+    public void onEntitiesUnload(EntitiesUnloadEvent e) {
         e.getEntities().stream()
                 .filter(ent -> ent instanceof EnderCrystal)
                 .map(ent -> (EnderCrystal) ent)
                 .filter(Totem::isTotem)
                 .map(Totem::fromEnderCrystal)
+                .filter(Objects::nonNull)
                 .forEach(t -> {
-                    TotemManager.unregisterTotem(t);
-                    Bukkit.broadcastMessage("Totem unloaded. ID: " + t.getRegionId());
+                    Region r = t.getRegion().orElse(null);
+                    Logger logger = Landlords.getMainInstance().getLogger();
+                    if (r == null) {
+                        t.destroy();
+                        logger.warning("Destroyed totem with no region during regular unload. Region Id: " + t.getRegionId() + ". Totem Id: " + t.getUniqueId().toString() + ".");
+                    } else { t.unload(); }
                 });
     }
 
     @EventHandler
-    public void onBlockUpdateEvent(BlockPhysicsEvent e) {
-
+    public void onBlockUpdate(BlockPhysicsEvent e) {
+        List<Totem> totems = Arrays.stream(Totem.getAll()).filter(t -> t.contains(e.getBlock())).toList();
+        for(Totem t : totems){
+            t.setEnabled(t.getBlueprint().testStructure(t.getLocation()));
+        }
     }
 
     @EventHandler

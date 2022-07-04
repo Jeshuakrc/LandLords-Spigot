@@ -12,15 +12,16 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.util.Vector;
 
 import java.util.List;
 
 public class TotemLectern implements TotemRelative, Cloneable {
 
     //FIELDS
-    private int[] position_ = new int[3];
+    private final Vector pos_;
     private BlockFace facing_;
-    private final Blueprint structure_;
+    private final Blueprint blueprint_;
     private Totem totem_;
 
     //STATIC FIELDS
@@ -42,18 +43,16 @@ public class TotemLectern implements TotemRelative, Cloneable {
     }
 
     //CONSTRUCTORS
-    public TotemLectern(int x, int y, int z, BlockFace facing, Blueprint structure){
-        this.setPosition(x,y,z);
+    public TotemLectern(Vector pos, BlockFace facing, Blueprint blueprint) {
         this.setFacing(facing);
-        this.structure_ = structure;
+        this.pos_ = pos;
+        this.blueprint_ = blueprint;
+    }
+    public TotemLectern(int x, int y, int z, BlockFace facing, Blueprint blueprint){
+        this(new Vector(x,y,z), facing, blueprint);
     }
 
     //SETTERS
-    void setPosition(int x, int y, int z) {
-        position_[0]=x;
-        position_[1]=y;
-        position_[2]=z;
-    }
     void setFacing(BlockFace face) {
         facing_= face;
     }
@@ -62,14 +61,14 @@ public class TotemLectern implements TotemRelative, Cloneable {
     }
 
     //GETTERS
-    public int[] getPosition() {
-        return position_;
+    public Vector getPosition() {
+        return this.pos_.clone();
     }
     public BlockFace getFacing() {
         return facing_;
     }
     public Blueprint getStructure() {
-        return this.structure_;
+        return this.blueprint_;
     }
     public Totem getTotem() {
         return this.totem_;

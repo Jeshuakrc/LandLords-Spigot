@@ -1,28 +1,31 @@
 package com.jkantrell.landlords.totem;
 
+import org.bukkit.util.Vector;
+
 public abstract class TotemElement<T> implements TotemRelative {
 
-    private final Blueprint structure_;
+    private final Blueprint blueprint_;
     private final T type_;
-    private int[] pos_;
-    public TotemElement (T type, int x, int y, int z, Blueprint structure) {
+    private final Vector pos_;
+
+    public TotemElement(T type, Vector position, Blueprint blueprint) {
+        this.blueprint_ = blueprint;
         this.type_ = type;
-        this.pos_ = new int[] {x,y,z};
-        this.structure_ = structure;
+        this.pos_ = position;
     }
-    public int[] getPosition() {
+    public TotemElement (T type, int x, int y, int z, Blueprint blueprint) {
+        this(type, new Vector(x,y,z), blueprint);
+    }
+    public Vector getPosition() {
         return this.pos_;
-    };
-    public void setPosition(int x, int y, int z) {
-        this.pos_ = new int[] {x,y,z};
-    };
+    }
     T getType() {
         return this.type_;
     };
 
     @Override
     public Blueprint getStructure() {
-        return this.structure_;
+        return this.blueprint_;
     }
 
     public enum ElementType { block , entity }

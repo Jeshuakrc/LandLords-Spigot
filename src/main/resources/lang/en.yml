@@ -198,7 +198,7 @@ deeds:
       #   %1$s = Deeds region     %2$s = Actual region
       region_mismatch: "These are %1$s's deeds. They have no power over %2$s."
 
-      #If a no linger valid deeds item is placed in a totem lectern
+      #If a no longer valid deeds item is placed in a totem lectern
       #   %1$s = Deeds ID         %2$s = Valid ID
       id_mismatch: "Minutes #%1$s no longer valid."
 

@@ -1,10 +1,16 @@
 package com.jkantrell.landlords.totem;
 
+import org.bukkit.util.Vector;
+
 public interface TotemRelative {
 
-    int[] getPosition();
+    Vector getPosition();
+    default int[] getBlockPositionArray() {
+        Vector pos = this.getPosition();
+        return new int[] {pos.getBlockX(),pos.getBlockY(),pos.getBlockZ()};
+    }
     default int[] getAbsolutePosition(int x, int y, int z) {
-        int[]   pos = getPosition(),
+        int[]   pos = getBlockPositionArray(),
                 add = {x,y,z},
                 r = new int[3];
         for (int i = 0; i < 3; i++) {
