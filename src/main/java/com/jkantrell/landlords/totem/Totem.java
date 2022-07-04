@@ -21,6 +21,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.logging.Logger;
+import java.util.stream.Stream;
 
 public class Totem {
 
@@ -36,12 +37,6 @@ public class Totem {
     };
 
     //STATIC METHODS
-    public static void registerListener() {
-        Landlords mainInstance = Landlords.getMainInstance();
-    }
-    public static boolean isListenerRegistered() {
-        return Totem.listenerRegistered_;
-    }
     public static boolean isTotem(Entity entity) {
         if (!(entity instanceof EnderCrystal enderCrystal)) { return false; }
         return Totem.isTotem(enderCrystal);
@@ -63,11 +58,18 @@ public class Totem {
     public static Totem fromEnderCrystal(EnderCrystal crystal) {
         if (!Totem.isTotem(crystal)) { return null; }
 
+        Totem t = Totem.totems_.stream()
+                .filter(tot -> tot.getEndCrystal().equals(crystal))
+                .findFirst()
+                .orElse(null);
+
+        if (t != null) { return t; }
+
         PersistentDataContainer data = crystal.getPersistentDataContainer();
         int bluePrintId = data.get(blueprintIdKey, PersistentDataType.INTEGER);
         Location loc = crystal.getLocation();
 
-        Totem t = new Totem(loc.add(0,.5,0), Blueprint.get(bluePrintId));
+        t = new Totem(loc.add(0,.5,0), Blueprint.get(bluePrintId));
         t.regionId_ = data.get(regionIdKey, PersistentDataType.INTEGER);
         t.leveled_ = data.get(leveledKey, PersistentDataType.INTEGER);
         t.endCrystal_ = crystal;
@@ -81,9 +83,25 @@ public class Totem {
             logger.warning("    Region ID: " + t.regionId_);
         }
 
-        if (!Totem.totems_.contains(t)) {Totem.totems_.add(t);}
-
+        t.save();
         return t;
+    }
+    public static Totem[] getAll() {
+        return Totem.totems_.toArray(new Totem[0]);
+    }
+    public static Totem[] loadAll(Stream<Entity> entities) {
+        List<Totem> r = entities
+                .filter(e -> e instanceof EnderCrystal)
+                .map(e -> (EnderCrystal) e)
+                .filter(Totem::isTotem)
+                .map(Totem::fromEnderCrystal)
+                .toList();
+        r.forEach(t -> {
+            if (t.getRegion().isEmpty()) { t.destroy(); } else {
+                Landlords.getMainInstance().getLogger().fine("Loaded totem. Region Id: " + t.getRegion().get().getId() + ". Totem Id: " + t.getUniqueId().toString() + ".");
+            }
+        });
+        return r.toArray(new Totem[0]);
     }
 
     //FIELDS
@@ -95,7 +113,6 @@ public class Totem {
     private int regionId_;
     private Region region_ = null;
     private EnderCrystal endCrystal_ = null;
-    private int cooldown_ = Landlords.CONFIG.totemInteractCoolDown;
 
     //CONSTRUCTORS
     public Totem(Location location, Blueprint blueprint){
@@ -239,7 +256,7 @@ public class Totem {
 
         TotemLectern r = null;
         Block containingBlock = this.getContainingBlock();
-        int[]   pos = {containingBlock.getX(), containingBlock.getY(), containingBlock.getX()},
+        int[]   pos = {containingBlock.getX(), containingBlock.getY(), containingBlock.getZ()},
                 blockPos = {x, y, z},
                 lPos;
 

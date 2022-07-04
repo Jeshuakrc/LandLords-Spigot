@@ -103,10 +103,6 @@ regions:
   #This is a merely visual setting. Determines how long will the region borders be displayed when a new totem is placed.
   border_persistence_placed: 420
 
-  #The minimum and maximum names a player can set to a region
-  minimum_name_length: 4
-  maximum_name_length: 32
-
   # Configures the tittles to display whenever a players enters a region.
   name_title_display:
     enabled: true       # If true, a tittle with the region name will be shown to the player whenever they enter a region.

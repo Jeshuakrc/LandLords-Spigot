@@ -8,6 +8,8 @@ import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.landlords.totem.Exception.*;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.events.RegionDestroyEvent;
+import com.jkantrell.regionslib.regions.Hierarchy;
+import com.jkantrell.regionslib.regions.Permission;
 import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import org.bukkit.*;
@@ -67,6 +69,131 @@ public class TotemListener implements Listener {
 
     @EventHandler
     public void onPlaceDeeds(PlayerInteractEvent e) {
+        //Checking if the interaction was a right-clicked block
+        if (!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) { return; }
+
+        //Checking if the clicked block is a Totem lectern
+        Block block = e.getClickedBlock();
+        if (block == null) { return; }
+        if (!TotemLectern.isTotemLectern(block)) { return; }
+        TotemLectern lectern = TotemLectern.getAt(block);
+        if (lectern == null) { return; }
+
+        //Checking if the item used is a Deeds book
+        Player player = e.getPlayer();
+        Deeds deeds = Deeds.getFromBook(e.getItem(), player);
+        if (deeds == null) { return; }
+
+        //Checking if the totem has a region.
+        Region region = lectern.getTotem().getRegion().orElse(null);
+        if (region == null) { return; }
+
+        //Reading deeds
+        Player[] msgRecipients = region.getOnlineMembers();
+        List<Permission> oldPerms = new ArrayList<>(Arrays.asList(region.getPermissions().clone())), newPerms;
+        String oldName = region.getName(), newName;
+        try {
+            lectern.readDeeds(deeds,player);
+        } catch (IllegalArgumentException ex) {
+            player.sendMessage(ex.getMessage());
+            e.setCancelled(true);
+        } catch (TotemLectern.unreadableDeedsException ex) {
+            //Presenting reading errors to player and ending method
+            StringBuilder message = new StringBuilder();
+            message.append(ex.getMessage()).append("§r");
+            for (String error : ex.errors) {
+                message.append("\n").append(error);
+            }
+            player.sendMessage(message.toString());
+            e.setCancelled(true);
+            return;
+        }
+
+        //Checking if there was any change
+        newPerms = new ArrayList<>(Arrays.asList(region.getPermissions()));
+        newName = region.getName();
+        if (oldPerms.equals(newPerms) && oldName.equals(newName)) { return; }
+
+        //Scanning differences and presenting them to the players
+        HashMap<Player,List<String>> playerMessagesMap = new HashMap<>();
+        for (Player p : msgRecipients) {
+            playerMessagesMap.put(p,new LinkedList<>());
+        }
+
+        List<String> messages;
+        StringBuilder messagePath = new StringBuilder();
+
+        if(!oldName.equals(newName)){
+            for (Player p : msgRecipients) {
+                messages = playerMessagesMap.get(p);
+                messagePath.setLength(0);
+                messagePath.append("regions.name_update.");
+                messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson");
+
+                messages.add(LangManager.getString(messagePath.toString(),p,oldName,newName,player.getName()));
+            }
+        }
+
+        HashMap<String,List<Hierarchy.Group>> playerPermissionsMap = new HashMap<>();
+        for (Permission oldPerm : oldPerms) {
+            String p = oldPerm.getPlayerName();
+            if (!playerPermissionsMap.containsKey(p)) {
+                playerPermissionsMap.put(p,new LinkedList<>());
+            }
+            playerPermissionsMap.get(p).add(oldPerm.getGroup());
+        }
+
+        for (Permission perm : newPerms) {
+
+            String affected = perm.getPlayerName();
+            List<Hierarchy.Group> groups = playerPermissionsMap.getOrDefault(affected,Collections.emptyList());
+            if(groups.isEmpty()){
+                for (Player p : msgRecipients) {
+                    messages = playerMessagesMap.get(p);
+                    messagePath.setLength(0);
+                    messagePath.append("regions.permissions.add.");
+                    messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
+                    messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
+
+                    messages.add(LangManager.getString(messagePath.toString(),p,affected,player.getName(),perm.getGroup().getName(),region.getName()));
+                }
+            } else {
+                Hierarchy.Group group = groups.get(0);
+                if (!groups.contains(perm.getGroup())) {
+                    for (Player p : msgRecipients) {
+                        messages = playerMessagesMap.get(p);
+                        messagePath.setLength(0);
+                        messagePath.append("regions.permissions.change.");
+                        messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
+                        messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
+
+                        messages.add(LangManager.getString(messagePath.toString(), p, affected, player.getName(), group.getName(), perm.getGroup().getName(), region.getName()));
+                    }
+                }
+                groups.remove(group);
+            }
+        }
+
+        for (String name : playerPermissionsMap.keySet()) {
+            for (Hierarchy.Group g : playerPermissionsMap.get(name)) {
+                for (Player p : msgRecipients) {
+                    messages = playerMessagesMap.get(p);
+                    messagePath.setLength(0);
+                    messagePath.append("regions.permissions.remove.");
+                    messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
+                    messagePath.append(p.getName().equals(name) ? "firstPerson" : "thirdPerson");
+
+                    messages.add(LangManager.getString(messagePath.toString(),p,name,player.getName(),g.getName(),region.getName()));
+                }
+            }
+        }
+
+        for (Player p : msgRecipients) {
+            for (String s : playerMessagesMap.get(p)) {
+                p.sendMessage(s);
+            }
+        }
+
 
     }
 
@@ -276,13 +403,13 @@ public class TotemListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent e) {
-        if (Bukkit.getOnlinePlayers().size() > 0) { return; }
-        this.loadTotems_(Bukkit.getWorlds().stream().flatMap(w -> w.getEntities().stream()));
+        //if (Bukkit.getOnlinePlayers().size() > 0) { return; }
+        //Totem.loadAll(Bukkit.getWorlds().stream().flatMap(w -> w.getEntities().stream()));
     }
 
     @EventHandler
     public void onChunkLoad(EntitiesLoadEvent e) {
-        this.loadTotems_(e.getEntities().stream());
+        Totem.loadAll(e.getEntities().stream());
     }
 
     @EventHandler
@@ -307,7 +434,7 @@ public class TotemListener implements Listener {
     public void onPlaceLectern(BlockPlaceEvent e) {
         Block block = e.getBlock();
         if (!(block.getState() instanceof Lectern)) { return; }
-        TotemLectern totemLectern = TotemManager.getLecternAtSpot(block);
+        TotemLectern totemLectern = TotemLectern.getAt(block);
         if (totemLectern == null) { return; }
         Directional dir = (Directional) block.getBlockData();
         dir.setFacing(totemLectern.getFacing());
@@ -369,16 +496,4 @@ public class TotemListener implements Listener {
         }
     }
 
-    private void loadTotems_(Stream<Entity> entities) {
-        entities
-                .filter(e -> e instanceof EnderCrystal)
-                .map(e -> (EnderCrystal) e)
-                .filter(Totem::isTotem)
-                .forEach(c -> {
-                    Totem totem = Totem.fromEnderCrystal(c);
-                    TotemManager.registerTotem(totem);
-                    if (totem.getRegion() == null) {totem.destroy();}
-                    Bukkit.broadcastMessage("Totem loaded. ID: " +totem.getRegionId());
-                });
-    }
 }

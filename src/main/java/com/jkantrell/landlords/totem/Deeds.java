@@ -99,6 +99,7 @@ public class Deeds {
         book.setItemMeta(bookMeta);
 
         itemStack_ = book;
+        Deeds.setDeedsId_(region,this.getId());
 
         return book;
     }
@@ -225,7 +226,6 @@ public class Deeds {
         Region region = this.getRegion();
         int id = Deeds.getDeedsId(region);
         id = (id == -1) ? 1 : id +1;
-        Deeds.setDeedsId_(region,id);
         id_ = id;
         return this.getId();
     }
@@ -255,7 +255,6 @@ public class Deeds {
 
     //STATIC METHODS
     public ItemStack convertToDeeds(ItemStack itemStack, Player holder) {
-
         itemStack.setType(Material.WRITABLE_BOOK);
         ItemMeta meta = itemStack.getItemMeta();
         PersistentDataContainer dataContainer = meta.getPersistentDataContainer();
@@ -271,6 +270,7 @@ public class Deeds {
         return itemStack;
     }
     public static boolean isTotemDeeds(ItemStack itemStack){
+        if (itemStack == null) { return false; }
         if (checkMaterial_(itemStack)) {
             return isTotemDeeds((BookMeta) itemStack.getItemMeta());
         } else {
@@ -278,6 +278,7 @@ public class Deeds {
         }
     }
     public static boolean isTotemDeeds(BookMeta bookMeta) {
+        if (bookMeta == null) { return false; }
         return bookMeta.getPersistentDataContainer().has(isDeedsNsKey_, PersistentDataType.BYTE);
     }
     public static Deeds getFromBook(ItemStack itemStack, Player getter) {

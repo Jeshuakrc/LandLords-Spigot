@@ -26,6 +26,21 @@ public class TotemLectern implements TotemRelative, Cloneable {
     //STATIC FIELDS
     private static NamespacedKey lecternRegionIDKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedLecternRegionID");
 
+    //STATIC METHODS
+    public static boolean isTotemLectern(Block block) {
+        if (block.getState() instanceof Lectern lectern) {
+            return lectern.getPersistentDataContainer().has(lecternRegionIDKey_,PersistentDataType.INTEGER);
+        } else { return false; }
+    }
+    public static TotemLectern getAt(Block block) {
+        TotemLectern r = null;
+        for (Totem t : Totem.getAll()){
+            r = t.getLecternAt(block);
+            if (r != null) { break; }
+        }
+        return r;
+    }
+
     //CONSTRUCTORS
     public TotemLectern(int x, int y, int z, BlockFace facing, Blueprint structure){
         this.setPosition(x,y,z);
@@ -72,8 +87,10 @@ public class TotemLectern implements TotemRelative, Cloneable {
     }
     public Deeds.ReadingResults readDeeds(ItemStack itemStack, Player player) {
         if (!Deeds.isTotemDeeds(itemStack)) { throw new IllegalArgumentException(); }
+        return this.readDeeds(Deeds.getFromBook(itemStack, player), player);
+    }
+    public Deeds.ReadingResults readDeeds(Deeds deeds, Player player) {
 
-        Deeds deeds = Deeds.getFromBook(itemStack, player);
         Region deedsRegion = deeds.getRegion(), lecternRegion = this.getTotem().getRegion().orElseThrow();
         if (!deedsRegion.equals(lecternRegion)) {
             throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.region_mismatch",player,deedsRegion.getName(),lecternRegion.getName()));
@@ -95,11 +112,6 @@ public class TotemLectern implements TotemRelative, Cloneable {
         lecternRegion.save();
 
         return read;
-    }
-    public static boolean isTotemLectern(Block block) {
-        if (block.getState() instanceof Lectern lectern) {
-            return lectern.getPersistentDataContainer().has(lecternRegionIDKey_,PersistentDataType.INTEGER);
-        } else { return false; }
     }
     @Override
     public TotemLectern clone() {

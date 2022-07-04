@@ -5,9 +5,11 @@ import com.jkantrell.landlords.io.LangManager;
 import com.jkantrell.landlords.region.LandLordsAbilities;
 import com.jkantrell.landlords.region.LandLordsRuleKeys;
 import com.jkantrell.landlords.region.RegionListener;
+import com.jkantrell.landlords.totem.Totem;
 import com.jkantrell.landlords.totem.TotemListener;
 import com.jkantrell.landlords.totem.TotemManager;
 import com.jkantrell.regionslib.RegionsLib;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import javax.annotation.Nonnull;
@@ -52,6 +54,7 @@ public final class Landlords extends JavaPlugin {
 
         //Initializing totems
         TotemManager.loadTotemStructures();
+        Totem.loadAll(this.getServer().getWorlds().stream().flatMap(w -> w.getEntities().stream()));
 
         //Registering listeners
         this.getServer().getPluginManager().registerEvents(new TotemListener(),this);

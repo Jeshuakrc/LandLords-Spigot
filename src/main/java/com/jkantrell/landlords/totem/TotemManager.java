@@ -29,52 +29,6 @@ public abstract class TotemManager {
         }
         return structures_;
     }
-    public static List<Totem> getTotems(){
-        return List.copyOf(totems_);
-    }
-    public static Totem getTotemFromEndCrystal(EnderCrystal enderCrystal){
-
-        Totem t = null;
-        for (Totem i : getTotems()){
-            if(i.getEndCrystal().equals(enderCrystal)){
-                t = i;
-                break;
-            }
-        }
-        return t;
-    }
-    public static Totem getTotemFromId(int id){
-
-        Totem t = null;
-
-        for (Totem i : getTotems()){
-            if (i.getRegionId() == id) {
-                t = i;
-                break;
-            }
-        }
-        return t;
-    }
-    public static List<Totem> loadTotems() {
-
-        List<World> worlds = Landlords.getMainInstance().getServer().getWorlds();
-        totems_.clear();
-        for(World w : worlds){
-
-            for (Entity e : w.getEntities()) {
-                if(e.getType().equals(EntityType.ENDER_CRYSTAL)){
-
-                    EnderCrystal crystal = (EnderCrystal) e;
-                    if(Totem.isTotem(crystal)){
-                        totems_.add(Totem.fromEnderCrystal(crystal));
-                    }
-                }
-            }
-        }
-        //removeOrphanedRegions(); //Causing regions in non-generated terrain to be deleted
-        return totems_;
-    }
-
 
     public static Blueprint chekStructuresFromPoint(Location location) {
 
@@ -84,15 +38,6 @@ public abstract class TotemManager {
                 r=s;
                 break;
             }
-        }
-        return r;
-    }
-    public static TotemLectern getLecternAtSpot(Block block) {
-
-        TotemLectern r = null;
-        for (Totem t : TotemManager.getTotems()){
-            r = t.getLecternAt(block);
-            if (r != null) { break; }
         }
         return r;
     }
@@ -107,15 +52,5 @@ public abstract class TotemManager {
     }
     public static void removeTotem(Totem totem){
         totems_.remove(totem);
-    }
-    public static void removeOrphanedRegions(Stream<Region> regions) {
-        regions
-                .filter(r -> {
-                    RegionData data = r.getDataContainer().get("totemRegion");
-                    if (data == null) { return false; }
-                    return data.getAsBoolean();
-                })
-                .filter(r -> TotemManager.getTotemFromId(r.getId()) == null)
-                .forEach(Region::destroy);
     }
 }
