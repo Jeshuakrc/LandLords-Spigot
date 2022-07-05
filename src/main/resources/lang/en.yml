@@ -194,6 +194,9 @@ deeds:
         too_many: "%1$s ':' symbols found. It must only be one after the role name."
 
     place:
+      #If a player tried to place a non-deeds book in a totem lectern.
+      not_deeds: "That lectern is only for deeds"
+
       #If a deeds are placed on a totem lectern of a region they don't belong
       #   %1$s = Deeds region     %2$s = Actual region
       region_mismatch: "These are %1$s's deeds. They have no power over %2$s."

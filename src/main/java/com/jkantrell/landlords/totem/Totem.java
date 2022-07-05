@@ -102,6 +102,18 @@ public class Totem {
         });
         return r.toArray(new Totem[0]);
     }
+    public static Optional<Totem> get(String id) {
+        return Totem.get(UUID.fromString(id));
+    }
+    public static Optional<Totem> get(UUID id) {
+        return Totem.totems_.stream().filter(t -> t.getUniqueId().equals(id)).findFirst();
+    }
+    public static boolean exists(String id) {
+        return Totem.get(id).isPresent();
+    }
+    public static boolean exists(UUID id) {
+        return Totem.get(id).isPresent();
+    }
 
     //FIELDS
     private final Blueprint blueprint_;
@@ -218,7 +230,7 @@ public class Totem {
         this.regionId_ = this.region_.getId();
 
         //Spawning an EndCrystal
-        this.endCrystal_ = (EnderCrystal) this.location_.getWorld().spawnEntity(this.location_.clone().add(0,-.5,0), EntityType.ENDER_CRYSTAL);
+        this.endCrystal_ = (EnderCrystal) this.location_.getWorld().spawnEntity(this.getLocation().add(0,-.5,0), EntityType.ENDER_CRYSTAL);
         this.endCrystal_.setShowingBottom(false);
 
         //Assigning the region to the crystal
@@ -238,7 +250,7 @@ public class Totem {
         Config.ParticleData particleData = Landlords.CONFIG.totemPlaceParticleEffect;
         this.getWorld().spawnParticle(
                 particleData.particle(),
-                this.location_.add(particlePos[0], particlePos[1], particlePos[2]),
+                this.getLocation().add(particlePos[0], particlePos[1], particlePos[2]),
                 particleData.count(),
                 particleData.delta()[0], particleData.delta()[1], particleData.delta()[2]
         );

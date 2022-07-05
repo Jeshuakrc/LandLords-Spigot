@@ -14,41 +14,120 @@ import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
-
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class Deeds {
+
+    //STATIC FIELDS
+    private static final String deedsIdContainerKey_ = "deedsId";
+    private static final String deedsMinutesContainerKey_ = "deedsMinutes";
+    private static final NamespacedKey deedsIdNsKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedsId");
+    private static final NamespacedKey deedsRegionIdNsKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedsRegionId");
+    private static final NamespacedKey deedsMinutesNsKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedsMinutes");
+
+    //STATIC METHODS
+    public static boolean isTotemDeeds(ItemStack itemStack){
+        if (itemStack == null) { return false; }
+        if (!checkMaterial_(itemStack)) { return false; }
+        return isTotemDeeds((BookMeta) itemStack.getItemMeta());
+    }
+    public static boolean isTotemDeeds(BookMeta bookMeta) {
+        if (bookMeta == null) { return false; }
+        PersistentDataContainer dataContainer = bookMeta.getPersistentDataContainer();
+        if (!dataContainer.has(deedsIdNsKey_, PersistentDataType.STRING)) { return false; }
+        try {
+            UUID.fromString(dataContainer.get(deedsIdNsKey_, PersistentDataType.STRING));
+        } catch (Exception e) {return false; }
+        return (dataContainer.has(deedsMinutesNsKey_, PersistentDataType.INTEGER) &&
+                dataContainer.has(deedsIdNsKey_, PersistentDataType.STRING)
+        );
+    }
+    public static Optional<Deeds> fromBook(ItemStack itemStack, Player getter) {
+        if (itemStack == null) { return Optional.empty(); }
+        if (!checkMaterial_(itemStack)) { return Optional.empty(); }
+        Optional<Deeds> r = Deeds.fromBook((BookMeta) itemStack.getItemMeta(),getter);
+        if (r.isEmpty()) { return r; }
+        r.get().itemStack_ = itemStack;
+        return r;
+    }
+    @SuppressWarnings("null")
+    public static Optional<Deeds> fromBook(BookMeta bookMeta, Player getter) {
+        //Checking if the ItemMetaProvided is from a Deeds item
+        if (!Deeds.isTotemDeeds(bookMeta)) { return Optional.empty(); }
+
+        //Checking if there's a region under the extracted ID
+        PersistentDataContainer dataContainer = bookMeta.getPersistentDataContainer();
+        Region region = Regions.get(dataContainer.get(deedsRegionIdNsKey_,PersistentDataType.INTEGER)).orElse(null);
+        if (region == null) { return Optional.empty(); }
+
+        //Checking if the region matches this deed's ID
+        RegionDataContainer regionDataContainer = region.getDataContainer();
+        if (!regionDataContainer.has(deedsIdContainerKey_)) { return Optional.empty(); }
+        UUID id = UUID.fromString(dataContainer.get(deedsIdNsKey_,PersistentDataType.STRING));
+        if (!regionDataContainer.get(deedsIdContainerKey_).getAsString().equals(id.toString())) { return Optional.empty(); }
+
+        //Building deeds
+        int minutes = dataContainer.get(deedsMinutesNsKey_,PersistentDataType.INTEGER);
+        ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
+        item.setItemMeta(bookMeta);
+
+        return Optional.of(new Deeds(item,region,minutes,id,getter));
+    }
+    public static Optional<Integer> idOf(Region region) {
+        RegionData data = region.getDataContainer().get(deedsMinutesContainerKey_);
+        return Optional.ofNullable((data == null) ? null : data.getAsInt());
+    }
 
     //FIELDS
     private ItemStack itemStack_;
     private Region region_;
     private Permission[] permissions_;
     private String name_;
-    private int id_;
+    private int minutes_;
     private Player holder_;
-
-    public static final String deedsIdContainerKey = "deedsId";
-    private static NamespacedKey isDeedsNsKey_ = new NamespacedKey(Landlords.getMainInstance(),"isDeeds");
-    private static NamespacedKey deedsRegionIdNsKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedsRegionId");
-    private static NamespacedKey deedsIdNsKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedsId");
+    private final UUID id_;
 
     //CONSTRUCTORS
     public Deeds(Region region, Player creator){
-        this.setRegion_(region);
-        this.permissions_ = this.getRegion().getPermissions();
-        this.name_ = this.getRegion().getName();
-        this.setID_();
-        this.itemStack_ = this.convertToDeeds(new ItemStack(Material.WRITABLE_BOOK),creator);
+        this.region_ = region;
+        this.permissions_ = region.getPermissions();
+        this.name_ = region.getName();
+        this.id_ = UUID.randomUUID();
         this.holder_ = creator;
-
+        this.setMinutes_();
+        this.itemStack_ = this.convertToDeeds(new ItemStack(Material.WRITABLE_BOOK),creator);
     }
-    private Deeds(ItemStack item, Region region, int id, Player getter) {
-        this.setRegion_(region);
+    private Deeds(ItemStack item, Region region, int minutes, UUID id, Player getter) {
+        this.region_ = region;
         this.permissions_ = this.getRegion().getPermissions();
         this.name_ = this.getRegion().getName();
-        this.id_ = id;
+        this.minutes_ = minutes;
         this.itemStack_ = item;
         this.holder_ = getter;
+        this.id_ = id;
+    }
+
+    //GETTERS
+    public ItemStack getItemStack(){
+        return itemStack_.clone();
+    }
+    public Region getRegion() {
+        return region_;
+    }
+    public UUID getId() {
+        return this.id_;
+    }
+    public int getMinutes() {
+        return minutes_;
+    }
+
+    //SETTERS
+    private int setMinutes_(){
+        Region region = this.getRegion();
+        this.minutes_ = Deeds.idOf(region).orElse(1);
+        return this.getMinutes();
     }
 
     //PUBLIC METHODS
@@ -99,7 +178,7 @@ public class Deeds {
         book.setItemMeta(bookMeta);
 
         itemStack_ = book;
-        Deeds.setDeedsId_(region,this.getId());
+        this.saveToRegion_();
 
         return book;
     }
@@ -209,28 +288,20 @@ public class Deeds {
     public ReadingResults read(){
         return read((BookMeta) this.getItemStack().getItemMeta());
     }
+    public ItemStack convertToDeeds(ItemStack itemStack, Player holder) {
+        itemStack.setType(Material.WRITABLE_BOOK);
+        ItemMeta meta = itemStack.getItemMeta();
+        PersistentDataContainer dataContainer = meta.getPersistentDataContainer();
 
-    //GETTERS
-    public ItemStack getItemStack(){
-        return itemStack_.clone();
-    }
-    public Region getRegion() {
-        return region_;
-    }
-    public int getId() {
-        return id_;
-    }
+        dataContainer.set(deedsIdNsKey_,PersistentDataType.STRING,this.getId().toString());
+        dataContainer.set(deedsMinutesNsKey_,PersistentDataType.INTEGER,this.getMinutes());
+        dataContainer.set(deedsRegionIdNsKey_,PersistentDataType.INTEGER,this.getRegion().getId());
+        meta.addEnchant(Enchantment.BINDING_CURSE,1,true);
+        meta.setDisplayName(LangManager.getString("deeds.book.title", holder, this.getRegion().getName()));
 
-    //SETTERS
-    private int setID_(){
-        Region region = this.getRegion();
-        int id = Deeds.getDeedsId(region);
-        id = (id == -1) ? 1 : id +1;
-        id_ = id;
-        return this.getId();
-    }
-    private void setRegion_(Region region){
-        region_=region;
+        itemStack.setItemMeta(meta);
+
+        return itemStack;
     }
 
     //RECORDS
@@ -253,69 +324,10 @@ public class Deeds {
         }
     }
 
-    //STATIC METHODS
-    public ItemStack convertToDeeds(ItemStack itemStack, Player holder) {
-        itemStack.setType(Material.WRITABLE_BOOK);
-        ItemMeta meta = itemStack.getItemMeta();
-        PersistentDataContainer dataContainer = meta.getPersistentDataContainer();
-
-        dataContainer.set(isDeedsNsKey_,PersistentDataType.BYTE,(byte) 1);
-        dataContainer.set(deedsIdNsKey_,PersistentDataType.INTEGER,this.getId());
-        dataContainer.set(deedsRegionIdNsKey_,PersistentDataType.INTEGER,this.getRegion().getId());
-        meta.addEnchant(Enchantment.BINDING_CURSE,1,true);
-        meta.setDisplayName(LangManager.getString("deeds.book.title", holder, this.getRegion().getName()));
-
-        itemStack.setItemMeta(meta);
-
-        return itemStack;
-    }
-    public static boolean isTotemDeeds(ItemStack itemStack){
-        if (itemStack == null) { return false; }
-        if (checkMaterial_(itemStack)) {
-            return isTotemDeeds((BookMeta) itemStack.getItemMeta());
-        } else {
-            return false;
-        }
-    }
-    public static boolean isTotemDeeds(BookMeta bookMeta) {
-        if (bookMeta == null) { return false; }
-        return bookMeta.getPersistentDataContainer().has(isDeedsNsKey_, PersistentDataType.BYTE);
-    }
-    public static Deeds getFromBook(ItemStack itemStack, Player getter) {
-        if (!Deeds.isTotemDeeds(itemStack)) { return null; }
-        Deeds r = Deeds.getFromBook((BookMeta) itemStack.getItemMeta(),getter);
-        assert r != null;
-        r.itemStack_ = itemStack;
-
-        return r;
-    }
-    public static Deeds getFromBook(BookMeta bookMeta, Player getter) {
-
-        if (!Deeds.isTotemDeeds(bookMeta)) { return null; }
-
-        PersistentDataContainer dataContainer = bookMeta.getPersistentDataContainer();
-        Region region = Regions.get(dataContainer.get(deedsRegionIdNsKey_,PersistentDataType.INTEGER)).orElseThrow();
-        int id = dataContainer.get(deedsIdNsKey_,PersistentDataType.INTEGER);
-        ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
-        item.setItemMeta(bookMeta);
-
-        return new Deeds(item,region,id,getter);
-
-    }
-    public static int getDeedsId(Region region) {
-        RegionData data = region.getDataContainer().get(deedsIdContainerKey);
-
-        if (data != null) {
-            return data.getAsInt();
-        } else {
-            return -1;
-        }
-    }
-
     //PRIVATE METHODS
     private String getStyledFirstPage_(String name){
         String  nameField = "[" + name + "]",
-                deedsId = String.format("%03d",this.getId()),
+                deedsId = String.format("%03d",this.getMinutes()),
                 firstPage = LangManager.getStringNonFormatted("deeds.book.first_page",this.holder_)+"§r";
         firstPage = firstPage.replaceAll("\\[","").replaceAll("]","");
         return String.format(firstPage,nameField,deedsId,this.getRegion().getId());
@@ -331,16 +343,17 @@ public class Deeds {
         }
         return page.toString();
     }
-
-    //PRIVATE STATIC METHODS
-    private static void setDeedsId_(Region region, int id) {
+    private void saveToRegion_() {
+        Region region = this.getRegion();
         RegionDataContainer data = region.getDataContainer();
-        if (data.has(deedsIdContainerKey)) {
-            data.remove(deedsIdContainerKey);
-        }
-        data.add(new RegionData(deedsIdContainerKey,id));
+        data.remove(deedsIdContainerKey_);
+        data.remove(deedsMinutesContainerKey_);
+        data.add(new RegionData(deedsIdContainerKey_,this.getId().toString()));
+        data.add(new RegionData(deedsMinutesContainerKey_,this.getMinutes()));
         region.save();
     }
+
+    //PRIVATE STATIC METHODS
     private static boolean checkMaterial_(ItemStack itemStack) {
         Material material = itemStack.getType();
         return material.equals(Material.WRITTEN_BOOK) || material.equals(Material.WRITABLE_BOOK);

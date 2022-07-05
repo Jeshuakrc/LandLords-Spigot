@@ -13,8 +13,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.Vector;
-
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class TotemLectern implements TotemRelative, Cloneable {
 
@@ -25,13 +26,14 @@ public class TotemLectern implements TotemRelative, Cloneable {
     private Totem totem_;
 
     //STATIC FIELDS
-    private static NamespacedKey lecternRegionIDKey_ = new NamespacedKey(Landlords.getMainInstance(),"deedLecternRegionID");
+    private static final NamespacedKey totemIdKey_ = new NamespacedKey(Landlords.getMainInstance(),"totemId");
 
     //STATIC METHODS
     public static boolean isTotemLectern(Block block) {
-        if (block.getState() instanceof Lectern lectern) {
-            return lectern.getPersistentDataContainer().has(lecternRegionIDKey_,PersistentDataType.INTEGER);
-        } else { return false; }
+        if (!(block.getState() instanceof Lectern lectern)) { return false; }
+        PersistentDataContainer dataContainer = lectern.getPersistentDataContainer();
+        if (!dataContainer.has(totemIdKey_,PersistentDataType.STRING)) { return false; }
+        return Totem.exists(dataContainer.get(totemIdKey_,PersistentDataType.STRING));
     }
     public static TotemLectern getAt(Block block) {
         TotemLectern r = null;
@@ -76,17 +78,15 @@ public class TotemLectern implements TotemRelative, Cloneable {
 
     //METHODS
     public void convert(Block block) {
-
-        if (block.getState() instanceof Lectern lectern) {
-            PersistentDataContainer data = lectern.getPersistentDataContainer();
-            data.set(lecternRegionIDKey_, PersistentDataType.INTEGER, this.getTotem().getRegionId());
-            lectern.update();
-        }
-
+        if (!(block.getState() instanceof Lectern lectern)) { return; }
+        PersistentDataContainer data = lectern.getPersistentDataContainer();
+        data.set(totemIdKey_, PersistentDataType.STRING, this.getTotem().getUniqueId().toString());
+        lectern.update();
     }
     public Deeds.ReadingResults readDeeds(ItemStack itemStack, Player player) {
-        if (!Deeds.isTotemDeeds(itemStack)) { throw new IllegalArgumentException(); }
-        return this.readDeeds(Deeds.getFromBook(itemStack, player), player);
+        Optional<Deeds> deeds = Deeds.fromBook(itemStack,player);
+        if (deeds.isEmpty()) { return new Deeds.ReadingResults("", Collections.emptyList(),Collections.emptyList()); }
+        return this.readDeeds(deeds.get(), player);
     }
     public Deeds.ReadingResults readDeeds(Deeds deeds, Player player) {
 
@@ -94,9 +94,9 @@ public class TotemLectern implements TotemRelative, Cloneable {
         if (!deedsRegion.equals(lecternRegion)) {
             throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.region_mismatch",player,deedsRegion.getName(),lecternRegion.getName()));
         }
-        Integer deedsID = deeds.getId(), regionID = lecternRegion.getDataContainer().get(Deeds.deedsIdContainerKey).getAsInt();
-        if (!deedsID.equals(regionID)) {
-            throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.id_mismatch",player,deedsID.toString(),regionID.toString()));
+        Integer deedsMinutes = deeds.getMinutes(), regionMinutes = Deeds.idOf(lecternRegion).orElse(-1);
+        if (!deedsMinutes.equals(regionMinutes)) {
+            throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.id_mismatch",player,deedsMinutes.toString(),regionMinutes.toString()));
         }
 
         Deeds.ReadingResults read = deeds.read();

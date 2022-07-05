@@ -12,6 +12,8 @@ import com.jkantrell.regionslib.regions.Hierarchy;
 import com.jkantrell.regionslib.regions.Permission;
 import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.Lectern;
@@ -67,7 +69,7 @@ public class TotemListener implements Listener {
         new Totem(loc,blueprint).place(player);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlaceDeeds(PlayerInteractEvent e) {
         //Checking if the interaction was a right-clicked block
         if (!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) { return; }
@@ -79,10 +81,20 @@ public class TotemListener implements Listener {
         TotemLectern lectern = TotemLectern.getAt(block);
         if (lectern == null) { return; }
 
-        //Checking if the item used is a Deeds book
+        //Checking if the item used is a book
+        ItemStack item = e.getItem();
+        if (item == null) { return; }
+        if (!(item.getItemMeta() instanceof BookMeta bookMeta)) { return; }
+
+        //Checking if the book is a Deeds book
         Player player = e.getPlayer();
-        Deeds deeds = Deeds.getFromBook(e.getItem(), player);
-        if (deeds == null) { return; }
+        Deeds deeds = Deeds.fromBook(bookMeta, player).orElse(null);
+        if (deeds == null) {
+            e.setCancelled(true);
+            String notDeedsMessage = LangManager.getString("deeds.error_message.place.not_deeds",player);
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(notDeedsMessage));
+            return;
+        }
 
         //Checking if the totem has a region.
         Region region = lectern.getTotem().getRegion().orElse(null);
@@ -459,7 +471,7 @@ public class TotemListener implements Listener {
         //Checking if the edited book is a deeds book
         Player player = e.getPlayer();
         BookMeta oldMeta = e.getPreviousBookMeta();
-        Deeds deeds = Deeds.getFromBook(oldMeta, player);
+        Deeds deeds = Deeds.fromBook(oldMeta, player).orElse(null);
         if (deeds == null) { return; }
 
         //Reading the book
