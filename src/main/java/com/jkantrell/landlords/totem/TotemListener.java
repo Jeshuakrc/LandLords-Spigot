@@ -270,33 +270,25 @@ public class TotemListener implements Listener {
         //Checking if the player has enough items to interact
         if (totemData.consume() && !inventory.contains(totemData.item(), totemData.count())) { return; }
 
-        //Saving the region's original size
-        double[] originalSize = region.get().getCorners();
-
-        //Placeholder for possible exceptions
-        List<UnresizableReason> unresizableReasons = null;
-
         //Expanding the region
+        boolean resized = true;
+        List<UnresizableReason> unresizableReasons = null;
         try {
-            int toResize = (totemData.equals(Landlords.CONFIG.totemDowngradeItem)) ? -1 : 1; //Scale in or out depending on the item
-            totem.scale(toResize);
+            totem.feed(1);
         } catch (TotemUnresizableException ex) {
+            resized = ex.wasResized();
             unresizableReasons = ex.getReasons(); //Fills placeholder for exception handling to execute.
         }
 
         //Checks if the region's size actually changed.
         String regionName = region.get().getName();
-        if (!Arrays.equals(region.get().getCorners(), originalSize)) {
+        if (resized) {
             if (totemData.consume() && !player.getGameMode().equals(GameMode.CREATIVE)) {
                 inventory.removeItem(new ItemStack(totemData.item(), totemData.count()));
             }
             Vector size = region.get().getDimensions();
             DecimalFormat formater = new DecimalFormat("#0.00");
-            World world = totem.getWorld();
-            Location loc = totem.getLocation();
             player.sendMessage(LangManager.getString("totems.resized", player, regionName, formater.format(size.getX()), formater.format(size.getY()), formater.format(size.getZ())));
-            world.playSound(loc, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE,SoundCategory.AMBIENT,3f, 1.5f);
-            world.spawnParticle(Particle.PORTAL, loc, 120, 0.1,0.1,0.1,6);
             return;
         }
 
@@ -388,16 +380,12 @@ public class TotemListener implements Listener {
 
         if (totem.getLevel() > 0) {
             try {
-                totem.scale(-1);
+                totem.hurt(1);
             } catch (TotemUnresizableException ignored) {}
         } else {
             Player finalPlayer = player;
             totem.getRegion().ifPresent(r -> r.destroy(finalPlayer));
         }
-        World world = totem.getWorld();
-        Location loc = totem.getLocation();
-        world.playSound(loc, Sound.ENTITY_BLAZE_HURT,SoundCategory.AMBIENT,5f, 0.5f);
-        world.spawnParticle(Particle.DRAGON_BREATH, loc, 80, 0.2,0.2,0.2);
 
         if (Math.random() > Landlords.CONFIG.totemDropBackRate) { return; }
         Config.TotemInteractionData itemData = Landlords.CONFIG.totemUpgradeItem;

@@ -43,12 +43,27 @@ totems:
   #Value between 0 and 1 that corresponds to the percentage of upgrade_item to drop when destroying a totem or downgrading it.
   drop_back_rate: 0.5
 
-  #Merely visual settings. Set the particle effect to display when a totem is placed.
-  place_particle_effect:
-    type: REVERSE_PORTAL    #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
-    count: 400
-    delta: [0,0,0]
-    position: [0,-3,0]
+  particles:
+    #Merely visual settings. Set the particle effect to display when a totem is placed.
+    enable:
+      type: REVERSE_PORTAL    #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+      count: 400
+      delta: [0, 0, 0]
+
+    hurt:
+      type: DRAGON_BREATH     #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+      count: 120
+      delta: [.3, .3, .3]
+
+    feed:
+      type: PORTAL            #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+      count: 250
+      delta: [.3, .3, .3]
+
+    disable:
+      type: CRIT              #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
+      count: 300
+      delta: [.6, .6, .6]
 
   #List of the effects an arrow mist have to destroy a totem EndCrystal. Must be defined as the name of the fields of
   #the Spigot's PotionEffectType class https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html or a custom registered effect.

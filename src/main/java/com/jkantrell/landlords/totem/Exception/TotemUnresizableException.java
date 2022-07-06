@@ -20,6 +20,7 @@ public class TotemUnresizableException extends Exception{
     private final Vector exceededNegative_;
     private final Vector exceededPositive_;
     private final LinkedList<UnresizableReason> reasons_ = new LinkedList<>();
+    private boolean resized_;
 
     //CONSTRUCTORS
     public TotemUnresizableException(Totem totem, double exceededNegative, double exceededPositive, Axis direction, @Nullable UnresizableReason reason) {
@@ -106,6 +107,14 @@ public class TotemUnresizableException extends Exception{
     public Totem getTotem() {
         return this.totem_;
     }
+    public boolean wasResized() {
+        return this.resized_;
+    }
+
+    //SETTERS
+    public void announceResizing() {
+        this.resized_ = true;
+    }
 
     //METHODS
     public void addReason(UnresizableReason reason) {
@@ -119,7 +128,6 @@ public class TotemUnresizableException extends Exception{
     public void addReasons(UnresizableReason... reasons) {
         this.addReasons(List.of(reasons));
     }
-
     public void addExceeded(double exceededNegative, double exceededPositive, Axis direction) {
         double[] magnitudesPositive = {0, 0, 0}, magnitudesNegative = {0, 0, 0};
         int locator = switch (direction) { case X -> 0; case Y -> 1; default -> 2; };

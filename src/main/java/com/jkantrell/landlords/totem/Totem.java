@@ -211,9 +211,8 @@ public class Totem {
     public void setEnabled(boolean isEnabled) {
         if (isEnabled == isEnabled()) { return; }
         this.getRegion().ifPresent(r -> { r.enabled(isEnabled); r.save();});
-
-        Sound sound = (isEnabled) ? Sound.BLOCK_BEACON_ACTIVATE : Sound.BLOCK_CONDUIT_DEACTIVATE;
-        this.getWorld().playSound(this.location_,sound,1f,1.3f);
+        (isEnabled ? Landlords.CONFIG.totemEnableParticleData : Landlords.CONFIG.totemDisableParticleData).spawn(this.getLocation(),1.3);
+        this.getWorld().playSound(this.location_,isEnabled ? Sound.BLOCK_BEACON_ACTIVATE : Sound.BLOCK_CONDUIT_DEACTIVATE,1f,1.3f);
     }
 
     //METHODS
@@ -246,27 +245,34 @@ public class Totem {
         //Diegetic feedback
         this.region_.displayBoundaries(Landlords.CONFIG.regionsBorderRefreshRate,Landlords.CONFIG.regionsBorderPersistencePlaced);
         this.getWorld().playSound(this.getLocation(), Sound.BLOCK_BEACON_ACTIVATE,3, 0.5f);
-        double[] particlePos = Landlords.CONFIG.totemPlaceParticlePos;
-        Config.ParticleData particleData = Landlords.CONFIG.totemPlaceParticleEffect;
-        this.getWorld().spawnParticle(
-                particleData.particle(),
-                this.getLocation().add(particlePos[0], particlePos[1], particlePos[2]),
-                particleData.count(),
-                particleData.delta()[0], particleData.delta()[1], particleData.delta()[2]
-        );
-
+        Landlords.CONFIG.totemEnableParticleData.spawn(this.location_,1.3);
 
         return this.region_;
     }
-    public void scale(int levelAdd) throws TotemUnresizableException {
-        double[] expansions = (levelAdd > 0) ?
-                this.getBlueprint().getRegionGrowthRate() :
-                new double[] {1,1,1,1,1,1};
+    public void feed(double howMuch) throws TotemUnresizableException {
+        if (howMuch < 1) { return; }
+        this.feedbackScale_(
+                Arrays.stream(this.getBlueprint().getRegionGrowthRate()).map(d -> d * howMuch).toArray(),
+                Landlords.CONFIG.totemFeedParticleData,
+                Sound.BLOCK_RESPAWN_ANCHOR_CHARGE
+        );
+        this.leveled_ += howMuch;
+    }
+    public void hurt(double howMuch) throws TotemUnresizableException {
+        howMuch = -Math.abs(howMuch);
+        double[] i = new double[6];
+        Arrays.fill(i,howMuch);
+        this.feedbackScale_(i, Landlords.CONFIG.totemHurtParticleData, Sound.ENTITY_BLAZE_HURT);
+        this.leveled_ += howMuch;
+    }
+    public void scale(double x1, double y1, double z1, double x2, double y2, double z2) throws TotemUnresizableException {
+        this.scale(new double[] {x1,y1,z1,x2,y2,z2});
+    }
+    public void scale(double[] magnitudes) throws TotemUnresizableException {
         try {
             for (int i = 0; i < 3; i++) {
-                this.directions_[i].expand(expansions[i] * levelAdd, expansions[i + 3] * levelAdd);
+                this.directions_[i].expand(magnitudes[i], magnitudes[i + 3]);
             }
-            this.leveled_ += levelAdd;
         } finally {
             Arrays.stream(this.directions_).forEach(Direction::resetCollisions);
             this.save();
@@ -313,7 +319,9 @@ public class Totem {
         if (!Totem.totems_.contains(this)) { Totem.totems_.add(this); }
     }
     public void destroy() {
-        this.dropItem_(this.getLevel());
+        try {
+            this.feedbackScale_(null,Landlords.CONFIG.totemHurtParticleData,Sound.ENTITY_BLAZE_HURT);
+        } catch (Exception ignored) {}
         this.getWorld().createExplosion(this.endCrystal_.getLocation(), 6f,true,true);
         this.endCrystal_.remove();
         Totem.totems_.remove(this);
@@ -324,14 +332,15 @@ public class Totem {
     }
 
     //PRIVATE METHODS
-    private void dropItem_(int amount) {
-        for (int i = 0; i < amount; i++) {
-            double random = Math.random();
-            if (random <= Landlords.CONFIG.totemDropBackRate) {
-                Item item = this.getWorld().dropItem(this.getLocation(), new ItemStack(Landlords.CONFIG.totemUpgradeItem.item()));
-                item.setInvulnerable(true);
-            }
-        }
+    private void feedbackScale_(double[] magnitudes, Config.ParticleData particleData, Sound sound) throws TotemUnresizableException {
+        TotemUnresizableException exception = null;
+        try {
+            if (magnitudes != null) { this.scale(magnitudes); }
+        } catch (TotemUnresizableException e) { exception = e; }
+        if (!(exception == null || exception.wasResized())) { throw exception; }
+        this.getWorld().playSound(this.location_, sound,SoundCategory.AMBIENT,3f, 0.3f);
+        particleData.spawn(this.location_,6);
+        if (exception != null) { throw exception; }
     }
 
     //CLASSES
@@ -439,10 +448,12 @@ public class Totem {
             }
 
             List<UnresizableReason> innerReasons = Collections.emptyList();
+            boolean resized = false;
             try {
                 this.min_.expand(toExpandMin);
                 this.max_.expand(toExpandMax);
             } catch (TotemUnresizableException e) {
+                resized = e.wasResized();
                 leftOverMin += Math.abs(e.getExceeded(this.min_.getBlocFace()));
                 leftOverMax += e.getExceeded(this.max_.getBlocFace());
                 innerReasons = e.getReasons();
@@ -468,6 +479,7 @@ public class Totem {
                 TotemUnresizableException e = new TotemUnresizableException(Totem.this, leftOverMin,leftOverMax,this.axis_, null);
                 e.addReason(reason);
                 e.addReasons(innerReasons);
+                if (resized) { e.announceResizing(); }
                 throw e;
             }
             toExpand = leftOver / availableDirections.size();
@@ -478,6 +490,7 @@ public class Totem {
                     e.addExceeded(leftOverMin,leftOverMax,this.axis_);
                     e.addReasons(innerReasons);
                     e.addReason(reason);
+                    if (resized) { e.announceResizing(); }
                     throw e;
                 }
             }
@@ -578,13 +591,16 @@ public class Totem {
             reg.expand(this.getBlocFace(), -leftOver);
 
             if (check) {
-                throw new TotemUnresizableException(Totem.this, leftOver, reason);
+                TotemUnresizableException e = new TotemUnresizableException(Totem.this, leftOver, reason);
+                if (leftOver != amount) { e.announceResizing(); }
+                throw e;
             } else {
                 try {
                     opposite.expand(leftOver);
                 } catch (TotemUnresizableException e) {
                     e.addReason(new RegionCollisionUnresizableReason(collidingWith,this.getBlocFace()));
                     e.addExceeded(leftOver, this.getBlocFace());
+                    if (leftOver != amount) { e.announceResizing(); }
                     throw e;
                 }
             }

@@ -2,8 +2,10 @@ package com.jkantrell.landlords.io;
 
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.yamlizer.yaml.*;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
+import org.bukkit.World;
 import org.bukkit.potion.PotionType;
 import java.util.List;
 import java.util.logging.Level;
@@ -21,7 +23,7 @@ public class Config extends AbstractYamlConfig {
                     return new Config.ParticleData(
                             Particle.valueOf(map.get("type").get(YamlElementType.STRING)),
                             map.get("count").get(YamlElementType.INT),
-                            yamlizer_.deserialize(map.get("delta"),int[].class)
+                            yamlizer_.deserialize(map.get("delta"),Double[].class)
                     );
                 }
         );
@@ -80,8 +82,19 @@ public class Config extends AbstractYamlConfig {
 
     //RECORDS
     public record TotemInteractionData(Material item, int count, boolean consume) {}
-    public record ParticleData(Particle particle, int count, int[] delta) {}
     public record TitleData(int fadeIn, int stay, int fadeOut) {}
+    public record ParticleData(Particle particle, int count, Double[] delta) {
+        public void spawn(Location location, double speed) {
+            if (location.getWorld() == null) {
+                throw new IllegalArgumentException("The location must contain a World");
+            }
+            this.spawn(location.getWorld(),location,speed);
+        }
+        public void spawn(World world, Location location, double speed) {
+            Double[] delta = this.delta();
+            world.spawnParticle(this.particle(),location,this.count,delta[0].doubleValue(),delta[1].doubleValue(),delta[2].doubleValue(),speed);
+        }
+    }
 
     //FIELDS
     public String configPath = "plugins/Landlords";
@@ -107,11 +120,17 @@ public class Config extends AbstractYamlConfig {
     @ConfigField(path = "totems.drop_back_rate")
     public double totemDropBackRate = 0.5;
 
-    @ConfigField(path = "totems.place_particle_effect")
-    public Config.ParticleData totemPlaceParticleEffect = new ParticleData(Particle.REVERSE_PORTAL,400,new int[] {0,0,0});
+    @ConfigField(path = "totems.particles.enable")
+    public Config.ParticleData totemEnableParticleData = new ParticleData(Particle.REVERSE_PORTAL,400,new Double[] {0.0,0.0,0.0});
 
-    @ConfigField(path = "totems.place_particle_effect.position")
-    public double[] totemPlaceParticlePos = {0,-3,0};
+    @ConfigField(path = "totems.particles.hurt")
+    public Config.ParticleData totemHurtParticleData = new ParticleData(Particle.DRAGON_BREATH,120,new Double[] {.3,.3,.3});
+
+    @ConfigField(path = "totems.particles.feed")
+    public Config.ParticleData totemFeedParticleData = new ParticleData(Particle.PORTAL,250,new Double[] {.3,.3,.3});
+
+    @ConfigField(path = "totems.particles.disable")
+    public Config.ParticleData totemDisableParticleData = new ParticleData(Particle.CRIT,300,new Double[] {.6,.6,.6});
 
     @ConfigField(path = "totems.destroy_arrow_effects")
     public List<PotionType> totemDestroyArrowEffects = List.of(PotionType.POISON);
@@ -125,10 +144,10 @@ public class Config extends AbstractYamlConfig {
     @ConfigField (path = "deeds.players_for_new_page")
     public int deedsPlayersForNewPage = 10;
 
-    @ConfigField (path = "regions.minimum_name_length")
+    @ConfigField (path = "regions.names_length_limit.min")
     public int regionsMinimumNameLength = 8;
 
-    @ConfigField (path = "regions.maximum_name_length")
+    @ConfigField (path = "regions.names_length_limit.max")
     public int regionsMaximumNameLength = 32;
 
     @ConfigField(path = "regions.border_refresh_rate")
