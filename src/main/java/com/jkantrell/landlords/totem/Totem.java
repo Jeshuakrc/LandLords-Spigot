@@ -228,6 +228,9 @@ public class Totem {
         );
         this.regionId_ = this.region_.getId();
 
+        //Setting region rules
+        Arrays.stream(this.getBlueprint().getRules()).forEach(this.region_::addRule);
+
         //Spawning an EndCrystal
         this.endCrystal_ = (EnderCrystal) this.location_.getWorld().spawnEntity(this.getLocation().add(0,-.5,0), EntityType.ENDER_CRYSTAL);
         this.endCrystal_.setShowingBottom(false);
