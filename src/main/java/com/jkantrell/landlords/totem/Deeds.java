@@ -1,6 +1,6 @@
 package com.jkantrell.landlords.totem;
 
-import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.*;
 import com.jkantrell.landlords.Landlords;
@@ -15,8 +15,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class Deeds {
 
@@ -297,7 +295,7 @@ public class Deeds {
         dataContainer.set(deedsMinutesNsKey_,PersistentDataType.INTEGER,this.getMinutes());
         dataContainer.set(deedsRegionIdNsKey_,PersistentDataType.INTEGER,this.getRegion().getId());
         meta.addEnchant(Enchantment.BINDING_CURSE,1,true);
-        meta.setDisplayName(LangManager.getString("deeds.book.title", holder, this.getRegion().getName()));
+        meta.setDisplayName(Landlords.getLangProvider().getEntry(holder, "deeds.book.title", this.getRegion().getName()));
 
         itemStack.setItemMeta(meta);
 
@@ -317,9 +315,9 @@ public class Deeds {
         }
         void trowException(String path, String... parms){
             throw new IllegalArgumentException(
-                    LangManager.getString("deeds.error_message.compose.page_indicator",holder_,Integer.toString(this.page)) + "§r" +
-                    LangManager.getString("deeds.error_message.compose.general_style",holder_) +
-                    LangManager.getString(path,holder_,parms) + "§r"
+                    Landlords.getLangProvider().getEntry(holder_,"deeds.error_message.compose.page_indicator",Integer.toString(this.page)) + "§r" +
+                    Landlords.getLangProvider().getEntry(holder_,"deeds.error_message.compose.general_style") +
+                    Landlords.getLangProvider().getEntry(holder_,path,parms) + "§r"
             );
         }
     }
@@ -328,16 +326,16 @@ public class Deeds {
     private String getStyledFirstPage_(String name){
         String  nameField = "[" + name + "]",
                 deedsId = String.format("%03d",this.getMinutes()),
-                firstPage = LangManager.getStringNonFormatted("deeds.book.first_page",this.holder_)+"§r";
+                firstPage = Landlords.getLangProvider().getNonFormattedEntry(this.holder_,"deeds.book.first_page")+"§r";
         firstPage = firstPage.replaceAll("\\[","").replaceAll("]","");
         return String.format(firstPage,nameField,deedsId,this.getRegion().getId());
     }
     private String getStyledPermissionsPage_(Hierarchy.Group group, List<String> players){
         StringBuilder page = new StringBuilder();
-        page.append(extractStyle_(LangManager.getString("deeds.book.styles.headers", this.holder_)))
+        page.append(extractStyle_(Landlords.getLangProvider().getEntry(this.holder_,"deeds.book.styles.headers")))
                 .append(group.getName())
                 .append(":§r")
-                .append(extractStyle_(LangManager.getString("deeds.book.styles.player_names", this.holder_)));
+                .append(extractStyle_(Landlords.getLangProvider().getEntry(this.holder_,"deeds.book.styles.player_names")));
         for (String p : players) {
             page.append("\n").append(p);
         }

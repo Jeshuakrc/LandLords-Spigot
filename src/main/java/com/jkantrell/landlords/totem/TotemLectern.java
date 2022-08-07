@@ -1,6 +1,6 @@
 package com.jkantrell.landlords.totem;
 
-import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.regionslib.regions.Permission;
 import com.jkantrell.regionslib.regions.Region;
 import com.jkantrell.landlords.Landlords;
@@ -92,16 +92,16 @@ public class TotemLectern implements TotemRelative, Cloneable {
 
         Region deedsRegion = deeds.getRegion(), lecternRegion = this.getTotem().getRegion().orElseThrow();
         if (!deedsRegion.equals(lecternRegion)) {
-            throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.region_mismatch",player,deedsRegion.getName(),lecternRegion.getName()));
+            throw new IllegalArgumentException(Landlords.getLangProvider().getEntry(player,"deeds.error_message.place.region_mismatch",deedsRegion.getName(),lecternRegion.getName()));
         }
         Integer deedsMinutes = deeds.getMinutes(), regionMinutes = Deeds.idOf(lecternRegion).orElse(-1);
         if (!deedsMinutes.equals(regionMinutes)) {
-            throw new IllegalArgumentException(LangManager.getString("deeds.error_message.place.id_mismatch",player,deedsMinutes.toString(),regionMinutes.toString()));
+            throw new IllegalArgumentException(Landlords.getLangProvider().getEntry(player,"deeds.error_message.place.id_mismatch",deedsMinutes.toString(),regionMinutes.toString()));
         }
 
         Deeds.ReadingResults read = deeds.read();
         if(!read.errors().isEmpty()){
-            throw new unreadableDeedsException(LangManager.getString("deeds.error_message.place.reading_errors",player),read.errors());
+            throw new unreadableDeedsException(Landlords.getLangProvider().getEntry(player, "deeds.error_message.place.reading_errors"),read.errors());
         }
 
         if (read.name() != null) {

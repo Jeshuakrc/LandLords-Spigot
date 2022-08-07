@@ -1,7 +1,7 @@
 package com.jkantrell.landlords;
 
 import com.jkantrell.landlords.io.Config;
-import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.landlords.region.LandLordsAbilities;
 import com.jkantrell.landlords.region.LandLordsRuleKeys;
 import com.jkantrell.landlords.region.RegionListener;
@@ -9,7 +9,6 @@ import com.jkantrell.landlords.totem.Totem;
 import com.jkantrell.landlords.totem.TotemListener;
 import com.jkantrell.landlords.totem.TotemManager;
 import com.jkantrell.regionslib.RegionsLib;
-import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import javax.annotation.Nonnull;
@@ -24,12 +23,16 @@ public final class Landlords extends JavaPlugin {
     //FIELDS
     public static final Config CONFIG = new Config("");
     private static Landlords mainInstance_;
+    private static LangProvider langProvider_ = null;
     private final Logger LOGGER_ = new LandlordsLogger("LandLords",this.getServer().getLogger().getResourceBundleName(),this.getServer().getLogger());
     private LandLordsRuleKeys ruleKeys_;
 
     //STATIC METHODS
     public static Landlords getMainInstance(){
         return mainInstance_;
+    }
+    public static LangProvider getLangProvider() {
+        return Landlords.langProvider_;
     }
 
     //PLUGIN EVENTS
@@ -45,6 +48,11 @@ public final class Landlords extends JavaPlugin {
             this.onEnable();
             return;
         }
+
+        //Initializing language settings
+        Landlords.langProvider_ = new LangProvider(this, "lang");
+        Landlords.langProvider_.setDefaultLanguage(Landlords.CONFIG.defaultLanguageCode);
+        Landlords.langProvider_.setLoggingLevel(Level.INFO);
 
         //Initializing RegionsLib
         RegionsLib.configLocation = new String[] {"./plugins/Landlords/config.yml", "regions"};
@@ -103,7 +111,7 @@ public final class Landlords extends JavaPlugin {
         public static void broadcastMessageLang(String path, String[] args, Collection<? extends Player> players) {
             for (Player player : players) {
                 assert player != null;
-                player.sendMessage(LangManager.getString(path, player, args));
+                player.sendMessage(Landlords.getLangProvider().getEntry(player, path, args));
             }
         }
 

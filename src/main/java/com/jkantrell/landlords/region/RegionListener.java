@@ -2,7 +2,7 @@ package com.jkantrell.landlords.region;
 
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.io.Config;
-import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.regionslib.events.AbilityTriggeredEvent;
 import com.jkantrell.regionslib.events.PlayerEnterRegionEvent;
 import com.jkantrell.regionslib.events.PlayerLeaveRegionEvent;
@@ -36,8 +36,8 @@ public class RegionListener implements Listener {
         String mainOwner = (region.getPermissions().length < 1) ? "" : region.getPermissions()[0].getPlayerName();
         Config.TitleData titleData = Landlords.CONFIG.regionsNameTitleData;
         player.sendTitle(
-                LangManager.getString("regions.enter_title.title",player,region.getName(),mainOwner),
-                LangManager.getString("regions.enter_title.subtitle",player,region.getName(),mainOwner),
+                Landlords.getLangProvider().getEntry(player,"regions.enter_title.title",region.getName(),mainOwner),
+                Landlords.getLangProvider().getEntry(player,"regions.enter_title.subtitle",region.getName(),mainOwner),
                 titleData.fadeIn(),
                 titleData.stay(),
                 titleData.fadeOut()
@@ -61,15 +61,15 @@ public class RegionListener implements Listener {
             String  message,
                     path = "not_allowed." + abilityName.toLowerCase();
             try {
-                message = LangManager.getString(path, player, regionName);
+                message = Landlords.getLangProvider().getEntry(player, path, regionName);
             } catch (NullPointerException ex) {
-                message = LangManager.getString("not_allowed.default", player, regionName);
+                message = Landlords.getLangProvider().getEntry(player, "not_allowed.default", regionName);
                 Bukkit.getLogger().warning(String.format(
                         """
                             %1$s doesn't have the ability "%2$s" in the region "%3$s", but a specific denial message wasn't found in the "%4$s" lang file.
                             Displaying the default denied action message.
                             Include the "not_allowed.%2$s" entry in the lang file to provide an specific message.""",
-                        player.getName(), abilityName, regionName, LangManager.getLangFileName(player)
+                        player.getName(), abilityName, regionName, Landlords.getLangProvider().getLangFileName(player)
                 ));
             }
             if (message.equals("")) { return; }
@@ -79,7 +79,7 @@ public class RegionListener implements Listener {
                     """
                             %1$s doesn't have the ability "%2$s" in the region "%3$s", but neither a specific nor default denial message was found in the "%4$s" lang file.
                             Make sure to include the "not_allowed.%2$s" or "not_allowed.default" entry in the lang file.""",
-                    player.getName(), abilityName, regionName, LangManager.getLangFileName(player)
+                    player.getName(), abilityName, regionName, Landlords.getLangProvider().getLangFileName(player)
             ));
         }
     }

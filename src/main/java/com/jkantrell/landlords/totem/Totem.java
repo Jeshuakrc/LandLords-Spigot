@@ -1,7 +1,7 @@
 package com.jkantrell.landlords.totem;
 
 import com.jkantrell.landlords.io.Config;
-import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.landlords.totem.Exception.*;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
@@ -11,7 +11,6 @@ import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.*;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.util.BoundingBox;
@@ -222,7 +221,7 @@ public class Totem {
         this.region_ = new Region(
             this.getBaseRegionBox(),
             this.location_.getWorld(),
-            LangManager.getString(namePath,placer,placer.getName()),
+            Landlords.getLangProvider().getEntry(placer,namePath,placer.getName()),
             this.blueprint_.getHierarchy(),
             placer
         );

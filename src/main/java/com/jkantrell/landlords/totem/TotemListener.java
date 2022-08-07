@@ -4,7 +4,7 @@ import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.event.DeedsCreateEvent;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.io.Config;
-import com.jkantrell.landlords.io.LangManager;
+import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.landlords.totem.Exception.*;
 import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.events.RegionDestroyEvent;
@@ -91,7 +91,7 @@ public class TotemListener implements Listener {
         Deeds deeds = Deeds.fromBook(bookMeta, player).orElse(null);
         if (deeds == null) {
             e.setCancelled(true);
-            String notDeedsMessage = LangManager.getString("deeds.error_message.place.not_deeds",player);
+            String notDeedsMessage = Landlords.getLangProvider().getEntry(player,"deeds.error_message.place.not_deeds");
             player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(notDeedsMessage));
             return;
         }
@@ -142,7 +142,7 @@ public class TotemListener implements Listener {
                 messagePath.append("regions.name_update.");
                 messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson");
 
-                messages.add(LangManager.getString(messagePath.toString(),p,oldName,newName,player.getName()));
+                messages.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),oldName,newName,player.getName()));
             }
         }
 
@@ -167,7 +167,7 @@ public class TotemListener implements Listener {
                     messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
                     messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
 
-                    messages.add(LangManager.getString(messagePath.toString(),p,affected,player.getName(),perm.getGroup().getName(),region.getName()));
+                    messages.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),affected,player.getName(),perm.getGroup().getName(),region.getName()));
                 }
             } else {
                 Hierarchy.Group group = groups.get(0);
@@ -179,7 +179,7 @@ public class TotemListener implements Listener {
                         messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
                         messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
 
-                        messages.add(LangManager.getString(messagePath.toString(), p, affected, player.getName(), group.getName(), perm.getGroup().getName(), region.getName()));
+                        messages.add(Landlords.getLangProvider().getEntry(p, messagePath.toString(), affected, player.getName(), group.getName(), perm.getGroup().getName(), region.getName()));
                     }
                 }
                 groups.remove(group);
@@ -195,7 +195,7 @@ public class TotemListener implements Listener {
                     messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
                     messagePath.append(p.getName().equals(name) ? "firstPerson" : "thirdPerson");
 
-                    messages.add(LangManager.getString(messagePath.toString(),p,name,player.getName(),g.getName(),region.getName()));
+                    messages.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),name,player.getName(),g.getName(),region.getName()));
                 }
             }
         }
@@ -288,7 +288,7 @@ public class TotemListener implements Listener {
             }
             Vector size = region.get().getDimensions();
             DecimalFormat formater = new DecimalFormat("#0.00");
-            player.sendMessage(LangManager.getString("totems.resized", player, regionName, formater.format(size.getX()), formater.format(size.getY()), formater.format(size.getZ())));
+            player.sendMessage(Landlords.getLangProvider().getEntry(player, "totems.resized", regionName, formater.format(size.getX()), formater.format(size.getY()), formater.format(size.getZ())));
             return;
         }
 
@@ -296,7 +296,7 @@ public class TotemListener implements Listener {
         if (unresizableReasons == null) { return; }
         player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASEDRUM, 3f, 0.5f);
 
-        String  header = LangManager.getString("totems.unrezisable.header",player,regionName),
+        String  header = Landlords.getLangProvider().getEntry(player,"totems.unrezisable.header",regionName),
                 basePath = "totems.unrezisable.", subPath = "default";
         String[] params = {};
         LinkedList<String> messages = new LinkedList<>();
@@ -315,7 +315,7 @@ public class TotemListener implements Listener {
             } else {
                 continue;
             }
-            messages.add(LangManager.getString(basePath + subPath, player, params));
+            messages.add(Landlords.getLangProvider().getEntry(player, basePath + subPath, params));
         }
 
         //Unifying maz size unrezisable reasons, if eny
@@ -338,12 +338,12 @@ public class TotemListener implements Listener {
                 subPath += "three";
                 params = new String[] {regionName, extractor.apply(Axis.X), extractor.apply(Axis.Y), extractor.apply(Axis.Z)};
             }
-            messages.add(LangManager.getString(basePath + subPath,player,params));
+            messages.add(Landlords.getLangProvider().getEntry(player,basePath + subPath,params));
         }
 
         //If not a singe reason could be handled, adds a default message to the header.
         if (messages.isEmpty()) {
-            String def = LangManager.getString("totems.unrezisable.default",player,region.get().getName());
+            String def = Landlords.getLangProvider().getEntry(player,"totems.unrezisable.default",region.get().getName());
             if (!def.equals("")) { header += " " + def; }
         }
         messages.push(header);
@@ -480,7 +480,7 @@ public class TotemListener implements Listener {
         //Presenting errors to the player
         if (!errors.isEmpty()) {
             StringBuilder message = new StringBuilder();
-            message.append(LangManager.getString("deeds.error_message.compose.header", player, Integer.toString(errors.size()))).append("§r");
+            message.append(Landlords.getLangProvider().getEntry(player, "deeds.error_message.compose.header", Integer.toString(errors.size()))).append("§r");
             for (String error : errors) {
                 message.append("\n").append(error);
             }
