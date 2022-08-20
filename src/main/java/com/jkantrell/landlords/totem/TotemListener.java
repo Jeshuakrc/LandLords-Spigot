@@ -274,7 +274,7 @@ public class TotemListener implements Listener {
         boolean resized = true;
         List<UnresizableReason> unresizableReasons = null;
         try {
-            totem.feed(1);
+            totem.feed(player,1);
         } catch (TotemUnresizableException ex) {
             resized = ex.wasResized();
             unresizableReasons = ex.getReasons(); //Fills placeholder for exception handling to execute.
@@ -380,7 +380,7 @@ public class TotemListener implements Listener {
 
         if (totem.getLevel() > 0) {
             try {
-                totem.hurt(1);
+                totem.hurt(player, 1);
             } catch (TotemUnresizableException ignored) {}
         } else {
             Player finalPlayer = player;

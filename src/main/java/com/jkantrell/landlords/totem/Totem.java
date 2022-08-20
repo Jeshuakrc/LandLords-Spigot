@@ -193,7 +193,7 @@ public class Totem {
         if (loc.getWorld() == null) {
             throw new NullPointerException("The 'World' parameter passed to a totem's constructor cannot be null.");
         }
-        this.location_ = loc;
+        this.location_ = loc.clone();
         this.structuralBox_ = this.blueprint_.getStructuralBox().shift(loc.clone().add(-.5,-.5,-.5));
 
         if (this.endCrystal_ == null) { return; }
@@ -245,32 +245,48 @@ public class Totem {
         this.save();
 
         //Diegetic feedback
-        this.region_.displayBoundaries(Landlords.CONFIG.regionsBorderRefreshRate,Landlords.CONFIG.regionsBorderPersistencePlaced);
+        this.displayBorders(placer);
         this.getWorld().playSound(this.getLocation(), Sound.BLOCK_BEACON_ACTIVATE,3, 0.5f);
         Landlords.CONFIG.totemEnableParticleData.spawn(this.location_,1.3);
 
         return this.region_;
     }
-    public void feed(double howMuch) throws TotemUnresizableException {
+    public void feed(Player player, double howMuch) throws TotemUnresizableException {
         if (howMuch < 1) { return; }
         this.feedbackScale_(
+                player,
                 Arrays.stream(this.getBlueprint().getRegionGrowthRate()).map(d -> d * howMuch).toArray(),
                 Landlords.CONFIG.totemFeedParticleData,
                 Sound.BLOCK_RESPAWN_ANCHOR_CHARGE
         );
         this.leveled_ += howMuch;
     }
-    public void hurt(double howMuch) throws TotemUnresizableException {
+    public void feed(Player player, BlockFace direction, double howMuch) throws TotemUnresizableException {
+        if (howMuch < 1) { return; }
+        if (!Arrays.asList(Totem.BLOCK_FACE_DIRECTIONS).contains(direction)) {
+            throw new IllegalArgumentException("The provided BlockFace must be cartesian (NORTH, SOUTH, EAST, WEST, UP, DOWN).");
+        }
+        double[] magnitudes = new double[6];
+        for (int i = 0; i < 6; i++) {
+            magnitudes[i] = (Totem.BLOCK_FACE_DIRECTIONS[i].equals(direction)) ?
+                    Arrays.stream(this.getBlueprint().getRegionGrowthRate()).reduce(0, Double::sum) :
+                    0;
+        }
+        this.feedbackScale_(player, magnitudes, Landlords.CONFIG.totemFeedParticleData, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE);
+        this.leveled_ += howMuch;
+    }
+    public void hurt(Player player, double howMuch) throws TotemUnresizableException {
         howMuch = -Math.abs(howMuch);
         double[] i = new double[6];
         Arrays.fill(i,howMuch);
-        this.feedbackScale_(i, Landlords.CONFIG.totemHurtParticleData, Sound.ENTITY_BLAZE_HURT);
+        this.feedbackScale_(player, i, Landlords.CONFIG.totemHurtParticleData, Sound.ENTITY_BLAZE_HURT);
         this.leveled_ += howMuch;
     }
     public void scale(double x1, double y1, double z1, double x2, double y2, double z2) throws TotemUnresizableException {
         this.scale(new double[] {x1,y1,z1,x2,y2,z2});
     }
     public void scale(double[] magnitudes) throws TotemUnresizableException {
+        if (this.getRegion().isEmpty()) { return; }
         try {
             for (int i = 0; i < 3; i++) {
                 this.directions_[i].expand(magnitudes[i], magnitudes[i + 3]);
@@ -322,7 +338,7 @@ public class Totem {
     }
     public void destroy() {
         try {
-            this.feedbackScale_(null,Landlords.CONFIG.totemHurtParticleData,Sound.ENTITY_BLAZE_HURT);
+            this.feedbackScale_(null,null,Landlords.CONFIG.totemHurtParticleData,Sound.ENTITY_BLAZE_HURT);
         } catch (Exception ignored) {}
         this.getWorld().createExplosion(this.endCrystal_.getLocation(), 6f,true,true);
         this.endCrystal_.remove();
@@ -332,9 +348,14 @@ public class Totem {
         Totem.totems_.remove(this);
         Landlords.getMainInstance().getLogger().fine("Unloaded totem. Region Id: " + this.getRegionId() + ". Totem Id: " + this.getUniqueId().toString() + ".");
     }
+    public void displayBorders(Player player) {
+        this.getRegion().ifPresent(
+                r -> r.displayBoundaries(player,Landlords.CONFIG.regionsBorderRefreshRate,Landlords.CONFIG.regionsBorderPersistencePlaced)
+        );
+    }
 
     //PRIVATE METHODS
-    private void feedbackScale_(double[] magnitudes, Config.ParticleData particleData, Sound sound) throws TotemUnresizableException {
+    private void feedbackScale_(Player player, double[] magnitudes, Config.ParticleData particleData, Sound sound) throws TotemUnresizableException {
         TotemUnresizableException exception = null;
         try {
             if (magnitudes != null) { this.scale(magnitudes); }
@@ -342,6 +363,7 @@ public class Totem {
         if (!(exception == null || exception.wasResized())) { throw exception; }
         this.getWorld().playSound(this.location_, sound,SoundCategory.AMBIENT,3f, 0.3f);
         particleData.spawn(this.location_,6);
+        if (player != null) { this.displayBorders(player); }
         if (exception != null) { throw exception; }
     }
 
