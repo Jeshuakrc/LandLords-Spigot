@@ -232,7 +232,7 @@ not_allowed:
   access_stonecutters: "Solo los miembros de §a§l%1$s§r pueden trabajar ahí"
   access_totem_lecterns: "No puedes acceder a las escrituras de §a§l%1$s§r, solo sus miembros"
   break_armor_stands: "No tienes permitido romper estantes para armadura en §a§l%1$s"
-  break_blocks: "No puedes bloques en §a§l%1$s"
+  break_blocks: "No puedes romper bloques en §a§l%1$s"
   break_crops: "No tienes permitido cosechar en §a§l%1$s"
   break_glow_item_frames: "No tienes permitido romper marcos en §a§l%1$s"
   break_item_frames: "No tienes permitido romper marcos en  §a§l%1$s"
