@@ -42,15 +42,14 @@ public class Totem {
     public static boolean isTotem(EnderCrystal enderCrystal) {
         return enderCrystal.getPersistentDataContainer().has(isTotemKey,PersistentDataType.BYTE);
     }
-    public static Totem fromRegion(Region region) {
+    public static Optional<Totem> fromRegion(Region region) {
         RegionData data = region.getDataContainer().get("totemId");
-        if (data == null) { return null; }
+        if (data == null) { return Optional.empty(); }
         String id = data.getAsString();
         return Totem.totems_.stream()
                 .filter(t -> t.getRegionId() == region.getId())
                 .filter(t -> t.getUniqueId().toString().equals(id))
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
     @SuppressWarnings("ConstantConditions")
     public static Totem fromEnderCrystal(EnderCrystal crystal) {

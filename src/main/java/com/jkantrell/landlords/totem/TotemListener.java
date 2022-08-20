@@ -11,6 +11,7 @@ import com.jkantrell.regionslib.events.RegionDestroyEvent;
 import com.jkantrell.regionslib.regions.Hierarchy;
 import com.jkantrell.regionslib.regions.Permission;
 import com.jkantrell.regionslib.regions.Region;
+import com.jkantrell.regionslib.regions.Regions;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
@@ -67,6 +68,24 @@ public class TotemListener implements Listener {
             player.getInventory().removeItem(new ItemStack(Material.END_CRYSTAL,1));
         }
         new Totem(loc,blueprint).place(player);
+    }
+
+    @EventHandler
+    public void onRingBell(PlayerInteractEvent e) {
+        if (!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) { return; }
+
+        Block block = e.getClickedBlock();
+        if (block == null) { return; }
+        if (!block.getType().equals(Material.BELL)) { return; }
+
+        Region[] regions = Regions.getAt(block.getLocation().add(.5,.5,.5));
+        if (regions.length < 1) {return; }
+
+        Arrays.stream(regions)
+                .map(Totem::fromRegion)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .forEach(t -> t.displayBorders(e.getPlayer()));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -450,8 +469,7 @@ public class TotemListener implements Listener {
         RegionData regionData = region.getDataContainer().get("totemId");
         if (regionData == null) { return; }
 
-        Totem totem = Totem.fromRegion(region);
-        if (totem != null) { totem.destroy(); }
+        Totem.fromRegion(region).ifPresent(Totem::destroy);
     }
 
     @EventHandler
