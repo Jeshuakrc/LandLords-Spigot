@@ -150,7 +150,7 @@ public class Config extends AbstractYamlConfig {
     @ConfigField (path = "regions.names_length_limit.max")
     public int regionsMaximumNameLength = 32;
 
-    @ConfigField(path = "regions.border_refresh_rate")
+    @ConfigField(path = "regions.border_display.refresh_rate")
     public int regionsBorderRefreshRate = 10;
 
     @ConfigField(path = "regions.border_persistence_bell")
