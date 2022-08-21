@@ -24,17 +24,14 @@ totems:
   #Defines the groups level a player is assigned to when they place a totem.
   default_group_level: 1
 
-  #The item to use to upgrade a totem.
+  #The item to use to feed a totem.
   upgrade_item:
     item: DIAMOND     #Must be defined as a Spigot's Material enum value. https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
     consume: true     #weather or not the item gets consumed when used.
-    count: 1          #how namy items to consume if the above is true.
+    count: 1          #how many items to consume if the above is true.
 
-  #The item to use to downgrade a totem.
-  downgrade_item:
-    item: STICK       #Must be defined as a Spigot's Material enum value. https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
-    consume: false    #weather or not the item gets consumed when used.
-    count: 1          #how name items to consume if the above is true.
+  #The item to hit a totem with in order to force expansion to one direction.
+  directional_item: BLAZE_ROD
 
   #How long it takes to be able to interact with a totem once you've already updated it or downgraded it.
   #Defined in ticks.

@@ -111,8 +111,8 @@ public class Config extends AbstractYamlConfig {
     @ConfigField(path = "totems.upgrade_item")
     public TotemInteractionData totemUpgradeItem = new TotemInteractionData(Material.DIAMOND,1,true);
 
-    @ConfigField(path = "totems.downgrade_item")
-    public TotemInteractionData totemDowngradeItem = new TotemInteractionData(Material.DIAMOND,1,true);
+    @ConfigField(path = "totems.directional_item")
+    public Material totemDirectionalItem = Material.BLAZE_ROD;
 
     @ConfigField(path = "totems.interact_cooldown")
     public int totemInteractCoolDown = 400;

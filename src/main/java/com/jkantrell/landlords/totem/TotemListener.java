@@ -2,6 +2,7 @@ package com.jkantrell.landlords.totem;
 
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.event.DeedsCreateEvent;
+import com.jkantrell.landlords.event.PlayerInteractTotemEvent;
 import com.jkantrell.landlords.event.TotemDestroyedByPlayerEvent;
 import com.jkantrell.landlords.io.Config;
 import com.jkantrell.landlords.io.LangProvider;
@@ -17,6 +18,7 @@ import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.*;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.Lectern;
 import org.bukkit.block.data.Directional;
 import org.bukkit.entity.*;
@@ -38,6 +40,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.potion.PotionType;
+import org.bukkit.util.BoundingBox;
+import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import java.text.DecimalFormat;
 import java.util.*;
@@ -267,13 +271,43 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onFeedTotem(PlayerInteractEntityEvent e) {
+    public void onEntityInteraction(PlayerInteractEntityEvent e) {
         //Checking if the entity is a totem
         if (!(e.getRightClicked() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
 
+        e.setCancelled(true);
+        Landlords.getMainInstance().getServer().getPluginManager().callEvent(new PlayerInteractTotemEvent(
+                e.getPlayer(),
+                Totem.fromEnderCrystal(crystal),
+                e.getHand(),
+                PlayerInteractTotemEvent.Action.RIGHT_CLICK
+        ));
+    }
+    @EventHandler(priority = EventPriority.LOW)
+    public void onEntityDamage(EntityDamageByEntityEvent e) {
+        //Checking if damager is a player
+        if (!(e.getDamager() instanceof Player player)) { return; }
+
+        //Checking if the entity is a totem
+        if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
+        if (!Totem.isTotem(crystal)) { return; }
+
+        //Calling event
+        PlayerInteractTotemEvent event = new PlayerInteractTotemEvent(
+                player,
+                Totem.fromEnderCrystal(crystal),
+                EquipmentSlot.HAND,
+                PlayerInteractTotemEvent.Action.LEFT_CLICK
+        );
+        Landlords.getMainInstance().getServer().getPluginManager().callEvent(event);
+        e.setCancelled(event.isCancelled());
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void OnFeedTotem(PlayerInteractTotemEvent e) {
         //Checking if the totem has a region
-        Totem totem = Totem.fromEnderCrystal(crystal);
+        Totem totem = e.getTotem();
         Optional<Region> region = totem.getRegion();
         if (region.isEmpty()) { return; }
 
@@ -282,18 +316,27 @@ public class TotemListener implements Listener {
         PlayerInventory inventory = player.getInventory();
         ItemStack item = inventory.getItem(e.getHand());
         if (item == null) { return; }
-        Config.TotemInteractionData totemData = Stream.of(Landlords.CONFIG.totemUpgradeItem, Landlords.CONFIG.totemDowngradeItem)
-                .filter(d -> item.getType().equals(d.item())).findFirst().orElse(null);
-        if (totemData == null) { return; }
+        Config.TotemInteractionData totemUpgrade = Landlords.CONFIG.totemUpgradeItem;
 
-        //Checking if the player has enough items to interact
-        if (totemData.consume() && !inventory.contains(totemData.item(), totemData.count())) { return; }
+        boolean normal = totemUpgrade.item().equals(item.getType()) && e.getAction().equals(PlayerInteractTotemEvent.Action.RIGHT_CLICK);
+        boolean directional = item.getType().equals(Landlords.CONFIG.totemDirectionalItem) && e.getAction().equals(PlayerInteractTotemEvent.Action.LEFT_CLICK);
+        if (!(normal || directional)) { return; }
+
+        //Checking if the player has enough items to feed
+        if (totemUpgrade.consume() && !inventory.contains(totemUpgrade.item(), totemUpgrade.count())) { return; }
 
         //Expanding the region
+        e.setCancelled(true);
         boolean resized = true;
         List<UnresizableReason> unresizableReasons = null;
         try {
-            totem.feed(player,1);
+            if (directional) {
+                BlockFace face = e.getClickedFace();
+                if (face == null) { return; }
+                totem.feed(player, face.getOppositeFace(), 1);
+            } else {
+                totem.feed(player, 1);
+            }
         } catch (TotemUnresizableException ex) {
             resized = ex.wasResized();
             unresizableReasons = ex.getReasons(); //Fills placeholder for exception handling to execute.
@@ -302,8 +345,8 @@ public class TotemListener implements Listener {
         //Checks if the region's size actually changed.
         String regionName = region.get().getName();
         if (resized) {
-            if (totemData.consume() && !player.getGameMode().equals(GameMode.CREATIVE)) {
-                inventory.removeItem(new ItemStack(totemData.item(), totemData.count()));
+            if (totemUpgrade.consume() && !player.getGameMode().equals(GameMode.CREATIVE)) {
+                inventory.removeItem(new ItemStack(totemUpgrade.item(), totemUpgrade.count()));
             }
             Vector size = region.get().getDimensions();
             DecimalFormat formater = new DecimalFormat("#0.00");
@@ -371,11 +414,13 @@ public class TotemListener implements Listener {
         messages.stream().distinct().filter(m -> !m.equals("")).forEach(player::sendMessage);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onHurtTotem(EntityDamageByEntityEvent e) {
+        //Checking if entity is an ender crystal
         if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
 
+        //Cancelling the event
         e.setCancelled(true);
         Totem totem = Totem.fromEnderCrystal(crystal);
 
