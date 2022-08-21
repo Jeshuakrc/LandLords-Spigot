@@ -268,7 +268,7 @@ public class Totem {
         double[] magnitudes = new double[6];
         for (int i = 0; i < 6; i++) {
             magnitudes[i] = (Totem.BLOCK_FACE_DIRECTIONS[i].equals(direction)) ?
-                    Arrays.stream(this.getBlueprint().getRegionGrowthRate()).reduce(0, Double::sum) :
+                    this.getBlueprint().getRegionDirectionalGrowth() :
                     0;
         }
         this.feedbackScale_(player, magnitudes, Landlords.CONFIG.totemFeedParticleData, Sound.BLOCK_RESPAWN_ANCHOR_CHARGE);

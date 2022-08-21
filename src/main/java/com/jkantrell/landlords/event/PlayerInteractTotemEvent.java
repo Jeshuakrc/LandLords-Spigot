@@ -42,7 +42,7 @@ public class PlayerInteractTotemEvent extends PlayerInteractEntityEvent {
         this.totem_ = totem;
         this.action_ = action;
 
-        BoundingBox totemBox = BoundingBox.of(totem.getLocation().add(-.6,-.6,-.6), totem.getLocation().add(.6,.6,.6));
+        BoundingBox totemBox = BoundingBox.of(totem.getLocation().add(-.8,-.8,-.8), totem.getLocation().add(.8,.8,.8));
         Location loc = player.getEyeLocation();
         RayTraceResult result = totemBox.rayTrace(new Vector(loc.getX(), loc.getY(), loc.getZ()), loc.getDirection(),30);
         if (result == null) { this.clickedFace_ = null; return; }

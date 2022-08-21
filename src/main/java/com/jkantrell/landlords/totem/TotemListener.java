@@ -323,10 +323,10 @@ public class TotemListener implements Listener {
         if (!(normal || directional)) { return; }
 
         //Checking if the player has enough items to feed
+        e.setCancelled(true);
         if (totemUpgrade.consume() && !inventory.contains(totemUpgrade.item(), totemUpgrade.count())) { return; }
 
         //Expanding the region
-        e.setCancelled(true);
         boolean resized = true;
         List<UnresizableReason> unresizableReasons = null;
         try {

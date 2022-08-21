@@ -13,6 +13,8 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Vector;
+
+import java.lang.reflect.Array;
 import java.lang.reflect.Type;
 import java.util.*;
 
@@ -37,6 +39,7 @@ public class Blueprint {
     private int id_;
     private double[] regionInitialVertex_ = new double[6];
     private double[] regionGrowthRate_ = new double[6];
+    private double regionDirectionalGrowth_ = 0;
     private Vector regionMaxSize_;
     private Hierarchy hierarchy_;
     private List<Rule> rules_;
@@ -63,6 +66,9 @@ public class Blueprint {
     public double[] getRegionGrowthRate(){
         return this.regionGrowthRate_;
     };
+    public double getRegionDirectionalGrowth() {
+        return this.regionDirectionalGrowth_;
+    }
     public Vector getRegionMaxSize() {
         return this.regionMaxSize_;
     }
@@ -109,6 +115,9 @@ public class Blueprint {
     public void setRegionGrowthRate(double[] growthRateArray){
         regionGrowthRate_ = growthRateArray;
     };
+    public void setRegionDirectionalGrowth(double magnitude) {
+        this.regionDirectionalGrowth_ = magnitude;
+    }
     public void setRegionMaxSize(Vector maxSize) {
         this.regionMaxSize_ = maxSize;
     }
@@ -253,14 +262,20 @@ public class Blueprint {
 
             double[] maxSize = Serializer.GSON.fromJson(jsonRegion.get("max_size"),double[].class);
             if (maxSize == null) { maxSize = new double[] {-1,-1,-1}; }
-            Blueprint structure = new Blueprint(
+            Blueprint blueprint = new Blueprint(
                     Serializer.GSON.fromJson(jsonRegion.get("initial_size"),double[].class),
                     Serializer.GSON.fromJson(jsonRegion.get("growth_rate"),double[].class),
                     new Vector(maxSize[0], maxSize[1], maxSize[2]),
                     Hierarchy.get(jsonRegion.get("hierarchy").getAsInt())
             );
 
-            structure.setId(jsonStructure.get("id").getAsInt());
+            blueprint.setId(jsonStructure.get("id").getAsInt());
+
+            blueprint.setRegionDirectionalGrowth(
+                jsonRegion.has("directional_growth") ?
+                        jsonRegion.get("directional_growth").getAsDouble() :
+                        Arrays.stream(blueprint.getRegionGrowthRate()).reduce(0, Double::sum)
+            );
 
             JsonObject jsonObject; TotemElement.ElementType type; int[] pos; String name;
             for (JsonElement elm : jsonStructure.get("elements").getAsJsonArray()) {
@@ -270,12 +285,12 @@ public class Blueprint {
                 name = jsonObject.get("name").getAsString();
 
                 switch (type) {
-                    case block -> structure.addElement(
+                    case block -> blueprint.addElement(
                             Material.valueOf(name),
                             pos[0], pos[1], pos [2]
                     );
 
-                    default -> structure.addElement(
+                    default -> blueprint.addElement(
                             EntityType.valueOf(name),
                             pos[0], pos[1], pos [2]
                     );
@@ -287,8 +302,9 @@ public class Blueprint {
                 pos = Serializer.GSON.fromJson(jsonObject.get("position"),int[].class);
                 facing = BlockFace.valueOf(jsonObject.get("direction").getAsString());
 
-                structure.lecterns_.add(pos[0],pos[1],pos[2],facing);
+                blueprint.lecterns_.add(pos[0],pos[1],pos[2],facing);
             }
+
             if (jsonRegion.has("rules")) {
                 JsonObject jsonRules = jsonRegion.get("rules").getAsJsonObject();
                 ArrayList<Rule> rules = new ArrayList<>();
@@ -297,10 +313,10 @@ public class Blueprint {
                     jsonRule.add(entry.getKey(),entry.getValue());
                     rules.add(Serializer.GSON.fromJson(jsonRule,Rule.class));
                 }
-                structure.setRules(rules);
+                blueprint.setRules(rules);
             }
 
-            return structure;
+            return blueprint;
         }
     }
 }
