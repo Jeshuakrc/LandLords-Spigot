@@ -150,14 +150,8 @@ public class Config extends AbstractYamlConfig {
     @ConfigField (path = "regions.names_length_limit.max")
     public int regionsMaximumNameLength = 32;
 
-    @ConfigField(path = "regions.border_display.refresh_rate")
-    public int regionsBorderRefreshRate = 10;
-
-    @ConfigField(path = "regions.border_persistence_bell")
-    public int regionsBorderPersistenceBell = 280;
-
-    @ConfigField(path = "regions.border_persistence_placed")
-    public int regionsBorderPersistencePlaced = 420;
+    @ConfigField(path = "regions.border_display.persistence")
+    public int regionsBorderPersistence = 420;
 
     @ConfigField(path = "regions.enforced_buttons")
     public List<Material> regionsEnforcedButtons = List.of(Material.STONE_BUTTON, Material.POLISHED_BLACKSTONE_BUTTON);

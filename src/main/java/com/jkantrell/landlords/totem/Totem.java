@@ -1,7 +1,6 @@
 package com.jkantrell.landlords.totem;
 
 import com.jkantrell.landlords.io.Config;
-import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.landlords.totem.Exception.*;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
@@ -349,7 +348,7 @@ public class Totem {
     }
     public void displayBorders(Player player) {
         this.getRegion().ifPresent(
-                r -> r.displayBoundaries(player,Landlords.CONFIG.regionsBorderRefreshRate,Landlords.CONFIG.regionsBorderPersistencePlaced)
+                r -> r.displayBoundaries(player,Landlords.CONFIG.regionsBorderPersistence)
         );
     }
 

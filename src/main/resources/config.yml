@@ -45,7 +45,7 @@ totems:
     enable:
       type: REVERSE_PORTAL    #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
       count: 400
-      delta: [0, 0, 0]
+      delta: [0.0, 0.0, 0.0]
 
     hurt:
       type: DRAGON_BREATH     #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
@@ -105,19 +105,14 @@ regions:
       type: NAUTILUS    #Must be defined as a Spigot's Particle enum value. https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Particle.html
       count: 1
       delta: [0,0,0]
-
-    #This is a merely visual setting. Determines the rate in ticks in which the particles wall will be updated with new particles. The higher, the slower.
-    #(This setting might need to be adjusted depending on each type of particle. Using a somewhat persistent particle and a high refresh rate.)
-    refresh_rate: 10
+      #Determines the rate in ticks in which the particles wall will be updated with new particles. The higher, the slower.
+      refresh_rate: 10
 
     #How far can a player see the particles displaying the border of a region. Setting this too high could crash the server if a large region is displayed.
     show_radius: 15
 
-  #This is a merely visual setting. Determines how long will the region borders be displayed when a bell is ringed.
-  border_persistence_bell: 160
-
-  #This is a merely visual setting. Determines how long will the region borders be displayed when a new totem is placed.
-  border_persistence_placed: 420
+    #How long in ticks will the region borders be displayed.
+    persistence: 420
 
   # Configures the tittles to display whenever a players enters a region.
   name_title_display:
