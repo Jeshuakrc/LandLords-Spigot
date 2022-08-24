@@ -206,10 +206,19 @@ public class Totem {
         dataContainer.add(new RegionData("totemLoc", new int[] {b.getX(), b.getY(), b.getZ()}));
     }
     public void setEnabled(boolean isEnabled) {
-        if (isEnabled == isEnabled()) { return; }
-        this.getRegion().ifPresent(r -> { r.enabled(isEnabled); r.save();});
-        (isEnabled ? Landlords.CONFIG.totemEnableParticleData : Landlords.CONFIG.totemDisableParticleData).spawn(this.getLocation(),1.3);
-        this.getWorld().playSound(this.location_,isEnabled ? Sound.BLOCK_BEACON_ACTIVATE : Sound.BLOCK_CONDUIT_DEACTIVATE,1f,1.3f);
+        if (isEnabled == this.isEnabled()) { return; }
+        if (isEnabled) { this.enable(); } else { this.disable(); }
+    }
+    public void enable() {
+        this.getRegion().ifPresent(Region::enable);
+        Landlords.CONFIG.totemEnableParticleData.spawn(this.getLocation(),1.3);
+        this.getWorld().playSound(this.location_, Sound.BLOCK_BEACON_ACTIVATE, 1f, 1.3f);
+        this.getRegion().ifPresent(r -> r.displayBoundaries(r.getInsidePlayers(),Landlords.CONFIG.regionsBorderPersistence));
+    }
+    public void disable() {
+        this.getRegion().ifPresent(Region::disable);
+        Landlords.CONFIG.totemDisableParticleData.spawn(this.getLocation(),1.3);
+        this.getWorld().playSound(this.location_, Sound.BLOCK_CONDUIT_DEACTIVATE, 1f, 1.3f);
     }
 
     //METHODS

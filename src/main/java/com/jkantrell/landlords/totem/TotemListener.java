@@ -284,6 +284,7 @@ public class TotemListener implements Listener {
                 PlayerInteractTotemEvent.Action.RIGHT_CLICK
         ));
     }
+
     @EventHandler(priority = EventPriority.LOW)
     public void onEntityDamage(EntityDamageByEntityEvent e) {
         //Checking if damager is a player
