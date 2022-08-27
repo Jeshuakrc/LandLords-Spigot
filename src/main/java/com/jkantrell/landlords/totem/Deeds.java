@@ -130,7 +130,6 @@ public class Deeds {
 
     //PUBLIC METHODS
     public ItemStack write() {
-
         ItemStack book = this.getItemStack();
         BookMeta bookMeta = (BookMeta) book.getItemMeta();
         Region region = this.getRegion();
@@ -148,28 +147,23 @@ public class Deeds {
             permissionsMap.get(group).add(p.getPlayerName());
         }
 
-        int size, index, perPage = Landlords.CONFIG.deedsPlayersPerPage;
+        int total, index, perPage = Landlords.CONFIG.deedsPlayersPerPage;
         List<String> players;
-        boolean newPage;
         List<String> names = new ArrayList<>();
-        for (Hierarchy.Group g : region.getHierarchy().getGroups()) {
+        List<Hierarchy.Group> groups = region.getHierarchy().getGroups();
+        for (Hierarchy.Group g : groups) {
+            players = permissionsMap.getOrDefault(g,Collections.emptyList());
+            total = players.size();
             index = 0;
-            players = permissionsMap.getOrDefault(g, Collections.emptyList());
-            size = players.size();
-            newPage = false;
 
             do {
-                while (index < size || newPage) {
-                    names.clear();
-                    for (int i = 0; i < perPage && index < size; i++) {
-                        names.add(players.get(index));
-                        index++;
-                    }
-                    pages.add(getStyledPermissionsPage_(g, names));
-                    if (newPage) { break; }
+                names.clear();
+                for (int i = 0; i < perPage && index < total; i++) {
+                    names.add(players.get(index));
+                    index++;
                 }
-                newPage = (index % perPage) >= Landlords.CONFIG.deedsPlayersForNewPage && !newPage;
-            } while (newPage);
+                pages.add(this.getStyledPermissionsPage_(g,names));
+            } while (index < total);
         }
 
         bookMeta.setPages(pages);

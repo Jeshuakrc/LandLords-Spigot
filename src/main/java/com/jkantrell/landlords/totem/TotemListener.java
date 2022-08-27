@@ -253,15 +253,9 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
-    public void onDeedsCreate(PlayerInteractEntityEvent e) {
-        //Checking if the clicked entity is an EndCrystal
-        if (!(e.getRightClicked() instanceof EnderCrystal enderCrystal)) { return; }
-
-        //Checking if the clicked EndCrystal is a Totem
-        Totem totem = Totem.fromEnderCrystal(enderCrystal);
-        if (totem == null) { return; }
-
+    public void onDeedsCreate(PlayerInteractTotemEvent e) {
         //Checking if the clicked Totem has a region
+        Totem totem = e.getTotem();
         Optional<Region> region = totem.getRegion();
         if (region.isEmpty()) { return; }
 
@@ -286,6 +280,7 @@ public class TotemListener implements Listener {
         Landlords.getMainInstance().getServer().getPluginManager().callEvent(event);
         if (event.isCancelled()) { return; }
 
+        //Giving deeds to player
         ItemStack book = deeds.write();
         inventory.getItem(hand).setItemMeta(book.getItemMeta());
     }
