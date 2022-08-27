@@ -440,6 +440,7 @@ public class TotemListener implements Listener {
         e.setCancelled(true);
         Totem totem = Totem.fromEnderCrystal(crystal);
 
+        //Getting the damager player
         Player player = null;
         Arrow arrow = null;
         Entity destroyer = e.getDamager();
@@ -451,25 +452,28 @@ public class TotemListener implements Listener {
             if (!effects.isEmpty() && !effects.contains(arrow_.getBasePotionData().getType())) { return; }
             player = player_; arrow = arrow_;
         }
-
         if (player == null) { return; }
 
+        //Firing TotemDestroyedByPlayerEvent
         TotemDestroyedByPlayerEvent event = new TotemDestroyedByPlayerEvent(player,totem,arrow);
         RegionsLib.getMain().getServer().getPluginManager().callEvent(event);
         if (event.isCancelled()) { return; }
 
         if (totem.getLevel() > 0) {
+            //Hurtting totem
             try {
                 totem.hurt(player, 1);
+
+                //Drop back update item
+                if (Math.random() > Landlords.CONFIG.totemDropBackRate) { return; }
+                Config.TotemInteractionData itemData = Landlords.CONFIG.totemUpgradeItem;
+                totem.getWorld().dropItemNaturally(totem.getLocation(),new ItemStack(itemData.item(), itemData.count())).setInvulnerable(true);
             } catch (TotemUnresizableException ignored) {}
         } else {
+            //Destroying totem
             Player finalPlayer = player;
             totem.getRegion().ifPresent(r -> r.destroy(finalPlayer));
         }
-
-        if (Math.random() > Landlords.CONFIG.totemDropBackRate) { return; }
-        Config.TotemInteractionData itemData = Landlords.CONFIG.totemUpgradeItem;
-        totem.getWorld().dropItemNaturally(totem.getLocation(),new ItemStack(itemData.item(), itemData.count())).setInvulnerable(true);
     }
 
     @EventHandler
