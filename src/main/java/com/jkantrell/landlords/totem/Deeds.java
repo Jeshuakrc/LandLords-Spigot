@@ -1,6 +1,5 @@
 package com.jkantrell.landlords.totem;
 
-import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.*;
 import com.jkantrell.landlords.Landlords;
@@ -124,8 +123,11 @@ public class Deeds {
     //SETTERS
     private int setMinutes_(){
         Region region = this.getRegion();
-        this.minutes_ = Deeds.idOf(region).orElse(1);
-        return this.getMinutes();
+        this.minutes_ = Deeds.idOf(region).orElse(0) + 1;
+        RegionDataContainer container = this.region_.getDataContainer();
+        container.remove(Deeds.deedsMinutesContainerKey_);
+        container.add(new RegionData(Deeds.deedsMinutesContainerKey_,this.minutes_));
+        return this.minutes_;
     }
 
     //PUBLIC METHODS
