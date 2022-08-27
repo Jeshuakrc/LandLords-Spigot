@@ -477,6 +477,19 @@ public class TotemListener implements Listener {
     }
 
     @EventHandler
+    public void onHurtTotemWithUpdateItem(PlayerInteractTotemEvent e) {
+        if (!e.getAction().equals(PlayerInteractTotemEvent.Action.LEFT_CLICK)) { return; }
+
+        ItemStack item = e.getPlayer().getInventory().getItem(e.getHand());
+        if (item == null) { return; }
+
+        if (item.getType().equals(Landlords.CONFIG.totemUpgradeItem.item())) {
+            e.setCancelled(true);
+        }
+        //This protects mobile bedrock players from accidentally hurting the totem
+    }
+
+    @EventHandler
     public void OnTotemKilled(EntityDeathEvent e) {
         if (!(e.getEntity() instanceof EnderCrystal crystal)) { return; }
         if (!Totem.isTotem(crystal)) { return; }
