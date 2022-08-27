@@ -50,8 +50,7 @@ public final class Landlords extends JavaPlugin {
         }
 
         //Initializing language settings
-        Landlords.langProvider_ = new LangProvider(this, "lang");
-        Landlords.langProvider_.setDefaultLanguage(Landlords.CONFIG.defaultLanguageCode);
+        Landlords.langProvider_ = new LangProvider(this, "lang", Landlords.CONFIG.defaultLanguageCode);
         Landlords.langProvider_.setLoggingLevel(Level.INFO);
 
         //Initializing RegionsLib
