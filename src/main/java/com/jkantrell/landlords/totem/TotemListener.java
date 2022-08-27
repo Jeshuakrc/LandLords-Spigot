@@ -36,6 +36,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.world.EntitiesLoadEvent;
 import org.bukkit.event.world.EntitiesUnloadEvent;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.BookMeta;
@@ -53,25 +54,44 @@ public class TotemListener implements Listener {
 
     @EventHandler
     public void onPlaceTotem(PlayerInteractEvent e) {
+        //Validating it was a RIGHT_CLICK_BLOCK_ACTION
         if (!e.getAction().equals(Action.RIGHT_CLICK_BLOCK)) { return; }
 
+        //Validating the player right-clicked with an end crystal in hand
         ItemStack item = e.getItem();
         if (item == null) { return; }
         if (!item.getType().equals(Material.END_CRYSTAL)) { return; }
 
+        //Checking if the clicked block is null
         Block block = e.getClickedBlock();
         if (block == null) { return; }
 
+        //Checking if there's valid blueprint at this point.
         Location loc = block.getRelative(e.getBlockFace()).getLocation().add(.5,.5,.5);
         Blueprint blueprint = TotemManager.chekStructuresFromPoint(loc);
         if (blueprint == null) { return; }
 
+        //Validating hand is not null
+        EquipmentSlot hand = e.getHand();
+        if (hand == null) { return; }
+
+        //Place totem
         Player player = e.getPlayer();
-        e.setCancelled(true);
-        if (!player.getGameMode().equals(GameMode.CREATIVE)) {
-            player.getInventory().removeItem(new ItemStack(Material.END_CRYSTAL,1));
-        }
         new Totem(loc,blueprint).place(player);
+        e.setCancelled(true);
+
+        //Checking if the player is in creative mode
+        if (player.getGameMode().equals(GameMode.CREATIVE)) { return; }
+
+        //Removing the ender crystal from player's inventory
+        PlayerInventory inventory = player.getInventory();
+        item = inventory.getItem(hand);
+        int amount = item.getAmount();
+        inventory.setItem(
+            hand,
+            (amount > 1) ? new ItemStack(Material.END_CRYSTAL, amount - 1) : null
+        );
+
     }
 
     @EventHandler
