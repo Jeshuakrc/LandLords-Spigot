@@ -92,9 +92,6 @@ public class RegionListener implements Listener {
         for (Region r : Regions.getRuleContainersAt("noMonsterSpawn",RuleDataType.BOOL,monster.getLocation())) {
             if (r.getRuleValue("noMonsterSpawn",RuleDataType.BOOL)) {
                 e.setCancelled(true);
-                Landlords.getMainInstance().getLogger().finest(
-                monster.getName() + " prevented from spawning in " + r.getName() + " as 'noMonsterSpawn' rule is enabled in the region."
-                );
                 return;
             }
         }
