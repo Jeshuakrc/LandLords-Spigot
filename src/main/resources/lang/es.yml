@@ -51,6 +51,9 @@ totems:
     #The name the associated region will get when a player places a totem
     #   %1$s = The totem placer player's name
     player_placed: "Región de %1$s"
+  #Message to display to a player when a totem could not be placed for some internal unhandled reason. (This is the worst case scenario. This message isn't supposed to ever show)
+  #   %1$s = The name of the exception that caused the error.
+  unplacezable: "El totem no se puede colocar debido a un error desconocido. [%1$s]"
   unrezisable:
     #Message to send when a region could not scale. (Specific reasons come after)
     #   %1$s = The name of the region

@@ -76,9 +76,20 @@ public class TotemListener implements Listener {
         if (hand == null) { return; }
 
         //Place totem
-        Player player = e.getPlayer();
-        new Totem(loc,blueprint).place(player);
         e.setCancelled(true);
+        Player player = e.getPlayer();
+        try {
+            new Totem(loc,blueprint).place(player);
+        } catch (Exception ex) {
+            //An exception is not expected here, but this is a defensive measure
+            String exName = ex.getClass().getSimpleName();
+            player.sendMessage(ChatColor.RED + Landlords.getLangProvider().getEntry(player, "totems.unplacezable", exName));
+            Landlords.getMainInstance().getLogger().severe(
+            "A totem could not be placed at [" + loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlock() + "], by " + player.getName() + ", due to " + exName + "."
+            );
+            ex.printStackTrace();
+            return;
+        }
 
         //Checking if the player is in creative mode
         if (player.getGameMode().equals(GameMode.CREATIVE)) { return; }
