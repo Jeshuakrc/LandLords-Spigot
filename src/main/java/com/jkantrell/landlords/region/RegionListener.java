@@ -19,10 +19,12 @@ import org.bukkit.block.data.Ageable;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.raid.RaidTriggerEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -90,7 +92,7 @@ public class RegionListener implements Listener {
     }
 
     @EventHandler
-    public void breakCrops(AbilityTriggeredEvent e) {
+    public void onBreakCrops(AbilityTriggeredEvent e) {
         //is it the BREAK_CROPS event?
         if (!e.getAbility().equals(Abilities.BREAK_CROPS)) { return; }
 
@@ -149,6 +151,31 @@ public class RegionListener implements Listener {
             }
         }.runTaskLater(Landlords.getMainInstance(),1);
 
+    }
+
+    @EventHandler
+    public void onSteppingOnFarmLand(PlayerInteractEvent e) {
+        //IS it a physical interaction?
+        if (!e.getAction().equals(Action.PHYSICAL)) { return; }
+
+        //Is there a block Involved
+        Block block = e.getClickedBlock();
+        if (block == null) { return; }
+
+        //Was if farmland
+        if (!block.getType().equals(Material.FARMLAND)) { return; }
+
+        //Checking if the block is in a region
+        Region[] regions = Regions.getRuleContainersAt("farmlandProtected", RuleDataType.BOOL, block.getLocation().add(.5,.5,.5));
+        if (regions.length < 1) { return; }
+
+        //Checking the "farmlandProtected" rule
+        for (Region r : regions) {
+            if (r.getRuleValue("farmlandProtected", RuleDataType.BOOL)) {
+                e.setCancelled(true);
+                return;
+            }
+        }
     }
 
     @EventHandler
