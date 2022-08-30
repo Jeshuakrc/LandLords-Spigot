@@ -6,6 +6,7 @@ import com.jkantrell.regionslib.regions.*;
 import com.jkantrell.regionslib.regions.dataContainers.RegionData;
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.regionslib.regions.dataContainers.RegionDataContainer;
+import org.apache.commons.lang3.StringUtils;
 import org.bukkit.*;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -224,11 +225,12 @@ public class Totem {
     //METHODS
     public Region place(Player placer) {
         //Creating the region
-        String namePath = "totems.default_name." + ((placer == null) ? "undefined_placer" : "player_placed");
+
+        String name = Landlords.getLangProvider().getEntry(placer,"totems.default_name." + ((placer == null) ? "undefined_placer" : "player_placed"),placer.getName());
         this.region_ = new Region(
             this.getBaseRegionBox(),
             this.location_.getWorld(),
-            Landlords.getLangProvider().getEntry(placer,namePath,placer.getName()),
+            StringUtils.truncate(name, Landlords.CONFIG.regionsMaximumNameLength),
             this.blueprint_.getHierarchy(),
             placer
         );
