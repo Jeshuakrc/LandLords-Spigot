@@ -233,11 +233,15 @@ public class Deeds {
                 players = StringUtils.split(sections[1], "\n");
                 permissions = new Permission[players.length];
                 for (int i = 0; i < players.length; i++) {
-                    permissions[i] = new Permission(players[i],hierarchy,regionGroup.getLevel());
+                    permissions[i] = new Permission(
+                            StringUtils.normalizeSpace(players[i])
+                            ,hierarchy
+                            ,regionGroup.getLevel()
+                    );
                 }
             }
 
-            pag = getStyledPermissionsPage_(regionGroup, new ArrayList<String>(Arrays.asList(players)));
+            pag = getStyledPermissionsPage_(regionGroup, new ArrayList<>(Arrays.asList(players)));
 
             if (page > meta.getPages().size()) {
                 meta.addPage(pag);
