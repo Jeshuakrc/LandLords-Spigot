@@ -16,6 +16,7 @@ public class LandLordsRuleKeys {
     public final RuleKey FIRE_PROTECTED;
     public final RuleKey RAID_PROTECTED;
     public final RuleKey NO_MONSTER_SPAWN;
+    public final RuleKey AUTOPLANT;
     
     //FIELDS
     private static Landlords mainInstance_ = null;
@@ -27,5 +28,6 @@ public class LandLordsRuleKeys {
         this.FIRE_PROTECTED = RuleKey.registerNew(mainInstance_,"fireProtected",RuleDataType.BOOL);
         this.RAID_PROTECTED = RuleKey.registerNew(mainInstance_,"raidProtected",RuleDataType.BOOL);
         this.NO_MONSTER_SPAWN = RuleKey.registerNew(mainInstance_,"noMonsterSpawn",RuleDataType.BOOL);
+        this.AUTOPLANT = RuleKey.registerNew(mainInstance_,"autoplant",RuleDataType.BOOL);
     }
 }

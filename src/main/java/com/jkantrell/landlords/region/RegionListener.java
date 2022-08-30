@@ -2,7 +2,6 @@ package com.jkantrell.landlords.region;
 
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.io.Config;
-import com.jkantrell.landlords.io.LangProvider;
 import com.jkantrell.regionslib.events.AbilityTriggeredEvent;
 import com.jkantrell.regionslib.events.PlayerEnterRegionEvent;
 import com.jkantrell.regionslib.events.PlayerLeaveRegionEvent;
@@ -14,15 +13,21 @@ import com.jkantrell.regionslib.regions.rules.RuleDataType;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.block.data.Ageable;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockBurnEvent;
 import org.bukkit.event.entity.CreatureSpawnEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.raid.RaidTriggerEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.scheduler.BukkitRunnable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.function.BiPredicate;
 
 public class RegionListener implements Listener {
@@ -82,6 +87,68 @@ public class RegionListener implements Listener {
                     player.getName(), abilityName, regionName, Landlords.getLangProvider().getLangFileName(player)
             ));
         }
+    }
+
+    @EventHandler
+    public void breakCrops(AbilityTriggeredEvent e) {
+        //is it the BREAK_CROPS event?
+        if (!e.getAbility().equals(Abilities.BREAK_CROPS)) { return; }
+
+        //Is the ability allowed?
+        if (!e.isAllowed()) { return; }
+
+        //Checking if the Region has de autoplant rule
+        Region region = e.getRegion();
+        if (!region.hasRule("autoplant", RuleDataType.BOOL)) { return; }
+
+        //Getting the rule result
+        if(!region.getRuleValue("autoplant",RuleDataType.BOOL)) { return; }
+
+        //Checking if the blockData is ageable
+        BlockBreakEvent event = (BlockBreakEvent) e.getTriggererEvent();
+        Block block = event.getBlock() ;
+        if(!(block.getBlockData() instanceof Ageable ageable)) { return; }
+
+        //Applying
+        Material type = block.getType();
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                block.setType(type);
+                ageable.setAge(0);
+                block.setBlockData(ageable);
+
+                List<Item> drops = block.getWorld().getNearbyEntities(block.getBoundingBox().expand(1)).stream()
+                        .filter(e -> e instanceof Item)
+                        .map(e -> (Item) e)
+                        .filter(i -> i.getThrower() == null)
+                        .toList();
+
+                if(drops.isEmpty()) { return; }
+
+                Item item = drops.stream()
+                        .filter(i -> i.getItemStack().getType().toString().toLowerCase().contains("seed"))
+                        .findFirst()
+                        .orElse(null);
+
+                if (item != null) {
+                    item.remove();
+                    return;
+                }
+
+                item = drops.get(0);
+                ItemStack itemStack = item.getItemStack();
+                int amount = itemStack.getAmount();
+
+                if (amount > 1) {
+                    itemStack.setAmount(amount - 1);
+                    item.setItemStack(itemStack);
+                } else {
+                    item.remove();
+                }
+            }
+        }.runTaskLater(Landlords.getMainInstance(),1);
+
     }
 
     @EventHandler
