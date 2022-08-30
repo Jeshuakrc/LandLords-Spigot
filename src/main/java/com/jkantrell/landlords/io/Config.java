@@ -141,13 +141,16 @@ public class Config extends AbstractYamlConfig {
     @ConfigField(path = "deeds.players_per_page")
     public int deedsPlayersPerPage = 13;
 
-    @ConfigField (path = "deeds.players_for_new_page")
+    @ConfigField(path = "deeds.players_for_new_page")
     public int deedsPlayersForNewPage = 10;
 
-    @ConfigField (path = "regions.names_length_limit.min")
+    @ConfigField(path = "deeds.unsignable")
+    public boolean deedsUnsignable = true;
+
+    @ConfigField(path = "regions.names_length_limit.min")
     public int regionsMinimumNameLength = 8;
 
-    @ConfigField (path = "regions.names_length_limit.max")
+    @ConfigField(path = "regions.names_length_limit.max")
     public int regionsMaximumNameLength = 32;
 
     @ConfigField(path = "regions.border_display.persistence")

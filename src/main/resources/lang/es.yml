@@ -165,6 +165,8 @@ deeds:
       player_names: ""
 
   error_message:
+    #Message to display to a player who tries to sign a deeds book. (Applicable only if 'deed.unsignable' setting in 'config.yml' is true)
+    unsignable: "¡Un libro con escrituras no se puede firmar!"
     compose:
       #The header text of the list of error reading Deeds.
       #   %1$s = Amount of errors

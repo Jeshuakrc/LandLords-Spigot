@@ -80,6 +80,9 @@ deeds:
   #How many players a page in a deeds book must contain to generate a new page for the group.
   players_for_new_page: 10
 
+  #Weather or not a deeds book can be signed. If a deeds book gets signed, the player must generate a new one to make any changes.
+  unsignable: true
+
 regions:
   #The minimum and maximum length a region name may have.
   names_length_limit:

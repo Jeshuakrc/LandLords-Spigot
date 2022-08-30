@@ -102,7 +102,6 @@ public class TotemListener implements Listener {
             hand,
             (amount > 1) ? new ItemStack(Material.END_CRYSTAL, amount - 1) : null
         );
-
     }
 
     @EventHandler
@@ -569,6 +568,13 @@ public class TotemListener implements Listener {
         Deeds deeds = Deeds.fromBook(oldMeta, player).orElse(null);
         if (deeds == null) { return; }
 
+        //Checking and reacting if the book is being signed
+        if (Landlords.CONFIG.deedsUnsignable && e.isSigning()) {
+            e.setSigning(false);
+            String message = Landlords.getLangProvider().getEntry(player,"deeds.error_message.unsignable");
+            player.spigot().sendMessage(ChatMessageType.ACTION_BAR, new TextComponent(message));
+        }
+
         //Reading the book
         LinkedList<String> errors = new LinkedList<>();
         BookMeta newMeta = e.getNewBookMeta();
@@ -582,7 +588,7 @@ public class TotemListener implements Listener {
         }
 
         //Checking if there were no reading errors
-        if (errors.isEmpty() && size > 0) { return; }       //The size check is for bedrock support. En EditBookEvent is triggered right away.
+        if (errors.isEmpty() && size > 0) { return; }       //The size check is for bedrock support. An EditBookEvent is triggered right away.
 
         //Presenting errors to the player
         if (!errors.isEmpty()) {
@@ -604,5 +610,4 @@ public class TotemListener implements Listener {
             player.getInventory().setItem(EquipmentSlot.OFF_HAND, book);
         }
     }
-
 }
