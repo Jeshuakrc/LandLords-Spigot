@@ -15,12 +15,14 @@ public abstract class Serializer {
     //NEW IMPLEMENTATION
     public static final Gson GSON;
     static {
-        GsonBuilder builder = new GsonBuilder();
-        builder.setPrettyPrinting();
-        builder.registerTypeAdapter(Blueprint.class, new Blueprint.JDeserializer());
-        builder.registerTypeAdapter(Rule.class, new Rule.JDeserializer());
+        GSON = new GsonBuilder()
+                .setPrettyPrinting()
+                .disableHtmlEscaping()
 
-        GSON = builder.create();
+                .registerTypeAdapter(Blueprint.class, new Blueprint.JDeserializer())
+                .registerTypeAdapter(Rule.class, new Rule.JDeserializer())
+
+                .create();
     }
 
     public static class FILES {
