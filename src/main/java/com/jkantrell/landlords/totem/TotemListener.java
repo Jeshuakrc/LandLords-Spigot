@@ -48,6 +48,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class TotemListener implements Listener {
@@ -154,7 +155,7 @@ public class TotemListener implements Listener {
         if (region == null) { return; }
 
         //Reading deeds
-        Player[] msgRecipients = region.getOnlineMembers();
+        LinkedList<Player> msgRecipients = Arrays.stream(region.getOnlineMembers()).collect(Collectors.toCollection(LinkedList::new));
         List<Permission> oldPerms = new ArrayList<>(Arrays.asList(region.getPermissions().clone())), newPerms;
         String oldName = region.getName(), newName;
         try {
@@ -200,19 +201,22 @@ public class TotemListener implements Listener {
         }
 
         HashMap<String,List<Hierarchy.Group>> playerPermissionsMap = new HashMap<>();
-        for (Permission oldPerm : oldPerms) {
-            String p = oldPerm.getPlayerName();
-            if (!playerPermissionsMap.containsKey(p)) {
-                playerPermissionsMap.put(p,new LinkedList<>());
+        oldPerms.forEach(p -> {
+            String n = p.getPlayerName();
+            if (!playerPermissionsMap.containsKey(n)) {
+                playerPermissionsMap.put(n,new LinkedList<>());
             }
-            playerPermissionsMap.get(p).add(oldPerm.getGroup());
-        }
+            playerPermissionsMap.get(n).add(p.getGroup());
+        });
 
         for (Permission perm : newPerms) {
-
             String affected = perm.getPlayerName();
             List<Hierarchy.Group> groups = playerPermissionsMap.getOrDefault(affected,Collections.emptyList());
             if(groups.isEmpty()){
+                Optional.ofNullable(perm.getPlayer()).ifPresent(p -> {
+                    msgRecipients.add(p);
+                    playerMessagesMap.put(p,new LinkedList<>());
+                });
                 for (Player p : msgRecipients) {
                     messages = playerMessagesMap.get(p);
                     messagePath.setLength(0);
