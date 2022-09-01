@@ -87,7 +87,7 @@ regions:
   enter_title:
     #The texts to display when in a tittle when entering a region.
     #   %1$s = Region name    %1$s = First owner.
-    title: "§3%1$s"
+    title: "§l§c%1$s"
     #The Subtitle of the previous title.
     #   %1$s = Region name    %1$s = First owner.
     subtitle: ""
