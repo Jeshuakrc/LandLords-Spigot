@@ -155,7 +155,7 @@ public class TotemListener implements Listener {
         if (region == null) { return; }
 
         //Reading deeds
-        LinkedList<Player> msgRecipients = Arrays.stream(region.getOnlineMembers()).collect(Collectors.toCollection(LinkedList::new));
+        Map<Player, List<String>> msgMap = Arrays.stream(region.getOnlineMembers()).collect(Collectors.toMap(p -> p, p -> new LinkedList<>()));
         List<Permission> oldPerms = new ArrayList<>(Arrays.asList(region.getPermissions().clone())), newPerms;
         String oldName = region.getName(), newName;
         try {
@@ -175,95 +175,80 @@ public class TotemListener implements Listener {
             return;
         }
 
-        //Checking if there was any change
-        newPerms = new ArrayList<>(Arrays.asList(region.getPermissions()));
-        newName = region.getName();
-        if (oldPerms.equals(newPerms) && oldName.equals(newName)) { return; }
-
-        //Scanning differences and presenting them to the players
-        HashMap<Player,List<String>> playerMessagesMap = new HashMap<>();
-        for (Player p : msgRecipients) {
-            playerMessagesMap.put(p,new LinkedList<>());
-        }
-
-        List<String> messages;
+        //If the name changed
         StringBuilder messagePath = new StringBuilder();
-
+        newName = region.getName();
         if(!oldName.equals(newName)){
-            for (Player p : msgRecipients) {
-                messages = playerMessagesMap.get(p);
+            msgMap.forEach((p,l) -> {
                 messagePath.setLength(0);
-                messagePath.append("regions.name_update.");
-                messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson");
+                messagePath
+                        .append("regions.name_update.")
+                        .append(p.equals(player) ? "firstPerson" : "thirdPerson");
 
-                messages.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),oldName,newName,player.getName()));
-            }
+                l.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),oldName,newName,player.getName()));
+            });
         }
 
-        HashMap<String,List<Hierarchy.Group>> playerPermissionsMap = new HashMap<>();
-        oldPerms.forEach(p -> {
-            String n = p.getPlayerName();
-            if (!playerPermissionsMap.containsKey(n)) {
-                playerPermissionsMap.put(n,new LinkedList<>());
-            }
-            playerPermissionsMap.get(n).add(p.getGroup());
-        });
+        //If permissions didn't change, return
+        newPerms = new ArrayList<>(Arrays.asList(region.getPermissions()));
+        if (oldPerms.equals(newPerms)) { return; }
 
+        //Mapping old permissions
+        HashMap<String,List<Hierarchy.Group>> oldPermsMap = new HashMap<>();
+        oldPerms.forEach(p -> oldPermsMap.computeIfAbsent(p.getPlayerName(), n -> new LinkedList<>()).add(p.getGroup()));
+
+        //Scanning new permissions
+        Map<Player,List<Hierarchy.Group>> newMembers = new HashMap<>();
         for (Permission perm : newPerms) {
             String affected = perm.getPlayerName();
-            List<Hierarchy.Group> groups = playerPermissionsMap.getOrDefault(affected,Collections.emptyList());
-            if(groups.isEmpty()){
-                Optional.ofNullable(perm.getPlayer()).ifPresent(p -> {
-                    msgRecipients.add(p);
-                    playerMessagesMap.put(p,new LinkedList<>());
+            Hierarchy.Group group = perm.getGroup();
+            List<Hierarchy.Group> oldGroups = oldPermsMap.get(affected);
+            if(oldGroups == null){
+                msgMap.forEach((p,l) -> {
+                    messagePath.setLength(0);
+                    messagePath
+                            .append("regions.permissions.add.")
+                            .append(p.equals(player) ? "firstPerson" : "thirdPerson")
+                            .append("_thirdPerson");
+                    l.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),affected,player.getName(),perm.getGroup().getName(),newName));
                 });
-                for (Player p : msgRecipients) {
-                    messages = playerMessagesMap.get(p);
-                    messagePath.setLength(0);
-                    messagePath.append("regions.permissions.add.");
-                    messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
-                    messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
-
-                    messages.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),affected,player.getName(),perm.getGroup().getName(),region.getName()));
-                }
+                perm.getPlayer().ifPresent(p -> newMembers.computeIfAbsent(p, p_ -> new LinkedList<>()).add(group));
             } else {
-                Hierarchy.Group group = groups.get(0);
-                if (!groups.contains(perm.getGroup())) {
-                    for (Player p : msgRecipients) {
-                        messages = playerMessagesMap.get(p);
-                        messagePath.setLength(0);
-                        messagePath.append("regions.permissions.change.");
-                        messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
-                        messagePath.append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
-
-                        messages.add(Landlords.getLangProvider().getEntry(p, messagePath.toString(), affected, player.getName(), group.getName(), perm.getGroup().getName(), region.getName()));
-                    }
-                }
-                groups.remove(group);
-            }
-        }
-
-        for (String name : playerPermissionsMap.keySet()) {
-            for (Hierarchy.Group g : playerPermissionsMap.get(name)) {
-                for (Player p : msgRecipients) {
-                    messages = playerMessagesMap.get(p);
+                if (oldGroups.remove(group)) { continue; }
+                Hierarchy.Group oldGroup = oldGroups.remove(0);
+                msgMap.forEach((p,l) -> {
                     messagePath.setLength(0);
-                    messagePath.append("regions.permissions.remove.");
-                    messagePath.append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_");
-                    messagePath.append(p.getName().equals(name) ? "firstPerson" : "thirdPerson");
-
-                    messages.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),name,player.getName(),g.getName(),region.getName()));
-                }
+                    messagePath
+                        .append("regions.permissions.change.")
+                        .append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_")
+                        .append(p.getName().equals(affected) ? "firstPerson" : "thirdPerson");
+                    l.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),affected,player.getName(),oldGroup.getName(),group.getName(),newName));
+                });
             }
         }
 
-        for (Player p : msgRecipients) {
-            for (String s : playerMessagesMap.get(p)) {
-                p.sendMessage(s);
-            }
-        }
+        //Handling new members
+        newMembers.forEach((p,l) -> {
+            messagePath.setLength(0);
+            messagePath
+                    .append("regions.permissions.add.")
+                    .append(p.equals(player) ? "firstPerson" : "thirdPerson")
+                    .append("_firstPerson");
+            l.forEach(g -> msgMap.computeIfAbsent(p,p_ -> new LinkedList<>()).add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),p.getName(),player.getName(),g.getName(),newName)));
+        });
 
+        //Handling deleted permissions
+        oldPermsMap.forEach((n,lg) -> lg.forEach(g -> msgMap.forEach((p, l) -> {
+            messagePath.setLength(0);
+            messagePath
+                    .append("regions.permissions.remove.")
+                    .append(p.equals(player) ? "firstPerson" : "thirdPerson").append("_")
+                    .append(p.getName().equals(n) ? "firstPerson" : "thirdPerson");
+            l.add(Landlords.getLangProvider().getEntry(p,messagePath.toString(),n,player.getName(),g.getName(),newName));
+        })));
 
+        //Messaging players
+        msgMap.forEach((p, m) -> m.forEach(p::sendMessage));
     }
 
     @EventHandler
