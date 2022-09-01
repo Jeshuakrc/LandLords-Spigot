@@ -87,7 +87,7 @@ regions:
   enter_title:
     #The texts to display when in a tittle when entering a region.
     #   %1$s = Region name    %1$s = First owner.
-    title: "§3%1$s"
+    title: "§l§c%1$s"
     #The Subtitle of the previous title.
     #   %1$s = Region name    %1$s = First owner.
     subtitle: ""
@@ -108,7 +108,7 @@ regions:
     add:
       #Message shown to other players when a permission in a region has been granted to another player
       #   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
-      thirdPerson_thirdPerson: "%2$s le otorgó el rol de %3$s a %1$s en %4$s"
+      thirdPerson_thirdPerson: "Otorgaste a %2$s el rol de %3$s a %1$s en %4$s"
       #Message shown to a player when a permission in a region has been granted to them
       #   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
       thirdPerson_firstPerson: "%2$s te otrogó el rol de %3$s en %4$s"
