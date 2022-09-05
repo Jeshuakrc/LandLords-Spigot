@@ -168,6 +168,9 @@ public class Config extends AbstractYamlConfig {
     @ConfigField(path = "regions.name_title_display.enabled")
     public boolean regionsNameTitleEnabled = true;
 
+    @ConfigField(path = "regions.fire_extinguish_chance")
+    public double regionFireExtinguishChance = 0.4;
+
     @ConfigField(path = "messages_reach.region_resize")
     public Config.GroupLevelReach msgReachRegionResize = GroupLevelReach.all;
 }

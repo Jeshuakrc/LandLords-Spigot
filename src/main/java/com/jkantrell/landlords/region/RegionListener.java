@@ -2,6 +2,7 @@ package com.jkantrell.landlords.region;
 
 import com.jkantrell.landlords.Landlords;
 import com.jkantrell.landlords.io.Config;
+import com.jkantrell.regionslib.RegionsLib;
 import com.jkantrell.regionslib.events.AbilityTriggeredEvent;
 import com.jkantrell.regionslib.events.PlayerEnterRegionEvent;
 import com.jkantrell.regionslib.events.PlayerLeaveRegionEvent;
@@ -30,6 +31,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiPredicate;
 
 public class RegionListener implements Listener {
@@ -196,6 +198,11 @@ public class RegionListener implements Listener {
         for (Region r :  Regions.getRuleContainersAt("fireProtected",RuleDataType.BOOL,e.getBlock().getLocation().add(.5,.5,.5))) {
             if (r.getRuleValue("fireProtected",RuleDataType.BOOL)) {
                 e.setCancelled(true);
+                double extinguishChance = Landlords.CONFIG.regionFireExtinguishChance;
+                if (extinguishChance <= 0) { return; }
+                if (Math.random() <= extinguishChance) {
+                    Optional.ofNullable(e.getIgnitingBlock()).ifPresent(b -> b.setType(Material.AIR));
+                }
                 return;
             }
         }
