@@ -108,13 +108,13 @@ regions:
     add:
       #Message shown to other players when a permission in a region has been granted to another player
       #   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
-      thirdPerson_thirdPerson: "Otorgaste a %1$s el rol de %3$s en %4$s"
+      thirdPerson_thirdPerson: "%2$s le otrogó a %1$s el rol de %3$s en %4$s"
       #Message shown to a player when a permission in a region has been granted to them
       #   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
       thirdPerson_firstPerson: "%2$s te otrogó el rol de %3$s en %4$s"
       #Message shown to a player when they grant a permission in a region to another player
       #   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
-      firstPerson_thirdPerson: "%1$s se le otorgó el rol de %3$s en %4$s"
+      firstPerson_thirdPerson: ""Otorgaste a %1$s el rol de %3$s en %4$s""
       #Message shown to a player when they grant a permission in a region to themselves
       #   %1$s = Affected player        %2$s = Responsible player       %3$s = Group name       %4$s = Region name
       firstPerson_firstPerson: "Impusiste tu rol de %3$s en %4$s"
