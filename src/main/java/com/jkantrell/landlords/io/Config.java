@@ -135,6 +135,9 @@ public class Config extends AbstractYamlConfig {
     @ConfigField(path = "totems.destroy_arrow_effects")
     public List<PotionType> totemDestroyArrowEffects = List.of(PotionType.POISON);
 
+    @ConfigField(path = "totems.attack_alerting")
+    public boolean totemAttackAlerting = true;
+
     @ConfigField(path = "deeds.exchange_item")
     public Material deedsExchangeItem = Material.WRITABLE_BOOK;
 

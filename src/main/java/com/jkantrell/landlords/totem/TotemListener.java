@@ -461,6 +461,9 @@ public class TotemListener implements Listener {
         //Checking if there's any blocks in between (Lagged players protection)
         if (!player.hasLineOfSight(totem.getEndCrystal())) { return; }
 
+        //Hurting totem
+        Player finalPlayer = player;
+        boolean destroyed = false;
         if (totem.getLevel() > 0) {
             //Hurtting totem
             try {
@@ -473,9 +476,20 @@ public class TotemListener implements Listener {
             } catch (TotemUnresizableException ignored) {}
         } else {
             //Destroying totem
-            Player finalPlayer = player;
             totem.getRegion().ifPresent(r -> r.destroy(finalPlayer));
+            destroyed = true;
         }
+
+        //Alerting members
+        if (!Landlords.CONFIG.totemAttackAlerting) { return; }
+
+        boolean finalDestroyed = destroyed;
+        Player[] onlineMembers = totem.getRegion().map(Region::getOnlineMembers).orElse(new Player[] {});
+        Arrays.stream(onlineMembers)
+            .filter(p -> !p.equals(finalPlayer))
+            .forEach(p -> p.sendMessage(
+                ChatColor.RED + Landlords.getLangProvider().getEntry(p, "totems." + ((finalDestroyed) ? "destroyed" : "hurt"), totem.getRegion().get().getName(), finalPlayer.getName())
+            ));
     }
 
     @EventHandler

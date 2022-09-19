@@ -67,6 +67,9 @@ totems:
   #An empty array means a normal arrow is enough to destroy an EndCrystal.
   destroy_arrow_effects: ["POISON"]
 
+  #Weather or not to alert members of a region if its totem is being attacked.
+  attack_alerting: true
+
 
 deeds:
   #Determines which item you must right-click a totem End Crystal with in order to obtain its deeds.

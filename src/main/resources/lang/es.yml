@@ -45,6 +45,12 @@ totems:
   #Message to send to the player once they've successfully resized a region with a totem.
   #   %1$s = The name of the region   %2$s = New X size   %3$s = New Y size    %4$s = New Z size
   resized: "%1$s fué redimensionado %2$s x %3$s x %4$s"
+  #Message to send to all members of a region when its totem has been hurt by another player.
+  #   %1$s = The name of the region   %2$s = the player
+  hurt: "%2$s dañó el totem de %1$s!"
+  #Message to send to all members of a region when it's been destroyed by another player by destroying its totem.
+  #   %1$s = The name of the region   %2$s = the player
+  destroyed: "%2$s destruyó el totem de %1$s!"
   default_name:
     #The name the associated region will get when totem is placed without player for any mystical reason.
     undefined_placer: "Región sin nombre"
