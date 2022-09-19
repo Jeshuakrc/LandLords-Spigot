@@ -458,6 +458,9 @@ public class TotemListener implements Listener {
         RegionsLib.getMain().getServer().getPluginManager().callEvent(event);
         if (event.isCancelled()) { return; }
 
+        //Checking if there's any blocks in between (Lagged players protection)
+        if (!player.hasLineOfSight(totem.getEndCrystal())) { return; }
+
         if (totem.getLevel() > 0) {
             //Hurtting totem
             try {
