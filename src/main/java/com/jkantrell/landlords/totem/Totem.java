@@ -262,13 +262,20 @@ public class Totem {
     }
     public void feed(Player player, double howMuch) throws TotemUnresizableException {
         if (howMuch < 1) { return; }
-        this.feedbackScale_(
-                player,
-                Arrays.stream(this.getBlueprint().getRegionGrowthRate()).map(d -> d * howMuch).toArray(),
-                Landlords.CONFIG.totemFeedParticleData,
-                Sound.BLOCK_RESPAWN_ANCHOR_CHARGE
-        );
-        this.leveled_ += howMuch;
+        boolean resized = true;
+        try {
+            this.feedbackScale_(
+                    player,
+                    Arrays.stream(this.getBlueprint().getRegionGrowthRate()).map(d -> d * howMuch).toArray(),
+                    Landlords.CONFIG.totemFeedParticleData,
+                    Sound.BLOCK_RESPAWN_ANCHOR_CHARGE
+            );
+        } catch (TotemUnresizableException ex) {
+            resized = ex.wasResized();
+            throw ex;
+        } finally {
+            if (resized) { this.leveled_ += howMuch; }
+        }
     }
     public void feed(Player player, BlockFace direction, double howMuch) throws TotemUnresizableException {
         if (howMuch < 1) { return; }
